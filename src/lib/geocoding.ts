@@ -24,7 +24,10 @@ export async function geocodeWithMapbox(
   query: string
 ): Promise<GeocodeResult | null> {
   // Skip Mapbox if no token is provided
-  if (!env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN === 'your_mapbox_token_here') {
+  if (
+    !env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ||
+    env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN === 'your_mapbox_token_here'
+  ) {
     return null;
   }
 
@@ -52,7 +55,7 @@ export async function geocodeWithMapbox(
     const address = feature.place_name;
     let city, state, zipCode, country;
 
-    feature.context?.forEach((ctx: any) => {
+    feature.context?.forEach((ctx: { id: string; text: string }) => {
       if (ctx.id.includes('place')) city = ctx.text;
       if (ctx.id.includes('region')) state = ctx.text;
       if (ctx.id.includes('postcode')) zipCode = ctx.text;
@@ -171,7 +174,10 @@ export async function reverseGeocode(
   }
 
   // Skip Mapbox if no token is provided
-  if (!env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN === 'your_mapbox_token_here') {
+  if (
+    !env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ||
+    env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN === 'your_mapbox_token_here'
+  ) {
     return null;
   }
 
@@ -194,7 +200,7 @@ export async function reverseGeocode(
     const address = feature.place_name;
 
     let city, state, zipCode, country;
-    feature.context?.forEach((ctx: any) => {
+    feature.context?.forEach((ctx: { id: string; text: string }) => {
       if (ctx.id.includes('place')) city = ctx.text;
       if (ctx.id.includes('region')) state = ctx.text;
       if (ctx.id.includes('postcode')) zipCode = ctx.text;

@@ -3,6 +3,7 @@ import { healthRouter } from '~/server/api/routers/health';
 import { geocodingRouter } from '~/server/api/routers/geocoding';
 import { campaignsRouter } from '~/server/api/routers/campaigns';
 import { commentsRouter } from '~/server/api/routers/comments';
+import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const appRouter = createTRPCRouter({
   health: healthRouter,
@@ -12,3 +13,5 @@ export const appRouter = createTRPCRouter({
 });
 
 export type AppRouter = typeof appRouter;
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;

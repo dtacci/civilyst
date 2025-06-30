@@ -10,7 +10,9 @@ interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function CampaignDetailPage({ params }: CampaignDetailPageProps) {
+export default function CampaignDetailPage({
+  params,
+}: CampaignDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [userVote, setUserVote] = useState<'SUPPORT' | 'OPPOSE' | null>(null);
@@ -67,8 +69,13 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Campaign Not Found</h1>
-          <p className="text-gray-600 mb-6">The campaign you're looking for doesn't exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Campaign Not Found
+          </h1>
+          <p className="text-gray-600 mb-6">
+            The campaign you&apos;re looking for doesn&apos;t exist or has been
+            removed.
+          </p>
           <button
             onClick={() => router.push('/campaigns')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -105,8 +112,18 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
               onClick={() => router.back()}
               className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div className="flex items-center gap-3">
@@ -118,7 +135,8 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
                 {campaign.status}
               </span>
               <span className="text-sm text-gray-500">
-                Created {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
+                Created{' '}
+                {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
               </span>
             </div>
           </div>
@@ -130,8 +148,10 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-8">
             {/* Title and Creator */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{campaign.title}</h1>
-            
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {campaign.title}
+            </h1>
+
             {/* Creator Info */}
             <div className="flex items-center mb-6">
               {campaign.creator?.imageUrl ? (
@@ -142,8 +162,16 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               )}
@@ -158,9 +186,24 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
             {/* Location */}
             {campaign.address && (
               <div className="flex items-center text-gray-600 mb-6">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 <span>{campaign.address}</span>
               </div>
@@ -176,7 +219,9 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
             {/* Voting Section */}
             {campaign.status === 'ACTIVE' && (
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Support this campaign</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Support this campaign
+                </h3>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => handleVote('SUPPORT')}
@@ -188,13 +233,23 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
                     } disabled:opacity-50`}
                   >
                     <div className="flex items-center justify-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V18m-7-8a2 2 0 01-2-2V6a2 2 0 012-2h2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                      <svg
+                        className="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V18m-7-8a2 2 0 01-2-2V6a2 2 0 012-2h2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                        />
                       </svg>
                       Support ({campaign._count?.votes || 0})
                     </div>
                   </button>
-                  
+
                   <button
                     onClick={() => handleVote('OPPOSE')}
                     disabled={voteMutation.isPending}
@@ -205,8 +260,18 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
                     } disabled:opacity-50`}
                   >
                     <div className="flex items-center justify-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 13l3 3 7-7" />
+                      <svg
+                        className="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 13l3 3 7-7"
+                        />
                       </svg>
                       Oppose
                     </div>
@@ -218,7 +283,7 @@ export default function CampaignDetailPage({ params }: CampaignDetailPageProps) 
         </div>
 
         {/* Comments Section */}
-        <CommentsSection 
+        <CommentsSection
           campaignId={id}
           currentUserId="mock_user_id" // TODO: Replace with actual user ID from auth
         />

@@ -5,17 +5,23 @@ import {
   loggedProcedure,
 } from '~/server/api/trpc';
 import { TRPCError } from '@trpc/server';
-import { db } from '~/lib/db';
+// import { db } from '~/lib/db'; // TODO: Enable when database is connected
 
 // Input validation schemas
 const CreateCommentInput = z.object({
-  content: z.string().min(1, 'Comment cannot be empty').max(2000, 'Comment too long'),
+  content: z
+    .string()
+    .min(1, 'Comment cannot be empty')
+    .max(2000, 'Comment too long'),
   campaignId: z.string().cuid('Invalid campaign ID'),
 });
 
 const UpdateCommentInput = z.object({
   id: z.string().cuid('Invalid comment ID'),
-  content: z.string().min(1, 'Comment cannot be empty').max(2000, 'Comment too long'),
+  content: z
+    .string()
+    .min(1, 'Comment cannot be empty')
+    .max(2000, 'Comment too long'),
 });
 
 const GetCommentsInput = z.object({
@@ -34,7 +40,8 @@ export const commentsRouter = createTRPCRouter({
         const mockComments = [
           {
             id: 'comment_1',
-            content: 'This is a great initiative! I fully support this campaign.',
+            content:
+              'This is a great initiative! I fully support this campaign.',
             createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
             updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
             campaignId: input.campaignId,
@@ -48,7 +55,8 @@ export const commentsRouter = createTRPCRouter({
           },
           {
             id: 'comment_2',
-            content: 'I have some concerns about the environmental impact. Could you provide more details about the sustainability measures?',
+            content:
+              'I have some concerns about the environmental impact. Could you provide more details about the sustainability measures?',
             createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
             updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
             campaignId: input.campaignId,
@@ -62,7 +70,8 @@ export const commentsRouter = createTRPCRouter({
           },
           {
             id: 'comment_3',
-            content: 'As a local business owner, I think this would benefit our community greatly. Count me in!',
+            content:
+              'As a local business owner, I think this would benefit our community greatly. Count me in!',
             createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
             updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
             campaignId: input.campaignId,
@@ -309,7 +318,7 @@ export const commentsRouter = createTRPCRouter({
   // Get comment count for a campaign
   getCount: rateLimitedProcedure
     .input(z.object({ campaignId: z.string().cuid() }))
-    .query(async ({ input }) => {
+    .query(async () => {
       try {
         // Mock implementation
         return { count: 3 };

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { api } from '~/lib/trpc';
 import { LocationPicker } from '~/components/map';
 import { GeocodeResult } from '~/lib/geocoding';
 
@@ -86,10 +85,7 @@ export function CampaignForm({
     }
   };
 
-  const handleInputChange = (
-    field: keyof CampaignFormData,
-    value: string
-  ) => {
+  const handleInputChange = (field: keyof CampaignFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -101,7 +97,10 @@ export function CampaignForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Campaign Title */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Campaign Title *
         </label>
         <input
@@ -125,7 +124,10 @@ export function CampaignForm({
 
       {/* Campaign Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Description *
         </label>
         <textarea
@@ -153,7 +155,8 @@ export function CampaignForm({
           Campaign Location
         </label>
         <p className="text-sm text-gray-600 mb-4">
-          Select the location where this campaign is focused. This helps community members find relevant local projects.
+          Select the location where this campaign is focused. This helps
+          community members find relevant local projects.
         </p>
         <LocationPicker
           onLocationChange={handleLocationChange}
@@ -171,17 +174,24 @@ export function CampaignForm({
 
       {/* Campaign Status */}
       <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="status"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Status
         </label>
         <select
           id="status"
           value={formData.status}
-          onChange={(e) => handleInputChange('status', e.target.value as 'DRAFT' | 'ACTIVE')}
+          onChange={(e) =>
+            handleInputChange('status', e.target.value as 'DRAFT' | 'ACTIVE')
+          }
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="DRAFT">Draft - Save for later editing</option>
-          <option value="ACTIVE">Active - Publish for community engagement</option>
+          <option value="ACTIVE">
+            Active - Publish for community engagement
+          </option>
         </select>
         <p className="mt-1 text-sm text-gray-500">
           {formData.status === 'DRAFT'
@@ -200,13 +210,15 @@ export function CampaignForm({
           {isLoading ? (
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              {formData.status === 'DRAFT' ? 'Saving Draft...' : 'Publishing...'}
+              {formData.status === 'DRAFT'
+                ? 'Saving Draft...'
+                : 'Publishing...'}
             </div>
           ) : (
             submitLabel
           )}
         </button>
-        
+
         {onCancel && (
           <button
             type="button"
@@ -221,7 +233,9 @@ export function CampaignForm({
 
       {/* Help Text */}
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h4 className="font-medium text-blue-900 mb-2">Tips for a successful campaign:</h4>
+        <h4 className="font-medium text-blue-900 mb-2">
+          Tips for a successful campaign:
+        </h4>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Use a clear, specific title that describes your proposal</li>
           <li>• Explain the problem and your proposed solution</li>

@@ -12,10 +12,12 @@ export function CreateCampaignPage() {
   const createCampaignMutation = api.campaigns.create.useMutation({
     onSuccess: (campaign) => {
       console.log('Campaign created successfully:', campaign);
-      
+
       // Show success message (you could add toast notification here)
-      alert(`Campaign "${campaign.title}" ${campaign.status === 'DRAFT' ? 'saved as draft' : 'published'} successfully!`);
-      
+      alert(
+        `Campaign "${campaign.title}" ${campaign.status === 'DRAFT' ? 'saved as draft' : 'published'} successfully!`
+      );
+
       // Redirect to campaign detail page or campaigns list
       router.push(`/campaigns/${campaign.id}`);
     },
@@ -30,7 +32,7 @@ export function CreateCampaignPage() {
 
   const handleSubmit = async (formData: CampaignFormData) => {
     setIsSubmitting(true);
-    
+
     try {
       await createCampaignMutation.mutateAsync({
         title: formData.title,
@@ -50,7 +52,9 @@ export function CreateCampaignPage() {
   };
 
   const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel? Your changes will be lost.')) {
+    if (
+      confirm('Are you sure you want to cancel? Your changes will be lost.')
+    ) {
       router.back();
     }
   };
@@ -65,15 +69,28 @@ export function CreateCampaignPage() {
               onClick={() => router.back()}
               className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Campaign</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Create New Campaign
+            </h1>
           </div>
           <p className="text-gray-600 max-w-2xl">
-            Start a campaign to engage your community around important local issues. 
-            Whether it's a new park, bike lanes, or community programs, your voice can make a difference.
+            Start a campaign to engage your community around important local
+            issues. Whether it&apos;s a new park, bike lanes, or community
+            programs, your voice can make a difference.
           </p>
         </div>
 
@@ -94,30 +111,38 @@ export function CreateCampaignPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">📝 Clear Communication</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                📝 Clear Communication
+              </h3>
               <p className="text-sm text-gray-600">
-                Use simple, clear language to explain your proposal. Avoid jargon and 
-                focus on how the campaign benefits the community.
+                Use simple, clear language to explain your proposal. Avoid
+                jargon and focus on how the campaign benefits the community.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">📍 Specific Location</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                📍 Specific Location
+              </h3>
               <p className="text-sm text-gray-600">
-                Be specific about where your campaign applies. This helps community 
-                members understand if it affects them directly.
+                Be specific about where your campaign applies. This helps
+                community members understand if it affects them directly.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">🎯 Define the Problem</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                🎯 Define the Problem
+              </h3>
               <p className="text-sm text-gray-600">
-                Clearly explain the issue you're addressing and why it matters to 
-                the community. Use facts and examples when possible.
+                Clearly explain the issue you&apos;re addressing and why it
+                matters to the community. Use facts and examples when possible.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">💡 Propose Solutions</h3>
+              <h3 className="font-medium text-gray-900 mb-2">
+                💡 Propose Solutions
+              </h3>
               <p className="text-sm text-gray-600">
-                Don't just identify problems - offer concrete solutions or 
+                Don&apos;t just identify problems - offer concrete solutions or
                 alternatives that the community can support.
               </p>
             </div>

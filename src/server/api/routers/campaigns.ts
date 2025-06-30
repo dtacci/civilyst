@@ -6,7 +6,7 @@ import {
 } from '~/server/api/trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '~/lib/db';
-import { CampaignStatus as PrismaCampaignStatus } from '~/generated/prisma';
+import { CampaignStatus, VoteType as PrismaVoteType } from '~/generated/prisma';
 import {
   findCampaignsWithinRadius,
   findNearestCampaigns,
@@ -16,11 +16,9 @@ import {
   type BoundingBox,
 } from '~/lib/spatial';
 
-// Campaign status enum matching Prisma schema
-const CampaignStatus = z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']);
-
-// Vote type enum matching Prisma schema
-const VoteType = z.enum(['SUPPORT', 'OPPOSE']);
+// Use Prisma enums directly with Zod
+const CampaignStatusSchema = z.nativeEnum(CampaignStatus);
+const VoteTypeSchema = z.nativeEnum(PrismaVoteType);
 
 // Input validation schemas
 const CreateCampaignInput = z.object({
@@ -35,7 +33,7 @@ const CreateCampaignInput = z.object({
   city: z.string().max(100).optional(),
   state: z.string().max(100).optional(),
   zipCode: z.string().max(20).optional(),
-  status: CampaignStatus.default('DRAFT'),
+  status: CampaignStatusSchema.default('DRAFT'),
 });
 
 const UpdateCampaignInput = z.object({
@@ -48,7 +46,7 @@ const UpdateCampaignInput = z.object({
   city: z.string().max(100).optional(),
   state: z.string().max(100).optional(),
   zipCode: z.string().max(20).optional(),
-  status: CampaignStatus.optional(),
+  status: CampaignStatusSchema.optional(),
 });
 
 const CampaignSearchInput = z.object({
@@ -56,7 +54,7 @@ const CampaignSearchInput = z.object({
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
   radius: z.number().min(0.1).max(50).default(10), // radius in kilometers
-  status: CampaignStatus.optional(),
+  status: CampaignStatusSchema.optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   limit: z.number().min(1).max(100).default(20),
@@ -120,7 +118,7 @@ export const campaignsRouter = createTRPCRouter({
         id: input.id,
         title: 'Mock Campaign',
         description: 'This is a mock campaign for development',
-        status: 'ACTIVE' as const,
+        status: CampaignStatus.ACTIVE,
         latitude: 37.7749,
         longitude: -122.4194,
         address: 'San Francisco, CA',
@@ -199,7 +197,7 @@ export const campaignsRouter = createTRPCRouter({
             id: campaign.id,
             title: campaign.title,
             description: campaign.description,
-            status: campaign.status as PrismaCampaignStatus,
+            status: campaign.status,
             latitude: campaign.latitude,
             longitude: campaign.longitude,
             address: campaign.address,
@@ -273,7 +271,7 @@ export const campaignsRouter = createTRPCRouter({
         // Format results
         const formattedCampaigns = results.map((campaign) => ({
           ...campaign,
-          status: campaign.status as PrismaCampaignStatus,
+          status: campaign.status,
           creator: { firstName: 'User', lastName: 'Name' },
           _count: { votes: 0, comments: 0 },
         }));
@@ -458,7 +456,7 @@ export const campaignsRouter = createTRPCRouter({
     .input(
       z.object({
         campaignId: z.string().cuid(),
-        voteType: VoteType,
+        voteType: VoteTypeSchema,
       })
     )
     .mutation(async ({ input }) => {
@@ -496,7 +494,7 @@ export const campaignsRouter = createTRPCRouter({
   getMyCampaigns: loggedProcedure
     .input(
       z.object({
-        status: CampaignStatus.optional(),
+        status: CampaignStatusSchema.optional(),
         limit: z.number().min(1).max(50).default(20),
         cursor: z.string().optional(),
       })

@@ -14,7 +14,7 @@ export interface CampaignCardData {
   address?: string | null;
   city?: string | null;
   state?: string | null;
-  createdAt: Date | string;
+  createdAt: Date;
   creator?: {
     firstName?: string;
     lastName?: string;
@@ -95,12 +95,7 @@ export function CampaignCard({
                   {getStatusLabel(campaign.status)}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {formatDistanceToNow(
-                    typeof campaign.createdAt === 'string' 
-                      ? new Date(campaign.createdAt) 
-                      : campaign.createdAt, 
-                    { addSuffix: true }
-                  )}
+                  {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
                 </span>
               </div>
             </div>
@@ -153,8 +148,16 @@ export function CampaignCard({
                   />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-gray-300 mr-2 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    <svg
+                      className="w-3 h-3 text-gray-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 )}

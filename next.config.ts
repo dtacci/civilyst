@@ -1,14 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  eslint: {
-    // Ignore ESLint errors during build (for generated files)
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Ignore TypeScript errors during build (for generated files)
-    ignoreBuildErrors: true,
-  },
+  // Build configuration restored - no more bypasses!
+  // ESLint and TypeScript validation now enforced during builds
 };
 
 export default nextConfig;

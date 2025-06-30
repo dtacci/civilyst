@@ -7,8 +7,8 @@ import { api } from '~/lib/trpc';
 export interface CommentData {
   id: string;
   content: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: Date;
+  updatedAt: Date;
   campaignId: string;
   authorId: string;
   author: {
@@ -41,9 +41,7 @@ export function Comment({
       onUpdate?.({
         ...comment,
         content: updatedComment.content,
-        updatedAt: typeof updatedComment.updatedAt === 'string' 
-          ? updatedComment.updatedAt 
-          : updatedComment.updatedAt,
+        updatedAt: updatedComment.updatedAt,
       });
     },
     onError: (error) => {
@@ -86,8 +84,9 @@ export function Comment({
   };
 
   const isOwner = currentUserId === comment.authorId;
-  const authorName = `${comment.author.firstName || 'Anonymous'} ${comment.author.lastName || ''}`.trim();
-  const isUpdated = new Date(comment.updatedAt).getTime() !== new Date(comment.createdAt).getTime();
+  const authorName =
+    `${comment.author.firstName || 'Anonymous'} ${comment.author.lastName || ''}`.trim();
+  const isUpdated = comment.updatedAt.getTime() !== comment.createdAt.getTime();
 
   return (
     <div className="border-b border-gray-200 py-4 last:border-b-0">
@@ -102,8 +101,16 @@ export function Comment({
             />
           ) : (
             <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
           )}
@@ -113,10 +120,12 @@ export function Comment({
         <div className="flex-1 min-w-0">
           {/* Author and timestamp */}
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-medium text-gray-900 text-sm">{authorName}</span>
+            <span className="font-medium text-gray-900 text-sm">
+              {authorName}
+            </span>
             <span className="text-gray-500 text-xs">•</span>
             <span className="text-gray-500 text-xs">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+              {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
               {isUpdated && <span className="ml-1">(edited)</span>}
             </span>
           </div>
@@ -146,7 +155,10 @@ export function Comment({
                   </button>
                   <button
                     onClick={handleSaveEdit}
-                    disabled={updateMutation.isPending || editContent.trim().length === 0}
+                    disabled={
+                      updateMutation.isPending ||
+                      editContent.trim().length === 0
+                    }
                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
                     {updateMutation.isPending ? 'Saving...' : 'Save'}

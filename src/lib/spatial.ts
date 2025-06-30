@@ -1,4 +1,5 @@
 import { db } from './db';
+import { CampaignStatus } from '~/generated/prisma';
 
 // PostGIS spatial query utilities for Civilyst
 // Provides geographic search and spatial analysis capabilities
@@ -26,7 +27,7 @@ export interface CampaignWithDistance {
   state: string | null;
   distanceMeters: number;
   createdAt: Date;
-  status: string;
+  status: CampaignStatus;
 }
 
 /**
