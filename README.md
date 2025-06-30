@@ -1,5 +1,7 @@
 # Civilyst
 
+**Civilyst - Become the catalyst!**
+
 Digital civic engagement platform for municipal development projects.
 
 ## Getting Started
