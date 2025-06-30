@@ -3,10 +3,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { httpBatchLink, loggerLink } from '@trpc/client';
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import superjson from 'superjson';
 import { api } from '~/lib/trpc';
 import { ErrorBoundary } from './error-boundary';
+import {
+  createBackgroundCacheManager,
+  CachePerformanceMonitor,
+} from '~/lib/background-cache';
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') {
@@ -27,18 +31,25 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// Improved QueryClient configuration
+// Enhanced QueryClient configuration with advanced cache management
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000, // 1 minute
+        staleTime: 60 * 1000, // 1 minute default
+        gcTime: 5 * 60 * 1000, // 5 minutes default (formerly cacheTime)
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
         retry: (failureCount, error: unknown) => {
           // Don't retry on 4xx errors
           if (error && typeof error === 'object' && 'data' in error) {
-            const trpcError = error as { data?: { httpStatus?: number } };
+            const trpcError = error as {
+              data?: { httpStatus?: number; code?: string };
+            };
+
+            // Don't retry on client errors (4xx)
             if (
               trpcError.data?.httpStatus &&
               trpcError.data.httpStatus >= 400 &&
@@ -46,13 +57,30 @@ function createQueryClient() {
             ) {
               return false;
             }
+
+            // Don't retry on specific tRPC error codes
+            if (trpcError.data?.code) {
+              const nonRetryableCodes = [
+                'NOT_FOUND',
+                'UNAUTHORIZED',
+                'FORBIDDEN',
+                'BAD_REQUEST',
+              ];
+              if (nonRetryableCodes.includes(trpcError.data.code)) {
+                return false;
+              }
+            }
           }
+
           // Retry up to 3 times for other errors
           return failureCount < 3;
         },
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       },
       mutations: {
         retry: false, // Don't retry mutations by default
+        // Set a timeout for mutations to prevent hanging
+        networkMode: 'online',
       },
     },
   });
@@ -86,6 +114,37 @@ export function Providers({ children }: { children: ReactNode }) {
       ],
     })
   );
+
+  // Set up background cache management
+  useEffect(() => {
+    const cacheManager = createBackgroundCacheManager(queryClient);
+    const performanceMonitor = new CachePerformanceMonitor(queryClient);
+
+    // Start background cache management
+    cacheManager.start();
+
+    // Prefetch common data on mount
+    cacheManager.prefetchCommonData();
+
+    // Log performance metrics in development
+    if (process.env.NODE_ENV === 'development') {
+      const logInterval = setInterval(() => {
+        const stats = cacheManager.getCacheStats();
+        const perfMetrics = performanceMonitor.getMetrics();
+        console.log('[Cache Stats]', stats);
+        console.log('[Performance Metrics]', perfMetrics);
+      }, 60000); // Log every minute
+
+      return () => {
+        cacheManager.stop();
+        clearInterval(logInterval);
+      };
+    }
+
+    return () => {
+      cacheManager.stop();
+    };
+  }, [queryClient]);
 
   return (
     <ErrorBoundary>

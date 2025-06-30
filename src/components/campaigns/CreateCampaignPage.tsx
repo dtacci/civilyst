@@ -2,39 +2,41 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '~/lib/trpc';
 import { CampaignForm, CampaignFormData } from './CampaignForm';
+import { useCampaignOperations } from '~/hooks/use-campaign-operations';
 
 export function CreateCampaignPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createCampaign, isCreating } = useCampaignOperations();
 
-  const createCampaignMutation = api.campaigns.create.useMutation({
-    onSuccess: (campaign) => {
-      console.log('Campaign created successfully:', campaign);
+  // Configure success/error handlers
+  const handleCampaignCreated = (campaign: {
+    id: string;
+    title: string;
+    status: string;
+  }) => {
+    console.log('Campaign created successfully:', campaign);
 
-      // Show success message (you could add toast notification here)
-      alert(
-        `Campaign "${campaign.title}" ${campaign.status === 'DRAFT' ? 'saved as draft' : 'published'} successfully!`
-      );
+    // Show success message (you could add toast notification here)
+    alert(
+      `Campaign "${campaign.title}" ${campaign.status === 'DRAFT' ? 'saved as draft' : 'published'} successfully!`
+    );
 
-      // Redirect to campaign detail page or campaigns list
-      router.push(`/campaigns/${campaign.id}`);
-    },
-    onError: (error) => {
-      console.error('Failed to create campaign:', error);
-      alert('Failed to create campaign. Please try again.');
-    },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
-  });
+    // Redirect to campaign detail page or campaigns list
+    router.push(`/campaigns/${campaign.id}`);
+  };
+
+  const handleCampaignError = (error: unknown) => {
+    console.error('Failed to create campaign:', error);
+    alert('Failed to create campaign. Please try again.');
+  };
 
   const handleSubmit = async (formData: CampaignFormData) => {
     setIsSubmitting(true);
 
     try {
-      await createCampaignMutation.mutateAsync({
+      const campaign = await createCampaign.mutateAsync({
         title: formData.title,
         description: formData.description,
         latitude: formData.latitude,
@@ -45,9 +47,12 @@ export function CreateCampaignPage() {
         zipCode: formData.zipCode,
         status: formData.status,
       });
+
+      handleCampaignCreated(campaign);
     } catch (error) {
-      // Error handling is done in onError callback
-      console.error('Submission error:', error);
+      handleCampaignError(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -99,8 +104,10 @@ export function CreateCampaignPage() {
           <CampaignForm
             onSubmit={handleSubmit}
             onCancel={handleCancel}
-            isLoading={isSubmitting}
-            submitLabel={isSubmitting ? 'Creating...' : 'Create Campaign'}
+            isLoading={isSubmitting || isCreating}
+            submitLabel={
+              isSubmitting || isCreating ? 'Creating...' : 'Create Campaign'
+            }
           />
         </div>
 
