@@ -70,3 +70,7 @@ node_modules/
 
 # Private documentation
 DEVELOPMENT_ROADMAP.md
+
+# Cursor/Claude Code configuration
+.cursor/
+.claude/
