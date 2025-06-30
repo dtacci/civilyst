@@ -15,6 +15,19 @@ import {
   type GeographicPoint,
   type BoundingBox,
 } from '~/lib/spatial';
+// Import caching utilities
+import {
+  getCacheWithFallback,
+  geoQueryCacheKey,
+  searchQueryCacheKey,
+  campaignCacheKey,
+  invalidateCampaignCache,
+  invalidateUserCache,
+  CACHE_TTL,
+  GEO_PRECISION,
+  deleteByPattern,
+  CACHE_PREFIX,
+} from '~/lib/cache';
 
 // Use Prisma enums directly with Zod
 const CampaignStatusSchema = z.nativeEnum(CampaignStatus);
@@ -95,6 +108,13 @@ export const campaignsRouter = createTRPCRouter({
         },
       });
 
+      // Invalidate all search and geo caches since a new campaign was created
+      // This ensures users will see the new campaign in search results
+      await Promise.all([
+        deleteByPattern(`${CACHE_PREFIX.SEARCH}:*`),
+        deleteByPattern(`${CACHE_PREFIX.GEO}:*`),
+      ]);
+
       return campaign;
     }),
 
@@ -102,18 +122,34 @@ export const campaignsRouter = createTRPCRouter({
   getById: rateLimitedProcedure
     .input(z.object({ id: z.string().cuid() }))
     .query(async ({ input }) => {
-      const campaign = await db.campaign.findUnique({
-        where: { id: input.id },
-      });
+      // Generate cache key for this campaign
+      const cacheKey = campaignCacheKey(input.id);
 
-      if (!campaign) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Campaign not found',
-        });
-      }
+      // Try to get from cache first, with fallback to database
+      const result = await getCacheWithFallback<typeof db.campaign.findUnique>(
+        cacheKey,
+        async () => {
+          const campaign = await db.campaign.findUnique({
+            where: { id: input.id },
+          });
 
-      return campaign;
+          if (!campaign) {
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: 'Campaign not found',
+            });
+          }
+
+          return campaign;
+        },
+        CACHE_TTL.CAMPAIGN_DETAIL
+      );
+
+      // If there was an error in the cache operation, throw it
+      if (result.error) throw result.error;
+
+      // Return the campaign data
+      return result.data;
     }),
 
   // Search campaigns with geographic and text filters using PostGIS
@@ -121,128 +157,165 @@ export const campaignsRouter = createTRPCRouter({
     .input(CampaignSearchInput)
     .query(async ({ input }) => {
       try {
-        // ------------------------------------------------------------------
-        // TEMPORARY: Disable PostGIS-powered spatial search until the DB
-        // extension is fully configured in Supabase.  We fall back to the
-        // regular Prisma text/location filtering for all requests.
-        // ------------------------------------------------------------------
-        const enableSpatial = true; // PostGIS is configured – enable spatial search
+        // Generate cache key based on search parameters
+        const searchParams: Record<string, string | number | boolean> = {};
+        if (input.query) searchParams.q = input.query;
+        if (input.city) searchParams.city = input.city;
+        if (input.state) searchParams.state = input.state;
+        if (input.status) searchParams.status = input.status;
+        if (input.cursor) searchParams.cursor = input.cursor;
+        searchParams.limit = input.limit;
 
-        // If geographic search is requested *and* spatial search enabled,
-        // attempt PostGIS query branch, otherwise skip to fallback.
-        if (
-          enableSpatial &&
-          input.latitude !== undefined &&
-          input.longitude !== undefined
-        ) {
-          const searchPoint: GeographicPoint = {
-            latitude: input.latitude,
-            longitude: input.longitude,
-          };
+        let cacheKey: string;
 
-          const radiusMeters = input.radius * 1000; // Convert km to meters
-
-          // Use PostGIS spatial search
-          const spatialResults = await findCampaignsWithinRadius({
-            point: searchPoint,
-            radiusMeters,
-            limit: input.limit,
-            offset: 0,
-          });
-
-          // Convert spatial results to expected format
-          const campaigns = spatialResults.map((campaign) => ({
-            id: campaign.id,
-            title: campaign.title,
-            description: campaign.description,
-            status: campaign.status,
-            latitude: campaign.latitude,
-            longitude: campaign.longitude,
-            address: campaign.address,
-            city: campaign.city,
-            state: campaign.state,
-            createdAt: campaign.createdAt,
-            distanceMeters: campaign.distanceMeters,
-            // TODO: Add creator and vote count from joins when auth is ready
-            creator: { firstName: 'User', lastName: 'Name' },
-            _count: { votes: 0, comments: 0 },
-          }));
-
-          return {
-            campaigns,
-            hasMore: campaigns.length === input.limit,
-            nextCursor:
-              campaigns.length === input.limit
-                ? campaigns[campaigns.length - 1]?.id
-                : null,
-            searchType: 'spatial' as const,
-            centerPoint: searchPoint,
-            radiusMeters,
-          };
-        }
-
-        // Fallback to regular database search without spatial queries
-        // Start with an empty filter and add status logic below.
-        const whereClause: Record<string, unknown> = {};
-
-        // Text search
-        if (input.query) {
-          whereClause.OR = [
-            { title: { contains: input.query, mode: 'insensitive' } },
-            { description: { contains: input.query, mode: 'insensitive' } },
-          ];
-        }
-
-        // Location and status filters
-        if (input.city) {
-          whereClause.city = { equals: input.city, mode: 'insensitive' };
-        }
-
-        // Apply status filter only when provided; otherwise default to ACTIVE
-        if (input.status) {
-          whereClause.status = input.status;
+        // If geographic search is requested, use geo cache key
+        if (input.latitude !== undefined && input.longitude !== undefined) {
+          cacheKey = geoQueryCacheKey(
+            input.latitude,
+            input.longitude,
+            input.radius,
+            GEO_PRECISION.CITY,
+            searchParams
+          );
         } else {
-          whereClause.status = 'ACTIVE';
+          // Otherwise use regular search cache key
+          cacheKey = searchQueryCacheKey(input.query || '', searchParams);
         }
 
-        const campaigns = await db.campaign.findMany({
-          where: whereClause,
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            status: true,
-            latitude: true,
-            longitude: true,
-            address: true,
-            city: true,
-            state: true,
-            createdAt: true,
-            // TODO: Add creator and vote count when auth is ready
+        // Try to get from cache first, with fallback to database query
+        const cacheResult = await getCacheWithFallback(
+          cacheKey,
+          async () => {
+            // ------------------------------------------------------------------
+            // TEMPORARY: Disable PostGIS-powered spatial search until the DB
+            // extension is fully configured in Supabase.  We fall back to the
+            // regular Prisma text/location filtering for all requests.
+            // ------------------------------------------------------------------
+            const enableSpatial = true; // PostGIS is configured – enable spatial search
+
+            // If geographic search is requested *and* spatial search enabled,
+            // attempt PostGIS query branch, otherwise skip to fallback.
+            if (
+              enableSpatial &&
+              input.latitude !== undefined &&
+              input.longitude !== undefined
+            ) {
+              const searchPoint: GeographicPoint = {
+                latitude: input.latitude,
+                longitude: input.longitude,
+              };
+
+              const radiusMeters = input.radius * 1000; // Convert km to meters
+
+              // Use PostGIS spatial search
+              const spatialResults = await findCampaignsWithinRadius({
+                point: searchPoint,
+                radiusMeters,
+                limit: input.limit,
+                offset: 0,
+              });
+
+              // Convert spatial results to expected format
+              const campaigns = spatialResults.map((campaign) => ({
+                id: campaign.id,
+                title: campaign.title,
+                description: campaign.description,
+                status: campaign.status,
+                latitude: campaign.latitude,
+                longitude: campaign.longitude,
+                address: campaign.address,
+                city: campaign.city,
+                state: campaign.state,
+                createdAt: campaign.createdAt,
+                distanceMeters: campaign.distanceMeters,
+                // TODO: Add creator and vote count from joins when auth is ready
+                creator: { firstName: 'User', lastName: 'Name' },
+                _count: { votes: 0, comments: 0 },
+              }));
+
+              return {
+                campaigns,
+                hasMore: campaigns.length === input.limit,
+                nextCursor:
+                  campaigns.length === input.limit
+                    ? campaigns[campaigns.length - 1]?.id
+                    : null,
+                searchType: 'spatial' as const,
+                centerPoint: searchPoint,
+                radiusMeters,
+              };
+            }
+
+            // Fallback to regular database search without spatial queries
+            // Start with an empty filter and add status logic below.
+            const whereClause: Record<string, unknown> = {};
+
+            // Text search
+            if (input.query) {
+              whereClause.OR = [
+                { title: { contains: input.query, mode: 'insensitive' } },
+                { description: { contains: input.query, mode: 'insensitive' } },
+              ];
+            }
+
+            // Location and status filters
+            if (input.city) {
+              whereClause.city = { equals: input.city, mode: 'insensitive' };
+            }
+
+            // Apply status filter only when provided; otherwise default to ACTIVE
+            if (input.status) {
+              whereClause.status = input.status;
+            } else {
+              whereClause.status = 'ACTIVE';
+            }
+
+            const campaigns = await db.campaign.findMany({
+              where: whereClause,
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                status: true,
+                latitude: true,
+                longitude: true,
+                address: true,
+                city: true,
+                state: true,
+                createdAt: true,
+                // TODO: Add creator and vote count when auth is ready
+              },
+              orderBy: { createdAt: 'desc' },
+              take: input.limit + 1,
+              cursor: input.cursor ? { id: input.cursor } : undefined,
+            });
+
+            const hasMore = campaigns.length > input.limit;
+            const results = hasMore ? campaigns.slice(0, -1) : campaigns;
+            const nextCursor = hasMore ? results[results.length - 1]?.id : null;
+
+            // Format results
+            const formattedCampaigns = results.map((campaign) => ({
+              ...campaign,
+              status: campaign.status,
+              creator: { firstName: 'User', lastName: 'Name' },
+              _count: { votes: 0, comments: 0 },
+            }));
+
+            return {
+              campaigns: formattedCampaigns,
+              hasMore,
+              nextCursor,
+              searchType: 'database' as const,
+            };
           },
-          orderBy: { createdAt: 'desc' },
-          take: input.limit + 1,
-          cursor: input.cursor ? { id: input.cursor } : undefined,
-        });
+          CACHE_TTL.SEARCH_RESULTS
+        );
 
-        const hasMore = campaigns.length > input.limit;
-        const results = hasMore ? campaigns.slice(0, -1) : campaigns;
-        const nextCursor = hasMore ? results[results.length - 1]?.id : null;
+        // If there was an error in the cache operation, throw it
+        if (cacheResult.error) throw cacheResult.error;
 
-        // Format results
-        const formattedCampaigns = results.map((campaign) => ({
-          ...campaign,
-          status: campaign.status,
-          creator: { firstName: 'User', lastName: 'Name' },
-          _count: { votes: 0, comments: 0 },
-        }));
-
-        return {
-          campaigns: formattedCampaigns,
-          hasMore,
-          nextCursor,
-          searchType: 'database' as const,
-        };
+        return cacheResult.data;
       } catch (error) {
         console.error('Campaign search error:', error);
         throw new TRPCError({
@@ -250,74 +323,6 @@ export const campaignsRouter = createTRPCRouter({
           message: 'Failed to search campaigns',
         });
       }
-
-      // Real implementation with PostGIS spatial queries:
-      // const whereClause: any = {};
-
-      // // Text search
-      // if (input.query) {
-      //   whereClause.OR = [
-      //     { title: { contains: input.query, mode: 'insensitive' } },
-      //     { description: { contains: input.query, mode: 'insensitive' } },
-      //   ];
-      // }
-
-      // // Status filter
-      // if (input.status) {
-      //   whereClause.status = input.status;
-      // }
-
-      // // Location filters
-      // if (input.city) {
-      //   whereClause.city = { equals: input.city, mode: 'insensitive' };
-      // }
-      // if (input.state) {
-      //   whereClause.state = { equals: input.state, mode: 'insensitive' };
-      // }
-
-      // // Geographic radius search using PostGIS
-      // if (input.latitude && input.longitude) {
-      //   const radiusInMeters = input.radius * 1000;
-      //   whereClause.AND = [
-      //     {
-      //       latitude: { not: null },
-      //       longitude: { not: null },
-      //     },
-      //   ];
-      //   // Add PostGIS ST_DWithin query here
-      // }
-
-      // const campaigns = await prisma.campaign.findMany({
-      //   where: whereClause,
-      //   include: {
-      //     creator: {
-      //       select: {
-      //         firstName: true,
-      //         lastName: true,
-      //         imageUrl: true,
-      //       },
-      //     },
-      //     _count: {
-      //       select: {
-      //         votes: true,
-      //         comments: true,
-      //       },
-      //     },
-      //   },
-      //   orderBy: { createdAt: 'desc' },
-      //   take: input.limit + 1,
-      //   cursor: input.cursor ? { id: input.cursor } : undefined,
-      // });
-
-      // const hasMore = campaigns.length > input.limit;
-      // const results = hasMore ? campaigns.slice(0, -1) : campaigns;
-      // const nextCursor = hasMore ? results[results.length - 1]?.id : null;
-
-      // return {
-      //   campaigns: results,
-      //   hasMore,
-      //   nextCursor,
-      // };
     }),
 
   // Update campaign
@@ -336,7 +341,7 @@ export const campaignsRouter = createTRPCRouter({
       });
 
       if (!internalUser) {
-        // User hasn’t been upserted yet – treat as unauthorized
+        // User hasn't been upserted yet – treat as unauthorized
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
 
@@ -370,6 +375,9 @@ export const campaignsRouter = createTRPCRouter({
           updatedAt: new Date(),
         },
       });
+
+      // 5. Invalidate caches for this campaign
+      await invalidateCampaignCache(id);
 
       return updated;
     }),
@@ -417,6 +425,9 @@ export const campaignsRouter = createTRPCRouter({
       // 4. Delete campaign
       await db.campaign.delete({ where: { id: input.id } });
 
+      // 5. Invalidate caches
+      await invalidateCampaignCache(input.id);
+
       return { success: true };
     }),
 
@@ -463,6 +474,12 @@ export const campaignsRouter = createTRPCRouter({
         },
       });
 
+      // 4. Invalidate campaign cache since vote count changed
+      await invalidateCampaignCache(input.campaignId);
+
+      // 5. Invalidate user cache since their votes changed
+      await invalidateUserCache(internalUser.id);
+
       return { success: true, voteType: input.voteType };
     }),
 
@@ -492,46 +509,61 @@ export const campaignsRouter = createTRPCRouter({
         select: { id: true },
       });
 
-      // 3. Build where-clause
-      const whereClause: Record<string, unknown> = {
-        creatorId: internalUser.id,
-      };
-      if (input.status) {
-        whereClause.status = input.status;
-      }
+      // Generate cache key for user's campaigns
+      const cacheKey = `${CACHE_PREFIX.USER}:${internalUser.id}:campaigns:${input.status || 'all'}:${input.limit}:${input.cursor || 'start'}`;
 
-      // 4. Query with pagination
-      const campaigns = await db.campaign.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          status: true,
-          latitude: true,
-          longitude: true,
-          address: true,
-          city: true,
-          state: true,
-          createdAt: true,
-          _count: {
-            select: { votes: true, comments: true },
-          },
+      // Try to get from cache first, with fallback to database
+      const result = await getCacheWithFallback(
+        cacheKey,
+        async () => {
+          // 3. Build where-clause
+          const whereClause: Record<string, unknown> = {
+            creatorId: internalUser.id,
+          };
+          if (input.status) {
+            whereClause.status = input.status;
+          }
+
+          // 4. Query with pagination
+          const campaigns = await db.campaign.findMany({
+            where: whereClause,
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              status: true,
+              latitude: true,
+              longitude: true,
+              address: true,
+              city: true,
+              state: true,
+              createdAt: true,
+              _count: {
+                select: { votes: true, comments: true },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: input.limit + 1,
+            cursor: input.cursor ? { id: input.cursor } : undefined,
+          });
+
+          const hasMore = campaigns.length > input.limit;
+          const results = hasMore ? campaigns.slice(0, -1) : campaigns;
+          const nextCursor = hasMore ? results[results.length - 1]?.id : null;
+
+          return {
+            campaigns: results,
+            hasMore,
+            nextCursor,
+          };
         },
-        orderBy: { createdAt: 'desc' },
-        take: input.limit + 1,
-        cursor: input.cursor ? { id: input.cursor } : undefined,
-      });
+        CACHE_TTL.USER_PROFILE
+      );
 
-      const hasMore = campaigns.length > input.limit;
-      const results = hasMore ? campaigns.slice(0, -1) : campaigns;
-      const nextCursor = hasMore ? results[results.length - 1]?.id : null;
+      // If there was an error in the cache operation, throw it
+      if (result.error) throw result.error;
 
-      return {
-        campaigns: results,
-        hasMore,
-        nextCursor,
-      };
+      return result.data;
     }),
 
   // Find nearest campaigns to a location (PostGIS powered)
@@ -545,38 +577,59 @@ export const campaignsRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const searchPoint: GeographicPoint = {
-          latitude: input.latitude,
-          longitude: input.longitude,
-        };
-
-        const nearestCampaigns = await findNearestCampaigns(
-          searchPoint,
-          input.limit
+        // Generate cache key for this geographic query
+        const cacheKey = geoQueryCacheKey(
+          input.latitude,
+          input.longitude,
+          10, // Default radius in km
+          GEO_PRECISION.CITY,
+          { limit: input.limit }
         );
 
-        const campaigns = nearestCampaigns.map((campaign) => ({
-          id: campaign.id,
-          title: campaign.title,
-          description: campaign.description,
-          latitude: campaign.latitude,
-          longitude: campaign.longitude,
-          address: campaign.address,
-          city: campaign.city,
-          state: campaign.state,
-          distanceMeters: campaign.distanceMeters,
-          distanceKm: campaign.distanceMeters / 1000,
-          createdAt: campaign.createdAt,
-          status: campaign.status,
-          creator: { firstName: 'User', lastName: 'Name' },
-          _count: { votes: 0, comments: 0 },
-        }));
+        // Try to get from cache first, with fallback to database
+        const result = await getCacheWithFallback(
+          cacheKey,
+          async () => {
+            const searchPoint: GeographicPoint = {
+              latitude: input.latitude,
+              longitude: input.longitude,
+            };
 
-        return {
-          campaigns,
-          searchPoint,
-          totalFound: campaigns.length,
-        };
+            const nearestCampaigns = await findNearestCampaigns(
+              searchPoint,
+              input.limit
+            );
+
+            const campaigns = nearestCampaigns.map((campaign) => ({
+              id: campaign.id,
+              title: campaign.title,
+              description: campaign.description,
+              latitude: campaign.latitude,
+              longitude: campaign.longitude,
+              address: campaign.address,
+              city: campaign.city,
+              state: campaign.state,
+              distanceMeters: campaign.distanceMeters,
+              distanceKm: campaign.distanceMeters / 1000,
+              createdAt: campaign.createdAt,
+              status: campaign.status,
+              creator: { firstName: 'User', lastName: 'Name' },
+              _count: { votes: 0, comments: 0 },
+            }));
+
+            return {
+              campaigns,
+              searchPoint,
+              totalFound: campaigns.length,
+            };
+          },
+          CACHE_TTL.GEO_QUERY
+        );
+
+        // If there was an error in the cache operation, throw it
+        if (result.error) throw result.error;
+
+        return result.data;
       } catch (error) {
         console.error('Find nearby campaigns error:', error);
         throw new TRPCError({
@@ -599,35 +652,53 @@ export const campaignsRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const bounds: BoundingBox = {
-          north: input.north,
-          south: input.south,
-          east: input.east,
-          west: input.west,
-        };
+        // Generate cache key for this bounds query
+        const cacheKey = `${CACHE_PREFIX.GEO}:bounds:${input.north.toFixed(2)}:${input.south.toFixed(2)}:${input.east.toFixed(2)}:${input.west.toFixed(2)}:${input.limit}`;
 
-        const boundsResults = await findCampaignsInBounds(bounds, input.limit);
+        // Try to get from cache first, with fallback to database
+        const result = await getCacheWithFallback(
+          cacheKey,
+          async () => {
+            const bounds: BoundingBox = {
+              north: input.north,
+              south: input.south,
+              east: input.east,
+              west: input.west,
+            };
 
-        const campaigns = boundsResults.map((campaign) => ({
-          id: campaign.id,
-          title: campaign.title,
-          description: campaign.description,
-          latitude: campaign.latitude,
-          longitude: campaign.longitude,
-          address: campaign.address,
-          city: campaign.city,
-          state: campaign.state,
-          createdAt: campaign.createdAt,
-          status: campaign.status,
-          creator: { firstName: 'User', lastName: 'Name' },
-          _count: { votes: 0, comments: 0 },
-        }));
+            const boundsResults = await findCampaignsInBounds(
+              bounds,
+              input.limit
+            );
 
-        return {
-          campaigns,
-          bounds,
-          totalFound: campaigns.length,
-        };
+            const campaigns = boundsResults.map((campaign) => ({
+              id: campaign.id,
+              title: campaign.title,
+              description: campaign.description,
+              latitude: campaign.latitude,
+              longitude: campaign.longitude,
+              address: campaign.address,
+              city: campaign.city,
+              state: campaign.state,
+              createdAt: campaign.createdAt,
+              status: campaign.status,
+              creator: { firstName: 'User', lastName: 'Name' },
+              _count: { votes: 0, comments: 0 },
+            }));
+
+            return {
+              campaigns,
+              bounds,
+              totalFound: campaigns.length,
+            };
+          },
+          CACHE_TTL.GEO_QUERY
+        );
+
+        // If there was an error in the cache operation, throw it
+        if (result.error) throw result.error;
+
+        return result.data;
       } catch (error) {
         console.error('Find campaigns in bounds error:', error);
         throw new TRPCError({
@@ -646,18 +717,33 @@ export const campaignsRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const stats = await getCityGeographicStats(input.city);
+        // Generate cache key for city stats
+        const cacheKey = `${CACHE_PREFIX.GEO}:city:${input.city.toLowerCase()}:stats`;
 
-        return {
-          city: input.city,
-          campaignCount: stats.campaign_count,
-          centerPoint: {
-            latitude: stats.center_lat,
-            longitude: stats.center_lng,
+        // Try to get from cache first, with fallback to database
+        const result = await getCacheWithFallback(
+          cacheKey,
+          async () => {
+            const stats = await getCityGeographicStats(input.city);
+
+            return {
+              city: input.city,
+              campaignCount: stats.campaign_count,
+              centerPoint: {
+                latitude: stats.center_lat,
+                longitude: stats.center_lng,
+              },
+              coverageRadiusMeters: stats.coverage_radius_meters,
+              coverageRadiusKm: stats.coverage_radius_meters / 1000,
+            };
           },
-          coverageRadiusMeters: stats.coverage_radius_meters,
-          coverageRadiusKm: stats.coverage_radius_meters / 1000,
-        };
+          CACHE_TTL.GEO_QUERY
+        );
+
+        // If there was an error in the cache operation, throw it
+        if (result.error) throw result.error;
+
+        return result.data;
       } catch (error) {
         console.error('Get city stats error:', error);
         throw new TRPCError({
