@@ -1,0 +1,40 @@
+# Doppler configuration for Civilyst
+# This file defines the project structure and environment mappings
+
+setup:
+  project: civilyst
+  config:
+    development: dev
+    staging: stg  
+    production: prd
+
+# Environment mappings
+environments:
+  development:
+    name: dev
+    description: "Local development environment"
+  staging:
+    name: stg
+    description: "Staging environment for testing"
+  production:
+    name: prd
+    description: "Production environment"
+
+# Branch mappings for CI/CD
+branches:
+  main: production
+  develop: staging
+  feature/*: development
+
+# Service integrations
+integrations:
+  vercel:
+    enabled: true
+    environments:
+      - production
+      - staging
+  railway:
+    enabled: true
+    environments:
+      - production
+      - staging

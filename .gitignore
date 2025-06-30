@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
+
+# Doppler CLI
+.doppler.yaml
 
 # vercel
 .vercel
