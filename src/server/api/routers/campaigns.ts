@@ -65,109 +65,55 @@ export const campaignsRouter = createTRPCRouter({
   // Create a new campaign
   create: loggedProcedure
     .input(CreateCampaignInput)
-    .mutation(async ({ input }) => {
-      // TODO: Get userId from Clerk when auth is connected
-      // const userId = ctx.auth?.userId;
-      // if (!userId) {
-      //   throw new TRPCError({ code: 'UNAUTHORIZED' });
-      // }
+    .mutation(async ({ ctx, input }) => {
+      // Require authentication
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
-      // Mock implementation for now
-      const mockCampaign = {
-        id: `campaign_${Date.now()}`,
-        ...input,
-        creatorId: 'mock_user_id',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      /**
+       * Convert the Clerk user-id to an internal `User` record.
+       * If the user already exists we use it; otherwise we create
+       * a minimal placeholder row.  Additional user details can be
+       * filled in later when profile endpoints are implemented.
+       */
+      const internalUser = await db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          // We need a unique email for NOT-NULL constraint; use a placeholder.
+          // This can be updated once we fetch real email from Clerk.
+          email: `${ctx.userId}@placeholder.local`,
+        },
+      });
 
-      console.log('Mock campaign created:', mockCampaign);
-      return mockCampaign;
+      const campaign = await db.campaign.create({
+        data: {
+          ...input,
+          creatorId: internalUser.id,
+        },
+      });
 
-      // Real implementation (uncomment when database is connected):
-      // return await prisma.campaign.create({
-      //   data: {
-      //     ...input,
-      //     creatorId: userId,
-      //   },
-      //   include: {
-      //     creator: {
-      //       select: {
-      //         id: true,
-      //         firstName: true,
-      //         lastName: true,
-      //         imageUrl: true,
-      //       },
-      //     },
-      //     _count: {
-      //       select: {
-      //         votes: true,
-      //         comments: true,
-      //       },
-      //     },
-      //   },
-      // });
+      return campaign;
     }),
 
   // Get campaign by ID
   getById: rateLimitedProcedure
     .input(z.object({ id: z.string().cuid() }))
     .query(async ({ input }) => {
-      // Mock implementation
-      const mockCampaign = {
-        id: input.id,
-        title: 'Mock Campaign',
-        description: 'This is a mock campaign for development',
-        status: CampaignStatus.ACTIVE,
-        latitude: 37.7749,
-        longitude: -122.4194,
-        address: 'San Francisco, CA',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94102',
-        creatorId: 'mock_user_id',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        creator: {
-          id: 'mock_user_id',
-          firstName: 'John',
-          lastName: 'Doe',
-          imageUrl: null,
-        },
-        _count: {
-          votes: 42,
-          comments: 8,
-        },
-      };
+      const campaign = await db.campaign.findUnique({
+        where: { id: input.id },
+      });
 
-      return mockCampaign;
+      if (!campaign) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
+      }
 
-      // Real implementation:
-      // const campaign = await prisma.campaign.findUnique({
-      //   where: { id: input.id },
-      //   include: {
-      //     creator: {
-      //       select: {
-      //         id: true,
-      //         firstName: true,
-      //         lastName: true,
-      //         imageUrl: true,
-      //       },
-      //     },
-      //     _count: {
-      //       select: {
-      //         votes: true,
-      //         comments: true,
-      //       },
-      //     },
-      //   },
-      // });
-
-      // if (!campaign) {
-      //   throw new TRPCError({ code: 'NOT_FOUND', message: 'Campaign not found' });
-      // }
-
-      // return campaign;
+      return campaign;
     }),
 
   // Search campaigns with geographic and text filters using PostGIS
@@ -175,8 +121,20 @@ export const campaignsRouter = createTRPCRouter({
     .input(CampaignSearchInput)
     .query(async ({ input }) => {
       try {
-        // If geographic search is requested, use PostGIS spatial queries
-        if (input.latitude && input.longitude) {
+        // ------------------------------------------------------------------
+        // TEMPORARY: Disable PostGIS-powered spatial search until the DB
+        // extension is fully configured in Supabase.  We fall back to the
+        // regular Prisma text/location filtering for all requests.
+        // ------------------------------------------------------------------
+        const enableSpatial = true; // PostGIS is configured – enable spatial search
+
+        // If geographic search is requested *and* spatial search enabled,
+        // attempt PostGIS query branch, otherwise skip to fallback.
+        if (
+          enableSpatial &&
+          input.latitude !== undefined &&
+          input.longitude !== undefined
+        ) {
           const searchPoint: GeographicPoint = {
             latitude: input.latitude,
             longitude: input.longitude,
@@ -224,9 +182,8 @@ export const campaignsRouter = createTRPCRouter({
         }
 
         // Fallback to regular database search without spatial queries
-        const whereClause: Record<string, unknown> = {
-          status: 'ACTIVE', // Only show active campaigns
-        };
+        // Start with an empty filter and add status logic below.
+        const whereClause: Record<string, unknown> = {};
 
         // Text search
         if (input.query) {
@@ -236,12 +193,16 @@ export const campaignsRouter = createTRPCRouter({
           ];
         }
 
-        // Location filters
+        // Location and status filters
         if (input.city) {
           whereClause.city = { equals: input.city, mode: 'insensitive' };
         }
+
+        // Apply status filter only when provided; otherwise default to ACTIVE
         if (input.status) {
           whereClause.status = input.status;
+        } else {
+          whereClause.status = 'ACTIVE';
         }
 
         const campaigns = await db.campaign.findMany({
@@ -362,93 +323,101 @@ export const campaignsRouter = createTRPCRouter({
   // Update campaign
   update: loggedProcedure
     .input(UpdateCampaignInput)
-    .mutation(async ({ input }) => {
-      // TODO: Check ownership and permissions
-      // const userId = ctx.auth?.userId;
-      // if (!userId) {
-      //   throw new TRPCError({ code: 'UNAUTHORIZED' });
-      // }
+    .mutation(async ({ ctx, input }) => {
+      // 1. Require authentication
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+
+      // 2. Resolve internal user record
+      const internalUser = await db.user.findUnique({
+        where: { clerkId: ctx.userId },
+        select: { id: true },
+      });
+
+      if (!internalUser) {
+        // User hasn’t been upserted yet – treat as unauthorized
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
       const { id, ...updateData } = input;
 
-      // Mock implementation
-      const mockUpdatedCampaign = {
-        id,
-        ...updateData,
-        updatedAt: new Date(),
-      };
+      // 3. Ensure campaign exists and ownership matches
+      const existingCampaign = await db.campaign.findUnique({
+        where: { id },
+        select: { creatorId: true },
+      });
 
-      console.log('Mock campaign updated:', mockUpdatedCampaign);
-      return mockUpdatedCampaign;
+      if (!existingCampaign) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
+      }
 
-      // Real implementation:
-      // const existingCampaign = await prisma.campaign.findUnique({
-      //   where: { id },
-      //   select: { creatorId: true },
-      // });
+      if (existingCampaign.creatorId !== internalUser.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Not campaign owner',
+        });
+      }
 
-      // if (!existingCampaign) {
-      //   throw new TRPCError({ code: 'NOT_FOUND' });
-      // }
+      // 4. Update campaign
+      const updated = await db.campaign.update({
+        where: { id },
+        data: {
+          ...updateData,
+          updatedAt: new Date(),
+        },
+      });
 
-      // if (existingCampaign.creatorId !== userId) {
-      //   throw new TRPCError({ code: 'FORBIDDEN' });
-      // }
-
-      // return await prisma.campaign.update({
-      //   where: { id },
-      //   data: updateData,
-      //   include: {
-      //     creator: {
-      //       select: {
-      //         id: true,
-      //         firstName: true,
-      //         lastName: true,
-      //         imageUrl: true,
-      //       },
-      //     },
-      //     _count: {
-      //       select: {
-      //         votes: true,
-      //         comments: true,
-      //       },
-      //     },
-      //   },
-      // });
+      return updated;
     }),
 
   // Delete campaign
   delete: loggedProcedure
     .input(z.object({ id: z.string().cuid() }))
-    .mutation(async ({ input }) => {
-      // TODO: Check ownership
-      // const userId = ctx.auth?.userId;
-      // if (!userId) {
-      //   throw new TRPCError({ code: 'UNAUTHORIZED' });
-      // }
+    .mutation(async ({ ctx, input }) => {
+      // 1. Require authentication
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
-      console.log('Mock campaign deleted:', input.id);
+      // 2. Resolve internal user record (creates placeholder if missing)
+      const internalUser = await db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          email: `${ctx.userId}@placeholder.local`,
+        },
+        select: { id: true },
+      });
+
+      // 3. Ensure campaign exists and is owned by current user
+      const campaign = await db.campaign.findUnique({
+        where: { id: input.id },
+        select: { creatorId: true },
+      });
+
+      if (!campaign) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
+      }
+
+      if (campaign.creatorId !== internalUser.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Not campaign owner',
+        });
+      }
+
+      // 4. Delete campaign
+      await db.campaign.delete({ where: { id: input.id } });
+
       return { success: true };
-
-      // Real implementation:
-      // const campaign = await prisma.campaign.findUnique({
-      //   where: { id: input.id },
-      //   select: { creatorId: true },
-      // });
-
-      // if (!campaign) {
-      //   throw new TRPCError({ code: 'NOT_FOUND' });
-      // }
-
-      // if (campaign.creatorId !== userId) {
-      //   throw new TRPCError({ code: 'FORBIDDEN' });
-      // }
-
-      // await prisma.campaign.delete({
-      //   where: { id: input.id },
-      // });
-
-      // return { success: true };
     }),
 
   // Vote on a campaign
@@ -459,35 +428,42 @@ export const campaignsRouter = createTRPCRouter({
         voteType: VoteTypeSchema,
       })
     )
-    .mutation(async ({ input }) => {
-      // TODO: Get userId from auth
-      // const userId = ctx.auth?.userId;
-      // if (!userId) {
-      //   throw new TRPCError({ code: 'UNAUTHORIZED' });
-      // }
+    .mutation(async ({ ctx, input }) => {
+      // 1. Require authentication
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
-      console.log('Mock vote cast:', input);
+      // 2. Ensure we have an internal user record
+      const internalUser = await db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          email: `${ctx.userId}@placeholder.local`,
+        },
+        select: { id: true },
+      });
+
+      // 3. Upsert vote (create new or update existing)
+      await db.vote.upsert({
+        where: {
+          campaignId_userId: {
+            campaignId: input.campaignId,
+            userId: internalUser.id,
+          },
+        },
+        update: {
+          type: input.voteType,
+        },
+        create: {
+          campaignId: input.campaignId,
+          userId: internalUser.id,
+          type: input.voteType,
+        },
+      });
+
       return { success: true, voteType: input.voteType };
-
-      // Real implementation:
-      // await prisma.vote.upsert({
-      //   where: {
-      //     campaignId_userId: {
-      //       campaignId: input.campaignId,
-      //       userId,
-      //     },
-      //   },
-      //   update: {
-      //     type: input.voteType,
-      //   },
-      //   create: {
-      //     campaignId: input.campaignId,
-      //     userId,
-      //     type: input.voteType,
-      //   },
-      // });
-
-      // return { success: true, voteType: input.voteType };
     }),
 
   // Get user's campaigns
@@ -499,50 +475,63 @@ export const campaignsRouter = createTRPCRouter({
         cursor: z.string().optional(),
       })
     )
-    .query(async () => {
-      // TODO: Get userId from auth
-      // const userId = ctx.auth?.userId;
-      // if (!userId) {
-      //   throw new TRPCError({ code: 'UNAUTHORIZED' });
-      // }
+    .query(async ({ ctx, input }) => {
+      // 1. Require authentication
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
-      // Mock implementation
-      return {
-        campaigns: [],
-        hasMore: false,
-        nextCursor: null,
+      // 2. Ensure we have an internal user record (create placeholder if missing)
+      const internalUser = await db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          email: `${ctx.userId}@placeholder.local`,
+        },
+        select: { id: true },
+      });
+
+      // 3. Build where-clause
+      const whereClause: Record<string, unknown> = {
+        creatorId: internalUser.id,
       };
+      if (input.status) {
+        whereClause.status = input.status;
+      }
 
-      // Real implementation:
-      // const whereClause: any = { creatorId: userId };
-      // if (input.status) {
-      //   whereClause.status = input.status;
-      // }
+      // 4. Query with pagination
+      const campaigns = await db.campaign.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          latitude: true,
+          longitude: true,
+          address: true,
+          city: true,
+          state: true,
+          createdAt: true,
+          _count: {
+            select: { votes: true, comments: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: input.limit + 1,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+      });
 
-      // const campaigns = await prisma.campaign.findMany({
-      //   where: whereClause,
-      //   include: {
-      //     _count: {
-      //       select: {
-      //         votes: true,
-      //         comments: true,
-      //       },
-      //     },
-      //   },
-      //   orderBy: { createdAt: 'desc' },
-      //   take: input.limit + 1,
-      //   cursor: input.cursor ? { id: input.cursor } : undefined,
-      // });
+      const hasMore = campaigns.length > input.limit;
+      const results = hasMore ? campaigns.slice(0, -1) : campaigns;
+      const nextCursor = hasMore ? results[results.length - 1]?.id : null;
 
-      // const hasMore = campaigns.length > input.limit;
-      // const results = hasMore ? campaigns.slice(0, -1) : campaigns;
-      // const nextCursor = hasMore ? results[results.length - 1]?.id : null;
-
-      // return {
-      //   campaigns: results,
-      //   hasMore,
-      //   nextCursor,
-      // };
+      return {
+        campaigns: results,
+        hasMore,
+        nextCursor,
+      };
     }),
 
   // Find nearest campaigns to a location (PostGIS powered)

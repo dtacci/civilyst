@@ -20,15 +20,16 @@ export function LocationPicker({
   initialLocation,
   className = '',
 }: LocationPickerProps) {
-  const [selectedLocation, setSelectedLocation] = useState<GeocodeResult | null>(
-    initialLocation
-      ? {
-          latitude: initialLocation.latitude,
-          longitude: initialLocation.longitude,
-          address: initialLocation.address || '',
-        }
-      : null
-  );
+  const [selectedLocation, setSelectedLocation] =
+    useState<GeocodeResult | null>(
+      initialLocation
+        ? {
+            latitude: initialLocation.latitude,
+            longitude: initialLocation.longitude,
+            address: initialLocation.address || '',
+          }
+        : null
+    );
 
   const handleSearchSelect = (location: GeocodeResult) => {
     setSelectedLocation(location);
@@ -64,6 +65,24 @@ export function LocationPicker({
     }
   };
 
+  /* ------------------------------------------------------------------
+   * Radius selection state (in kilometres)
+   * ------------------------------------------------------------------ */
+  const [radiusKm, setRadiusKm] = useState<number>(1); // default 1 km
+
+  const handleRadiusChange = (value: number) => {
+    setRadiusKm(value);
+    // If a location is already selected, report the radius change upstream
+    if (selectedLocation) {
+      onLocationChange({
+        ...selectedLocation,
+        radiusKm: value,
+      } as GeocodeResult & {
+        radiusKm: number;
+      });
+    }
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div>
@@ -74,6 +93,21 @@ export function LocationPicker({
           onLocationSelect={handleSearchSelect}
           placeholder="Enter an address, city, or landmark..."
           defaultValue={selectedLocation?.address}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Search radius: <span className="font-semibold">{radiusKm} km</span>
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={50}
+          step={1}
+          value={radiusKm}
+          onChange={(e) => handleRadiusChange(Number(e.target.value))}
+          className="w-full"
         />
       </div>
 

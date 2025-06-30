@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.23.1",
+    "@hookform/resolvers": "^5.1.1",
     "@mapbox/mapbox-gl-geocoder": "^5.0.3",
     "@prisma/client": "^6.10.1",
     "@supabase/supabase-js": "^2.50.2",
@@ -22,6 +23,7 @@
     "@trpc/next": "^11.4.3",
     "@trpc/react-query": "^11.4.3",
     "@trpc/server": "^11.4.3",
+    "@uploadthing/react": "^7.3.2",
     "@upstash/redis": "^1.35.0",
     "date-fns": "^4.1.0",
     "husky": "^9.1.7",
@@ -32,8 +34,10 @@
     "prisma": "^6.10.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.59.0",
     "react-map-gl": "^8.0.4",
     "superjson": "^2.2.2",
+    "uploadthing": "^7.7.3",
     "zod": "^3.25.67"
   },
   "devDependencies": {

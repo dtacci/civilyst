@@ -25,38 +25,28 @@ model User {
 }
 
 model Campaign {
-  id          String         @id @default(cuid())
+  id          String                   @id @default(cuid())
   title       String
   description String
-  status      CampaignStatus @default(DRAFT)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  status      CampaignStatus           @default(DRAFT)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  latitude    Float?
+  longitude   Float?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  creatorId   String
+  county      String?
+  geohash     String?
+  location    Unsupported("geometry")?
+  timezone    String?
+  districts   CampaignDistrict[]
+  creator     User                     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  votes       Vote[]
 
-  // PostGIS spatial data - SRID 4326 (WGS84 for GPS coordinates)
-  location Unsupported("geometry(POINT, 4326)")?
-
-  // Keep legacy fields for backward compatibility and ease of use
-  latitude  Float?
-  longitude Float?
-  address   String?
-  city      String?
-  state     String?
-  zipCode   String?
-  county    String?
-
-  // Geographic metadata
-  geohash  String? // For quick spatial indexing
-  timezone String? // Local timezone for the campaign location
-
-  // Relationships  
-  districts CampaignDistrict[] // Many-to-many with districts
-
-  creatorId String
-  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  comments  Comment[]
-  votes     Vote[]
-
-  // Spatial index for performance
   @@index([latitude, longitude])
   @@map("campaigns")
 }
@@ -88,44 +78,32 @@ model Vote {
 }
 
 model District {
-  id    String        @id @default(cuid())
-  name  String // e.g., "Downtown", "Ward 3", "City Council District 5"
-  type  DistrictType // Municipal boundary type
-  level DistrictLevel // City, county, state, federal
-
-  // PostGIS geometry for district boundaries (polygons/multipolygons)
-  boundary Unsupported("geometry(MULTIPOLYGON, 4326)")?
-
-  // Metadata
-  population  Int? // Census data
-  area        Float? // Square kilometers
-  description String? // Additional district info
-
-  // Geographic identifiers
-  city     String?
-  state    String
-  county   String?
-  zipCodes String[] // Array of zip codes in this district
-
-  // Relationships
-  campaigns CampaignDistrict[] // Many-to-many with campaigns
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String                   @id @default(cuid())
+  name        String
+  type        DistrictType
+  level       DistrictLevel
+  boundary    Unsupported("geometry")?
+  population  Int?
+  area        Float?
+  description String?
+  city        String?
+  state       String
+  county      String?
+  zipCodes    String[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  campaigns   CampaignDistrict[]
 
   @@map("districts")
 }
 
-// Junction table for campaign-district relationships
 model CampaignDistrict {
-  id         String   @id @default(cuid())
-  campaignId String
-  districtId String
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
-
-  // Spatial relationship type
+  id           String               @id @default(cuid())
+  campaignId   String
+  districtId   String
   relationship DistrictRelationship @default(WITHIN)
+  campaign     Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  district     District             @relation(fields: [districtId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, districtId])
   @@map("campaign_districts")
@@ -153,29 +131,29 @@ enum VoteType {
 }
 
 enum DistrictType {
-  CITY_COUNCIL // City council districts
-  WARD // Municipal wards
-  NEIGHBORHOOD // Neighborhood associations
-  SCHOOL_DISTRICT // School district boundaries
-  COUNTY // County boundaries
-  STATE_HOUSE // State house districts
-  STATE_SENATE // State senate districts
-  CONGRESSIONAL // Federal congressional districts
-  PLANNING_ZONE // Urban planning zones
-  VOTING_PRECINCT // Voting precincts
+  CITY_COUNCIL
+  WARD
+  NEIGHBORHOOD
+  SCHOOL_DISTRICT
+  COUNTY
+  STATE_HOUSE
+  STATE_SENATE
+  CONGRESSIONAL
+  PLANNING_ZONE
+  VOTING_PRECINCT
 }
 
 enum DistrictLevel {
-  NEIGHBORHOOD // Hyperlocal (HOAs, neighborhood groups)
-  MUNICIPAL // City-level districts  
-  COUNTY // County-level
-  STATE // State-level districts
-  FEDERAL // Federal districts
+  NEIGHBORHOOD
+  MUNICIPAL
+  COUNTY
+  STATE
+  FEDERAL
 }
 
 enum DistrictRelationship {
-  WITHIN // Campaign is entirely within the district
-  INTERSECTS // Campaign location intersects district boundary
-  NEARBY // Campaign is near but outside district
-  AFFECTS // Campaign may affect district (manually assigned)
+  WITHIN
+  INTERSECTS
+  NEARBY
+  AFFECTS
 }

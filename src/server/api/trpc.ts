@@ -7,6 +7,7 @@ import {
   getRateLimitConfig,
   getRateLimitIdentifier,
 } from '~/lib/rate-limiting';
+import { getAuth } from '@clerk/nextjs/server';
 
 export const createTRPCContext = (opts: CreateNextContextOptions) => {
   const { req, res } = opts;
@@ -18,10 +19,21 @@ export const createTRPCContext = (opts: CreateNextContextOptions) => {
       ? forwarded.split(',')[0]
       : req.socket.remoteAddress || 'unknown';
 
+  // Clerk authentication (safe-optional for anonymous routes)
+  let userId: string | undefined;
+  try {
+    // `getAuth` will throw if clerkMiddleware() did not run.
+    ({ userId } = getAuth(req));
+  } catch {
+    // No Clerk context – treat as anonymous
+    userId = undefined;
+  }
+
   return {
     req,
     res,
     ip,
+    userId,
   };
 };
 
@@ -57,13 +69,12 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
 
 // Rate limiting middleware
 const rateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
-  // Determine user type (for now, treat all as anonymous)
-  // TODO: Get user info from Clerk when auth is fully set up
-  const userType = 'anonymous';
+  // Determine user type from Clerk authentication
+  const userType = ctx.userId ? 'authenticated' : 'anonymous';
   const isExpensiveOperation =
     path.includes('geocod') || path.includes('search');
 
-  const identifier = getRateLimitIdentifier(undefined, ctx.ip);
+  const identifier = getRateLimitIdentifier(ctx.userId ?? undefined, ctx.ip);
   const config = getRateLimitConfig(userType, isExpensiveOperation);
 
   const rateLimitResult = await checkRateLimit(identifier, config);

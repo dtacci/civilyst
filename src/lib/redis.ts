@@ -5,17 +5,38 @@ import { env } from '~/env';
 let redis: Redis | null = null;
 
 export function getRedisClient(): Redis | null {
-  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN || 
-      env.UPSTASH_REDIS_REST_URL === '' || env.UPSTASH_REDIS_REST_TOKEN === '') {
-    console.warn('Redis credentials not configured, caching disabled');
+  // Helper to determine if value looks like a placeholder
+  const isPlaceholder = (val?: string) =>
+    !val ||
+    val.trim() === '' ||
+    val.startsWith('your_') || // e.g. 'your_upstash_redis_url_here'
+    val.includes('your_upstash');
+
+  const { UPSTASH_REDIS_REST_URL: url, UPSTASH_REDIS_REST_TOKEN: token } = env;
+
+  // Fail fast if credentials are missing or obviously placeholders
+  if (isPlaceholder(url) || isPlaceholder(token) || !url || !token) {
+    console.warn(
+      'Upstash Redis credentials are not configured (using placeholders or empty). Caching disabled.'
+    );
+    return null;
+  }
+
+  // Upstash requires an https URL – guard against common mistakes
+  if (!url.startsWith('https://')) {
+    console.warn(
+      `Upstash Redis URL must start with "https://". Received: "${url}". Caching disabled.`
+    );
     return null;
   }
 
   if (!redis) {
-    redis = new Redis({
-      url: env.UPSTASH_REDIS_REST_URL,
-      token: env.UPSTASH_REDIS_REST_TOKEN,
-    });
+    try {
+      redis = new Redis({ url, token });
+    } catch (err) {
+      console.error('Failed to initialise Upstash Redis client:', err);
+      return null;
+    }
   }
 
   return redis;
@@ -24,7 +45,7 @@ export function getRedisClient(): Redis | null {
 // Cache keys for different data types
 export const CacheKeys = {
   geocode: (query: string) => `geocode:${query.toLowerCase().trim()}`,
-  reverseGeocode: (lat: number, lng: number) => 
+  reverseGeocode: (lat: number, lng: number) =>
     `reverse:${lat.toFixed(6)},${lng.toFixed(6)}`,
   locationSearch: (lat: number, lng: number, radius: number) =>
     `location_search:${lat.toFixed(4)},${lng.toFixed(4)},${radius}`,

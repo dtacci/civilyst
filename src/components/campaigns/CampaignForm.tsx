@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { LocationPicker } from '~/components/map';
 import { GeocodeResult } from '~/lib/geocoding';
 
@@ -14,6 +17,7 @@ export interface CampaignFormData {
   state?: string;
   zipCode?: string;
   status: 'DRAFT' | 'ACTIVE';
+  imageUrls?: string[];
 }
 
 export interface CampaignFormProps {
@@ -31,70 +35,87 @@ export function CampaignForm({
   isLoading = false,
   submitLabel = 'Create Campaign',
 }: CampaignFormProps) {
-  const [formData, setFormData] = useState<CampaignFormData>({
-    title: initialData?.title || '',
-    description: initialData?.description || '',
-    latitude: initialData?.latitude,
-    longitude: initialData?.longitude,
-    address: initialData?.address || '',
-    city: initialData?.city || '',
-    state: initialData?.state || '',
-    zipCode: initialData?.zipCode || '',
-    status: initialData?.status || 'DRAFT',
+  /* ------------------------------------------------------------------ */
+  /* React Hook Form + Zod validation                                  */
+  /* ------------------------------------------------------------------ */
+  const schema = z.object({
+    title: z.string().min(1, 'Title is required').max(200),
+    description: z
+      .string()
+      .min(10, 'Description must be at least 10 characters')
+      .max(5000),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    status: z.enum(['DRAFT', 'ACTIVE']),
+    imageUrls: z.array(z.string().url()).max(5).optional(),
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  type FormValues = z.infer<typeof schema>;
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (formData.title.length > 200) {
-      newErrors.title = 'Title must be 200 characters or less';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
-    } else if (formData.description.length > 5000) {
-      newErrors.description = 'Description must be 5000 characters or less';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: initialData?.title ?? '',
+      description: initialData?.description ?? '',
+      latitude: initialData?.latitude,
+      longitude: initialData?.longitude,
+      address: initialData?.address ?? '',
+      city: initialData?.city ?? '',
+      state: initialData?.state ?? '',
+      zipCode: initialData?.zipCode ?? '',
+      status: initialData?.status ?? 'DRAFT',
+      imageUrls: initialData?.imageUrls ?? [],
+    },
+  });
 
   const handleLocationChange = (location: GeocodeResult) => {
-    setFormData((prev) => ({
-      ...prev,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      address: location.address,
-      city: location.city || '',
-      state: location.state || '',
-      zipCode: location.zipCode || '',
-    }));
+    setValue('latitude', location.latitude);
+    setValue('longitude', location.longitude);
+    setValue('address', location.address);
+    setValue('city', location.city || '');
+    setValue('state', location.state || '');
+    setValue('zipCode', location.zipCode || '');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-    }
+  // When form is successfully submitted via RHF
+  const onSubmitForm = (data: FormValues) => {
+    onSubmit(data as CampaignFormData);
   };
 
-  const handleInputChange = (field: keyof CampaignFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-  };
+  // live watch for char count
+  const watchedTitle = watch('title');
+  const watchedDescription = watch('description');
+  // Current location values from the form
+  const watchedLatitude = watch('latitude');
+  const watchedLongitude = watch('longitude');
+  const watchedAddress = watch('address');
+  const watchedImages = watch('imageUrls');
+
+  /* --------------------------- Uploadthing -------------------------- */
+  // Dynamically import to avoid SSR issues (and satisfy ESLint)
+  const [UploadButton, setUploadButton] = useState<
+    typeof import('@uploadthing/react').UploadButton | null
+  >(null);
+
+  useEffect(() => {
+    // Only runs on the client
+    import('@uploadthing/react').then((m) =>
+      setUploadButton(() => m.UploadButton)
+    );
+  }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
       {/* Campaign Title */}
       <div>
         <label
@@ -106,8 +127,7 @@ export function CampaignForm({
         <input
           type="text"
           id="title"
-          value={formData.title}
-          onChange={(e) => handleInputChange('title', e.target.value)}
+          {...register('title')}
           placeholder="Enter a clear, descriptive title for your campaign"
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
             errors.title ? 'border-red-300' : 'border-gray-300'
@@ -115,10 +135,10 @@ export function CampaignForm({
           maxLength={200}
         />
         {errors.title && (
-          <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+          <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
         )}
         <p className="mt-1 text-sm text-gray-500">
-          {formData.title.length}/200 characters
+          {watchedTitle?.length ?? 0}/200 characters
         </p>
       </div>
 
@@ -132,8 +152,7 @@ export function CampaignForm({
         </label>
         <textarea
           id="description"
-          value={formData.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
+          {...register('description')}
           placeholder="Describe your campaign in detail. What are you proposing? Why is it important? How will it benefit the community?"
           rows={6}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -142,11 +161,53 @@ export function CampaignForm({
           maxLength={5000}
         />
         {errors.description && (
-          <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+          <p className="mt-1 text-sm text-red-600">
+            {errors.description.message}
+          </p>
         )}
         <p className="mt-1 text-sm text-gray-500">
-          {formData.description.length}/5000 characters
+          {watchedDescription?.length ?? 0}/5000 characters
         </p>
+      </div>
+
+      {/* Image Uploads */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Campaign Images (up to 5)
+        </label>
+        {UploadButton ? (
+          <UploadButton
+            endpoint="campaignImageUploader"
+            onClientUploadComplete={(res) => {
+              const urls = res.map((r) => r.fileUrl);
+              setValue('imageUrls', urls);
+            }}
+            onUploadError={(err) => {
+              console.error('Image upload error:', err);
+              alert('Image upload failed, please try again.');
+            }}
+            appearance={{
+              button:
+                'ut-ready:border-blue-600 ut-ready:bg-blue-600 ut-uploading:cursor-not-allowed rounded-lg bg-blue-600 py-2 px-3 text-white text-sm font-medium hover:bg-blue-700 transition-colors',
+              container: 'flex items-center',
+              allowedContent: 'text-gray-500 text-xs mt-1',
+            }}
+          />
+        ) : (
+          <p className="text-sm text-gray-500">Loading uploader…</p>
+        )}
+        {watchedImages && watchedImages.length > 0 && (
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {watchedImages.map((url) => (
+              <img
+                key={url}
+                src={url}
+                alt="campaign upload preview"
+                className="h-24 w-full object-cover rounded-lg border"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Location Selection */}
@@ -161,11 +222,11 @@ export function CampaignForm({
         <LocationPicker
           onLocationChange={handleLocationChange}
           initialLocation={
-            formData.latitude && formData.longitude
+            watchedLatitude !== undefined && watchedLongitude !== undefined
               ? {
-                  latitude: formData.latitude,
-                  longitude: formData.longitude,
-                  address: formData.address,
+                  latitude: watchedLatitude,
+                  longitude: watchedLongitude,
+                  address: watchedAddress,
                 }
               : undefined
           }
@@ -182,10 +243,7 @@ export function CampaignForm({
         </label>
         <select
           id="status"
-          value={formData.status}
-          onChange={(e) =>
-            handleInputChange('status', e.target.value as 'DRAFT' | 'ACTIVE')
-          }
+          {...register('status')}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="DRAFT">Draft - Save for later editing</option>
@@ -194,7 +252,7 @@ export function CampaignForm({
           </option>
         </select>
         <p className="mt-1 text-sm text-gray-500">
-          {formData.status === 'DRAFT'
+          {watch('status') === 'DRAFT'
             ? 'Campaign will be saved but not visible to the public'
             : 'Campaign will be published and visible to the community'}
         </p>
@@ -210,7 +268,7 @@ export function CampaignForm({
           {isLoading ? (
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              {formData.status === 'DRAFT'
+              {watch('status') === 'DRAFT'
                 ? 'Saving Draft...'
                 : 'Publishing...'}
             </div>

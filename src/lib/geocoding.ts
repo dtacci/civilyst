@@ -8,6 +8,11 @@ export interface GeocodeResult {
   city?: string;
   state?: string;
   zipCode?: string;
+  /**
+   * Optional radius (in kilometres) selected by the user when
+   * picking a location.  Used for radius-based campaign searches.
+   */
+  radiusKm?: number;
   country?: string;
 }
 

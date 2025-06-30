@@ -1,7 +1,17 @@
 import { z } from 'zod';
 
-// Environment validation schema following OWASP security practices
-const envSchema = z.object({
+/**
+ * We validate environment variables with Zod.  However, **browser bundles**
+ * only have access to variables prefixed with `NEXT_PUBLIC_`.
+ *
+ * To avoid runtime ZodErrors on the client we split validation into
+ * two schemas and decide at runtime which one to use.
+ */
+
+// --------------------------------------------------------------------------- //
+// Server-only schema – validated when code executes on the server.
+// --------------------------------------------------------------------------- //
+const serverSchema = z.object({
   // Database
   DATABASE_URL: z.string().min(1, 'Database URL is required'),
 
@@ -68,11 +78,73 @@ const envSchema = z.object({
     .default('http://localhost:3000'),
 });
 
-// Parse and validate environment variables at startup
-export const env = envSchema.parse(process.env);
+// --------------------------------------------------------------------------- //
+// Client schema –  only public variables (prefixed with NEXT_PUBLIC_)
+// --------------------------------------------------------------------------- //
+/**
+ * NOTE:  Public variables can be absent in some build / test scenarios.
+ * We therefore mark the entire schema as `.partial()` (all fields optional)
+ * and add runtime logging for any *truly* required public vars that are
+ * missing.  This prevents hard-crashing the browser with a ZodError while
+ * still surfacing helpful diagnostics in the console.
+ */
+const clientSchema = z
+  .object({
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
+      .string()
+      .min(1, 'Clerk publishable key is required'),
+
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: z.string().optional(),
+
+    NEXT_PUBLIC_APP_URL: z
+      .string()
+      .url('Invalid app URL')
+      .default('http://localhost:3000'),
+
+    NODE_ENV: z
+      .enum(['development', 'test', 'production'])
+      .default('development'),
+  })
+  .partial(); // <- make all keys optional so missing vars don’t throw
+
+// --------------------------------------------------------------------------- //
+// Runtime selection: use server schema on the server, client schema in browser
+// --------------------------------------------------------------------------- //
+const isServer = typeof window === 'undefined';
+// Use a broad but safe type to avoid `any` while accommodating both schemas
+let parsedEnv: Record<string, unknown>;
+
+if (isServer) {
+  // Fail hard on the server
+  parsedEnv = serverSchema.parse(process.env);
+} else {
+  // Be forgiving on the client – log missing critical vars
+  const result = clientSchema.safeParse(process.env);
+  if (!result.success) {
+    // This should be rare thanks to `.partial()`, but log details just in case
+    console.warn(
+      '[env.ts] Client-side env validation failed:',
+      result.error.flatten().fieldErrors
+    );
+    parsedEnv = {};
+  } else {
+    parsedEnv = result.data;
+    // Extra runtime check for public Clerk key – warn if absent
+    if (!parsedEnv.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+      console.warn(
+        '[env.ts] NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing in client bundle.'
+      );
+    }
+  }
+}
+
+export const env = parsedEnv as z.infer<typeof serverSchema> &
+  z.infer<typeof clientSchema>;
 
 // Type-safe environment variables
-export type Env = z.infer<typeof envSchema>;
+export type Env = typeof env;
 
 // Environment validation for different stages
 export const validateRequiredForProduction = () => {
