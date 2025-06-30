@@ -71,9 +71,14 @@ const pwaConfig = withPWA({
   ],
   fallbacks: {
     document: '/offline',
+    image: '/offline',
+    audio: '/offline', 
+    video: '/offline',
+    font: '/offline',
   },
   buildExcludes: [/middleware-manifest\.json$/],
   disable: process.env.NODE_ENV === 'development',
 });
 
-export default pwaConfig(nextConfig);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default pwaConfig(nextConfig as any);

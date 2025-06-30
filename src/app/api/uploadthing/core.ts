@@ -16,7 +16,7 @@ export const ourFileRouter = {
     // `req` isn't needed here, so omit the parameter to satisfy ESLint
     .middleware(async () => {
       // Get Clerk userId from the request
-      const { userId } = auth();
+      const { userId } = await auth();
 
       // If no userId, reject the upload
       if (!userId) throw new UploadThingError('Unauthorized');

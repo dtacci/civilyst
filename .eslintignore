@@ -1,0 +1,22 @@
+# Build outputs
+.next/
+out/
+dist/
+
+# PWA generated files
+public/sw.js
+public/workbox-*.js
+public/fallback-*.js
+
+# Test files
+test-pwa.js
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env*
+
+# IDE
+.vscode/
+.idea/

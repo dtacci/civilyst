@@ -62,6 +62,12 @@ const serverSchema = z.object({
     .regex(/^sk-/, 'Invalid OpenAI API key format')
     .optional(),
 
+  // Monitoring & Error Tracking - Sentry
+  SENTRY_DSN: z.string().url('Invalid Sentry DSN').optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url('Invalid Sentry DSN').optional(),
+  NEXT_PUBLIC_SENTRY_ENVIRONMENT: z.string().optional(),
+  NEXT_PUBLIC_SENTRY_RELEASE: z.string().optional(),
+
   // Webhook Security
   STRIPE_WEBHOOK_SECRET: z
     .string()
@@ -106,6 +112,11 @@ const clientSchema = z
     NODE_ENV: z
       .enum(['development', 'test', 'production'])
       .default('development'),
+
+    // Sentry (public)
+    NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: z.string().optional(),
+    NEXT_PUBLIC_SENTRY_RELEASE: z.string().optional(),
   })
   .partial(); // <- make all keys optional so missing vars don’t throw
 
@@ -172,4 +183,5 @@ export const isServiceConfigured = {
   openai: () => !!env.OPENAI_API_KEY,
   supabase: () =>
     !!(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  sentry: () => !!(env.SENTRY_DSN || env.NEXT_PUBLIC_SENTRY_DSN),
 };
