@@ -3,10 +3,20 @@
 import { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Leaflet version (client-only) for graceful fallback
+const LeafletMap = dynamic(
+  () => import('./LeafletMap').then((m) => m.LeafletMap),
+  { ssr: false }
+);
 
 // Set Mapbox access token
-if (typeof window !== 'undefined') {
-  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+const rawToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+const hasValidToken = rawToken !== '' && rawToken !== 'your_mapbox_token_here';
+
+if (typeof window !== 'undefined' && hasValidToken) {
+  mapboxgl.accessToken = rawToken;
 }
 
 export interface MapboxMapProps {
@@ -31,12 +41,24 @@ export function MapboxMap({
   onLocationSelect,
   markers = [],
 }: MapboxMapProps) {
+  // Hooks MUST run unconditionally and in the same order on every render
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  /** keep the latest onLocationSelect without re-initialising the map */
+  const onLocationSelectRef = useRef<typeof onLocationSelect>();
+  // update ref when prop changes
+  useEffect(() => {
+    onLocationSelectRef.current = onLocationSelect;
+  }, [onLocationSelect]);
+
+  // Decide once per render whether to use Mapbox or fall back to Leaflet.
+  // This value is stable for the lifetime of the component.
+  const shouldUseMapbox = typeof window !== 'undefined' && hasValidToken;
 
   // Initialize map
   useEffect(() => {
+    if (!shouldUseMapbox) return; // Skip when using Leaflet fallback
     if (map.current || !mapContainer.current) return;
 
     map.current = new mapboxgl.Map({
@@ -51,12 +73,11 @@ export function MapboxMap({
     });
 
     // Add click handler for location selection
-    if (onLocationSelect) {
-      map.current.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        onLocationSelect(lat, lng);
-      });
-    }
+    map.current.on('click', (e) => {
+      const { lng, lat } = e.lngLat;
+      const cb = onLocationSelectRef.current;
+      if (cb) cb(lat, lng);
+    });
 
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -67,17 +88,20 @@ export function MapboxMap({
         map.current = null;
       }
     };
-  }, []);
+    // We include position/zoom so the map initialises correctly for new values
+  }, [shouldUseMapbox, latitude, longitude, zoom]);
 
   // Update map center when props change
   useEffect(() => {
+    if (!shouldUseMapbox) return;
     if (map.current && mapLoaded) {
       map.current.setCenter([longitude, latitude]);
     }
-  }, [latitude, longitude, mapLoaded]);
+  }, [latitude, longitude, mapLoaded, shouldUseMapbox]);
 
   // Handle markers
   useEffect(() => {
+    if (!shouldUseMapbox) return;
     if (!map.current || !mapLoaded) return;
 
     // Clear existing markers
@@ -100,7 +124,23 @@ export function MapboxMap({
         .setPopup(popup)
         .addTo(map.current!);
     });
-  }, [markers, mapLoaded]);
+  }, [markers, mapLoaded, shouldUseMapbox]);
+
+  // ------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------
+  if (!shouldUseMapbox) {
+    return (
+      <LeafletMap
+        latitude={latitude}
+        longitude={longitude}
+        zoom={zoom}
+        className={className}
+        onLocationSelect={onLocationSelect}
+        markers={markers}
+      />
+    );
+  }
 
   return (
     <div className={className}>
