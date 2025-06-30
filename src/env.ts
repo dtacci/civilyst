@@ -20,7 +20,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: z.string().optional(),
 
   // Cache - Upstash Redis
-  UPSTASH_REDIS_REST_URL: z.string().url('Invalid Redis URL').optional(),
+  UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
   // File Storage - Uploadthing

@@ -1,0 +1,130 @@
+-- Enable Row Level Security for all tables
+-- Using correct column names (Prisma camelCase -> PostgreSQL snake_case)
+
+-- Enable RLS on users table
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on campaigns table  
+ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on comments table
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on votes table
+ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on districts table
+ALTER TABLE districts ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on campaign_districts table
+ALTER TABLE campaign_districts ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for users table
+-- Users can read their own profile and update it
+CREATE POLICY "Users can view own profile" ON users
+  FOR SELECT USING ("clerkId" = current_setting('request.jwt.claims', true)::json->>'sub');
+
+CREATE POLICY "Users can update own profile" ON users  
+  FOR UPDATE USING ("clerkId" = current_setting('request.jwt.claims', true)::json->>'sub');
+
+CREATE POLICY "Users can insert own profile" ON users
+  FOR INSERT WITH CHECK ("clerkId" = current_setting('request.jwt.claims', true)::json->>'sub');
+
+-- Create policies for campaigns table
+-- Anyone can read active campaigns
+CREATE POLICY "Anyone can view active campaigns" ON campaigns
+  FOR SELECT USING (status = 'ACTIVE');
+
+-- Users can read their own campaigns (any status)
+CREATE POLICY "Users can view own campaigns" ON campaigns
+  FOR SELECT USING ("creatorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can create campaigns
+CREATE POLICY "Authenticated users can create campaigns" ON campaigns
+  FOR INSERT WITH CHECK ("creatorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can update their own campaigns
+CREATE POLICY "Users can update own campaigns" ON campaigns
+  FOR UPDATE USING ("creatorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can delete their own campaigns
+CREATE POLICY "Users can delete own campaigns" ON campaigns
+  FOR DELETE USING ("creatorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Create policies for comments table
+-- Anyone can read comments on active campaigns
+CREATE POLICY "Anyone can view comments on active campaigns" ON comments
+  FOR SELECT USING ("campaignId" IN (
+    SELECT id FROM campaigns WHERE status = 'ACTIVE'
+  ));
+
+-- Authenticated users can create comments
+CREATE POLICY "Authenticated users can create comments" ON comments
+  FOR INSERT WITH CHECK ("authorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can update their own comments
+CREATE POLICY "Users can update own comments" ON comments
+  FOR UPDATE USING ("authorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can delete their own comments
+CREATE POLICY "Users can delete own comments" ON comments
+  FOR DELETE USING ("authorId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Create policies for votes table
+-- Anyone can read vote counts (aggregated)
+CREATE POLICY "Anyone can view votes on active campaigns" ON votes
+  FOR SELECT USING ("campaignId" IN (
+    SELECT id FROM campaigns WHERE status = 'ACTIVE'
+  ));
+
+-- Authenticated users can create votes
+CREATE POLICY "Authenticated users can vote" ON votes
+  FOR INSERT WITH CHECK ("userId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can update their own votes
+CREATE POLICY "Users can update own votes" ON votes
+  FOR UPDATE USING ("userId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Users can delete their own votes
+CREATE POLICY "Users can delete own votes" ON votes
+  FOR DELETE USING ("userId" IN (
+    SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+  ));
+
+-- Create policies for districts table (public read access)
+CREATE POLICY "Anyone can view districts" ON districts
+  FOR SELECT USING (true);
+
+-- Only admins can modify districts (placeholder - implement admin role later)
+CREATE POLICY "Admins can manage districts" ON districts
+  FOR ALL USING (false); -- Disable until admin roles implemented
+
+-- Create policies for campaign_districts table
+CREATE POLICY "Anyone can view campaign district relationships" ON campaign_districts
+  FOR SELECT USING (true);
+
+-- Only campaign creators can manage their campaign's district relationships
+CREATE POLICY "Campaign creators can manage district relationships" ON campaign_districts
+  FOR ALL USING ("campaignId" IN (
+    SELECT id FROM campaigns WHERE "creatorId" IN (
+      SELECT id FROM users WHERE "clerkId" = current_setting('request.jwt.claims', true)::json->>'sub'
+    )
+  ));

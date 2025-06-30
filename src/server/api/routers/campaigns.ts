@@ -6,6 +6,7 @@ import {
 } from '~/server/api/trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '~/lib/db';
+import { CampaignStatus as PrismaCampaignStatus } from '~/generated/prisma';
 import {
   findCampaignsWithinRadius,
   findNearestCampaigns,
@@ -198,7 +199,7 @@ export const campaignsRouter = createTRPCRouter({
             id: campaign.id,
             title: campaign.title,
             description: campaign.description,
-            status: campaign.status,
+            status: campaign.status as PrismaCampaignStatus,
             latitude: campaign.latitude,
             longitude: campaign.longitude,
             address: campaign.address,
@@ -272,6 +273,7 @@ export const campaignsRouter = createTRPCRouter({
         // Format results
         const formattedCampaigns = results.map((campaign) => ({
           ...campaign,
+          status: campaign.status as PrismaCampaignStatus,
           creator: { firstName: 'User', lastName: 'Name' },
           _count: { votes: 0, comments: 0 },
         }));
