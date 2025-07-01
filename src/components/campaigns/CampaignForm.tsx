@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LocationPicker } from '~/components/map';
 import { GeocodeResult } from '~/lib/geocoding';
 import Image from 'next/image';
+import type { OurFileRouter } from '~/app/api/uploadthing/core'; // uploadthing router
 
 export interface CampaignFormData {
   title: string;
@@ -177,13 +178,15 @@ export function CampaignForm({
           Campaign Images (up to 5)
         </label>
         {UploadButton ? (
-          <UploadButton
+          <UploadButton<OurFileRouter, 'campaignImageUploader'>
             endpoint="campaignImageUploader"
             onClientUploadComplete={(res) => {
-              const urls = res.map((r) => r.fileUrl);
-              setValue('imageUrls', urls);
+              if (res) {
+                const urls = res.map((r) => r.url);
+                setValue('imageUrls', urls);
+              }
             }}
-            onUploadError={(err) => {
+            onUploadError={(err: Error) => {
               console.error('Image upload error:', err);
               alert('Image upload failed, please try again.');
             }}

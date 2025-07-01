@@ -27,6 +27,9 @@ const toastVariants = cva(
           'bg-red-50 text-red-800 border-red-200 dark:border-red-800 dark:bg-red-900 dark:text-red-200',
         success:
           'bg-green-50 text-green-800 border-green-200 dark:border-green-800 dark:bg-green-900 dark:text-green-200',
+        info: 'bg-blue-50 text-blue-800 border-blue-200 dark:border-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        warning:
+          'bg-orange-50 text-orange-800 border-orange-200 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200',
       },
     },
     defaultVariants: {
@@ -36,7 +39,8 @@ const toastVariants = cva(
 );
 
 export interface ToastProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  // Omit the native `title` attribute to allow ReactNode titles
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'>,
     VariantProps<typeof toastVariants> {
   id?: string;
   title?: React.ReactNode;
@@ -87,6 +91,19 @@ Toast.displayName = 'Toast';
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
 
+  /* ------------------------------------------------------------
+   * Helpers
+   * ---------------------------------------------------------- */
+
+  /** Dismiss a toast by id */
+  const dismissToast = React.useCallback((id: string) => {
+    setToasts((prevToasts) => {
+      const toast = prevToasts.find((t) => t.id === id);
+      toast?.onDismiss?.();
+      return prevToasts.filter((t) => t.id !== id);
+    });
+  }, []);
+
   const addToast = React.useCallback(
     (props: ToastProps) => {
       const id =
@@ -110,16 +127,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
     [dismissToast]
   );
-
-  const dismissToast = React.useCallback((id: string) => {
-    setToasts((prevToasts) => {
-      const toast = prevToasts.find((toast) => toast.id === id);
-      if (toast?.onDismiss) {
-        toast.onDismiss();
-      }
-      return prevToasts.filter((toast) => toast.id !== id);
-    });
-  }, []);
 
   const dismissAll = React.useCallback(() => {
     setToasts([]);
@@ -148,6 +155,10 @@ export function useToast() {
         context.addToast({ ...props, variant: 'destructive' }),
       success: (props: Omit<ToastProps, 'variant'>) =>
         context.addToast({ ...props, variant: 'success' }),
+      info: (props: Omit<ToastProps, 'variant'>) =>
+        context.addToast({ ...props, variant: 'info' }),
+      warning: (props: Omit<ToastProps, 'variant'>) =>
+        context.addToast({ ...props, variant: 'warning' }),
       dismiss: (id: string) => context.dismissToast(id),
       dismissAll: () => context.dismissAll(),
     }),

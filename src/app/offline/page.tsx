@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
-import { WifiOff, RefreshCw, Home, Search } from 'lucide-react';
-import { Button } from '~/components/ui/button';
+import { WifiOff, Home, Search } from 'lucide-react';
+import { buttonVariants } from '~/components/ui/button';
 import Link from 'next/link';
+import { cn } from '~/lib/utils';
+import { RefreshButton } from '~/components/RefreshButton';
 
 export const metadata: Metadata = {
   title: 'Offline - Civilyst',
@@ -25,7 +27,9 @@ export default function OfflinePage() {
               You&apos;re Offline
             </h1>
             <p className="text-gray-600">
-              It looks like you&apos;ve lost your internet connection. Don&apos;t worry - you can still browse previously viewed campaigns and access cached content.
+              It looks like you&apos;ve lost your internet connection.
+              Don&apos;t worry - you can still browse previously viewed
+              campaigns and access cached content.
             </p>
           </div>
 
@@ -64,47 +68,35 @@ export default function OfflinePage() {
 
           {/* Actions */}
           <div className="space-y-3">
-            <Button
-              onClick={() => window.location.reload()}
-              className="w-full"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
-            
+            <RefreshButton />
+
             <div className="flex space-x-3">
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1"
+              <Link
+                href="/"
+                className={cn(buttonVariants({ variant: 'outline' }), 'flex-1')}
               >
-                <Link href="/">
-                  <Home className="mr-2 h-4 w-4" />
-                  Home
-                </Link>
-              </Button>
-              
-              <Button
-                asChild
-                variant="outline"
-                className="flex-1"
+                <Home className="mr-2 h-4 w-4" />
+                Home
+              </Link>
+
+              <Link
+                href="/campaigns"
+                className={cn(buttonVariants({ variant: 'outline' }), 'flex-1')}
               >
-                <Link href="/campaigns">
-                  <Search className="mr-2 h-4 w-4" />
-                  Campaigns
-                </Link>
-              </Button>
+                <Search className="mr-2 h-4 w-4" />
+                Campaigns
+              </Link>
             </div>
           </div>
 
           {/* Tips */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-            <h3 className="font-medium text-blue-900 mb-2">
-              💡 Pro Tips
-            </h3>
+            <h3 className="font-medium text-blue-900 mb-2">💡 Pro Tips</h3>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Install our app for better offline support</li>
-              <li>• Your data will sync automatically when you&apos;re back online</li>
+              <li>
+                • Your data will sync automatically when you&apos;re back online
+              </li>
               <li>• Check your wifi or mobile data connection</li>
             </ul>
           </div>

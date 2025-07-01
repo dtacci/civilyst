@@ -23,7 +23,10 @@ export const createTRPCContext = (opts: CreateNextContextOptions) => {
   let userId: string | undefined;
   try {
     // `getAuth` will throw if clerkMiddleware() did not run.
-    ({ userId } = getAuth(req));
+    const { userId: clerkUserId } = getAuth(req);
+
+    // Convert null to undefined for consistency
+    userId = clerkUserId || undefined;
   } catch {
     // No Clerk context – treat as anonymous
     userId = undefined;
@@ -70,7 +73,7 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
 // Rate limiting middleware
 const rateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
   // Determine user type from Clerk authentication
-  const userType = ctx.userId ? 'authenticated' : 'anonymous';
+  const userType = ctx.userId ? 'pro' : 'anonymous';
   const isExpensiveOperation =
     path.includes('geocod') || path.includes('search');
 

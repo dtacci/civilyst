@@ -6,7 +6,11 @@ import {
 } from '~/server/api/trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '~/lib/db';
-import { CampaignStatus, VoteType as PrismaVoteType } from '~/generated/prisma';
+import {
+  CampaignStatus,
+  VoteType as PrismaVoteType,
+  type Prisma, // Prisma namespace for advanced payload typing
+} from '~/generated/prisma';
 import {
   findCampaignsWithinRadius,
   findNearestCampaigns,
@@ -122,15 +126,52 @@ export const campaignsRouter = createTRPCRouter({
   getById: rateLimitedProcedure
     .input(z.object({ id: z.string().cuid() }))
     .query(async ({ input }) => {
+      /**
+       * Campaign detail payload including creator info and engagement counts.
+       * This mirrors what the frontend expects (`creator` & `_count`).
+       */
+      type CampaignDetail = Prisma.CampaignGetPayload<{
+        include: {
+          creator: {
+            select: {
+              firstName: true;
+              lastName: true;
+              imageUrl: true;
+            };
+          };
+          _count: {
+            select: {
+              votes: true;
+              comments: true;
+            };
+          };
+        };
+      }>;
+
       // Generate cache key for this campaign
       const cacheKey = campaignCacheKey(input.id);
 
       // Try to get from cache first, with fallback to database
-      const result = await getCacheWithFallback<typeof db.campaign.findUnique>(
+      const result = await getCacheWithFallback<CampaignDetail>(
         cacheKey,
         async () => {
           const campaign = await db.campaign.findUnique({
             where: { id: input.id },
+            include: {
+              creator: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  imageUrl: true,
+                },
+              },
+              _count: {
+                select: {
+                  votes: true,
+                  comments: true,
+                },
+              },
+            },
           });
 
           if (!campaign) {

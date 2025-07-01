@@ -49,7 +49,7 @@ export function Tooltip({
   );
 
   // Delay timer for showing/hiding tooltip
-  const delayTimerRef = React.useRef<NodeJS.Timeout>();
+  const delayTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleDelayedOpen = React.useCallback(
     (value: boolean) => {
@@ -97,30 +97,62 @@ export function TooltipTrigger({
 }: TooltipTriggerProps) {
   const { onOpenChange } = React.useContext(TooltipContext);
 
-  const child = asChild ? (
-    React.Children.only(children)
-  ) : (
-    <span {...props}>{children}</span>
-  );
+  if (asChild && React.isValidElement(children)) {
+    const child = React.Children.only(children) as React.ReactElement<
+      React.HTMLAttributes<HTMLElement>
+    >;
 
-  return React.cloneElement(child as React.ReactElement, {
-    onMouseEnter: (e: React.MouseEvent) => {
-      onOpenChange(true);
-      (child as React.ReactElement).props?.onMouseEnter?.(e);
-    },
-    onMouseLeave: (e: React.MouseEvent) => {
-      onOpenChange(false);
-      (child as React.ReactElement).props?.onMouseLeave?.(e);
-    },
-    onFocus: (e: React.FocusEvent) => {
-      onOpenChange(true);
-      (child as React.ReactElement).props?.onFocus?.(e);
-    },
-    onBlur: (e: React.FocusEvent) => {
-      onOpenChange(false);
-      (child as React.ReactElement).props?.onBlur?.(e);
-    },
-  });
+    const {
+      onMouseEnter: originalMouseEnter,
+      onMouseLeave: originalMouseLeave,
+      onFocus: originalFocus,
+      onBlur: originalBlur,
+    } = child.props || {};
+
+    return React.cloneElement(child, {
+      ...child.props,
+      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+        onOpenChange(true);
+        originalMouseEnter?.(e);
+      },
+      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+        onOpenChange(false);
+        originalMouseLeave?.(e);
+      },
+      onFocus: (e: React.FocusEvent<HTMLElement>) => {
+        onOpenChange(true);
+        originalFocus?.(e);
+      },
+      onBlur: (e: React.FocusEvent<HTMLElement>) => {
+        onOpenChange(false);
+        originalBlur?.(e);
+      },
+    });
+  }
+
+  return (
+    <span
+      {...props}
+      onMouseEnter={(e) => {
+        onOpenChange(true);
+        props.onMouseEnter?.(e);
+      }}
+      onMouseLeave={(e) => {
+        onOpenChange(false);
+        props.onMouseLeave?.(e);
+      }}
+      onFocus={(e) => {
+        onOpenChange(true);
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        onOpenChange(false);
+        props.onBlur?.(e);
+      }}
+    >
+      {children}
+    </span>
+  );
 }
 
 interface TooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {

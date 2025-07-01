@@ -1,4 +1,4 @@
-import { getCLS, getFID, getLCP, getTTFB, getFCP, type Metric } from 'web-vitals';
+import { onCLS, onINP, onLCP, onTTFB, onFCP, type Metric } from 'web-vitals';
 import * as Sentry from '@sentry/nextjs';
 import { getCacheMetrics, isRedisAvailable } from '~/lib/cache';
 
@@ -88,47 +88,33 @@ let periodicReportIntervalId: NodeJS.Timeout | null = null;
 /**
  * Reports Core Web Vitals metrics to Sentry.
  */
-function reportWebVitalsToSentry(metric: Metric) {
-  if (!options.sendWebVitalsToSentry) return;
-
-  Sentry.captureEvent({
-    message: `Web Vitals: ${metric.name}`,
-    level: 'info',
-    tags: {
-      metric_name: metric.name,
-      metric_id: metric.id,
-      metric_value: metric.value,
-      is_delta: metric.isDelta,
-      navigation_type: metric.navigationType,
-    },
-    extra: {
-      metric_entries: metric.entries,
-    },
-    // Use a transaction for performance metrics if Sentry is configured for it
-    // Sentry.startSpan is more appropriate for custom operations
-  });
-
-  // For performance monitoring, Sentry's SDK automatically captures these if `tracesSampleRate` is set.
-  // This manual captureEvent is more for logging/debugging specific metric values.
-  // For actual performance tracing, ensure Sentry's BrowserTracing integration is active.
+export function reportWebVitals(metric: Metric) {
+  if (process.env.NODE_ENV === 'production') {
+    Sentry.captureMessage(`web-vitals: ${metric.name} ${metric.value}`, {
+      tags: {
+        web_vitals: true,
+        metric_name: metric.name,
+        is_delta: metric.delta,
+      },
+      extra: {
+        value: metric.value,
+        id: metric.id,
+        entries: metric.entries,
+      },
+    });
+  }
 }
 
 /**
  * Initializes Core Web Vitals tracking.
  */
-function initializeWebVitalsTracking() {
-  if (!options.enabled || !options.sendWebVitalsToSentry) return;
-
-  try {
-    getCLS(reportWebVitalsToSentry);
-    getFID(reportWebVitalsToSentry);
-    getLCP(reportWebVitalsToSentry);
-    getTTFB(reportWebVitalsToSentry);
-    getFCP(reportWebVitalsToSentry);
-    console.log('Core Web Vitals tracking initialized.');
-  } catch (error) {
-    console.error('Failed to initialize Web Vitals tracking:', error);
-    Sentry.captureException(error, { tags: { feature: 'web_vitals_init' } });
+export function registerWebVitals() {
+  if (typeof window !== 'undefined') {
+    onCLS(reportWebVitals);
+    onINP(reportWebVitals);
+    onLCP(reportWebVitals);
+    onTTFB(reportWebVitals);
+    onFCP(reportWebVitals);
   }
 }
 
@@ -210,8 +196,16 @@ async function reportCachePerformance() {
         cache_details: metrics,
       },
     });
-    recordCustomMetric({ name: 'cache_hit_rate', value: metrics.hitRate, unit: '%' });
-    recordCustomMetric({ name: 'cache_avg_latency', value: metrics.avgLatencyMs, unit: 'ms' });
+    recordCustomMetric({
+      name: 'cache_hit_rate',
+      value: metrics.hitRate,
+      unit: '%',
+    });
+    recordCustomMetric({
+      name: 'cache_avg_latency',
+      value: metrics.avgLatencyMs,
+      unit: 'ms',
+    });
   } catch (error) {
     console.error('Failed to report cache performance:', error);
     Sentry.captureException(error, { tags: { feature: 'cache_monitoring' } });
@@ -244,7 +238,9 @@ async function reportCachePerformance() {
  */
 function initializeApiResponseMonitoring() {
   if (!options.enabled || !options.monitorApiResponses) return;
-  console.log('API response time monitoring relies on Sentry Next.js SDK configuration.');
+  console.log(
+    'API response time monitoring relies on Sentry Next.js SDK configuration.'
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -256,12 +252,21 @@ function initializeApiResponseMonitoring() {
  * This is a basic example; more advanced tracking might involve specific event listeners.
  */
 function initializeUserInteractionMonitoring() {
-  if (!options.enabled || !options.monitorUserInteractions || typeof document === 'undefined') return;
+  if (
+    !options.enabled ||
+    !options.monitorUserInteractions ||
+    typeof document === 'undefined'
+  )
+    return;
 
   // Example: Track clicks on interactive elements
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
-    if (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('[role="button"]')) {
+    if (
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'A' ||
+      target.closest('[role="button"]')
+    ) {
       Sentry.addBreadcrumb({
         category: 'ui.interaction',
         message: `Clicked on: ${target.tagName} ${target.innerText || target.getAttribute('aria-label') || target.id || ''}`,
@@ -291,7 +296,9 @@ function initializePerformanceBudgetMonitoring() {
   // This is more of a build-time concern.
   // For runtime, you might report on initial load times (covered by Web Vitals)
   // or resource loading failures.
-  console.log('Performance budget monitoring is primarily a build-time concern.');
+  console.log(
+    'Performance budget monitoring is primarily a build-time concern.'
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -315,7 +322,10 @@ function initializeMemoryMonitoring() {
     memory: PerformanceMemory;
   }
 
-  if ('performance' in window && 'memory' in (window.performance as PerformanceWithMemory)) {
+  if (
+    'performance' in window &&
+    'memory' in (window.performance as PerformanceWithMemory)
+  ) {
     const memoryInfo = (window.performance as PerformanceWithMemory).memory;
     recordCustomMetric({
       name: 'js_heap_size_limit',
@@ -337,7 +347,9 @@ function initializeMemoryMonitoring() {
     });
     console.log('Client-side memory monitoring initialized.');
   } else {
-    console.warn('Client-side memory monitoring (performance.memory) not supported in this browser.');
+    console.warn(
+      'Client-side memory monitoring (performance.memory) not supported in this browser.'
+    );
   }
 }
 
@@ -349,7 +361,9 @@ function initializeMemoryMonitoring() {
  * Initializes the comprehensive performance monitoring system.
  * Should be called once at application startup.
  */
-export function initializePerformanceMonitoring(opts?: Partial<PerformanceMonitoringOptions>) {
+export function initializePerformanceMonitoring(
+  opts?: Partial<PerformanceMonitoringOptions>
+) {
   if (isInitialized) {
     console.warn('Performance monitoring already initialized.');
     return;
@@ -365,7 +379,7 @@ export function initializePerformanceMonitoring(opts?: Partial<PerformanceMonito
   console.log('Initializing comprehensive performance monitoring...');
 
   // Initialize all sub-components
-  initializeWebVitalsTracking();
+  registerWebVitals();
   initializeCustomMetricsReporting();
   initializeDatabaseQueryMonitoring();
   initializeApiResponseMonitoring();
@@ -449,51 +463,36 @@ export function collectPerformanceDashboardData() {
 /**
  * Measures the execution time of an async function and records it as a custom metric.
  */
-export async function measurePerformance<T>(
+export async function measureOperation<T>(
   name: string,
-  func: () => Promise<T>,
-  tags?: Record<string, string>
+  operation: () => Promise<T>,
+  tags: Record<string, string | number | boolean> = {}
 ): Promise<T> {
-  if (!options.enabled) {
-    return func(); // Execute function without measuring if monitoring is disabled
-  }
+  if (!options.enabled) return operation();
 
-  const startTime = performance.now();
-  let result: T;
-  let error: Error | undefined;
-
+  const start = Date.now();
   try {
-    result = await func();
-  } catch (e) {
-    error = e instanceof Error ? e : new Error(String(e));
-    Sentry.captureException(error, { tags: { operation: name, ...tags } });
-    throw error; // Re-throw the error after capturing
-  } finally {
-    const duration = performance.now() - startTime;
-    recordCustomMetric({
-      name: `${name}_duration`,
-      value: duration,
-      unit: 'ms',
-      tags: { ...tags, status: error ? 'failed' : 'success' },
+    return await operation();
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { feature: 'measure_operation', operation: name, ...tags },
     });
-
-    Sentry.startSpan(
-      {
-        name: name,
-        op: 'custom_operation',
-        description: `Execution of ${name}`,
-        data: {
-          duration_ms: duration,
-          status: error ? 'failed' : 'success',
+    throw error;
+  } finally {
+    const duration = Date.now() - start;
+    if (options.sendCustomMetricsToSentry) {
+      Sentry.captureMessage(`operation: ${name} - ${duration}ms`, {
+        tags: {
+          custom_operation: true,
+          operation: name,
           ...tags,
         },
-      },
-      (span) => {
-        span.end();
-      }
-    );
+        extra: {
+          duration_ms: duration,
+        },
+      });
+    }
   }
-  return result;
 }
 
 // ----------------------------------------------------------------------------
@@ -522,13 +521,18 @@ const defaultAlertThresholds: PerformanceAlertThresholds = {
 /**
  * Checks metrics against thresholds and triggers alerts if needed
  */
-export function checkPerformanceAlerts(thresholds: PerformanceAlertThresholds = defaultAlertThresholds) {
+export function checkPerformanceAlerts(
+  thresholds: PerformanceAlertThresholds = defaultAlertThresholds
+) {
   if (!options.enabled) return;
 
   try {
     // Check cache hit rate
     const cacheMetrics = getCacheMetrics();
-    if (thresholds.cacheHitRate && cacheMetrics.hitRate < thresholds.cacheHitRate) {
+    if (
+      thresholds.cacheHitRate &&
+      cacheMetrics.hitRate < thresholds.cacheHitRate
+    ) {
       triggerPerformanceAlert('Cache hit rate below threshold', {
         current: cacheMetrics.hitRate,
         threshold: thresholds.cacheHitRate,
@@ -547,12 +551,19 @@ export function checkPerformanceAlerts(thresholds: PerformanceAlertThresholds = 
       memory: PerformanceMemory;
     }
 
-    if (typeof window !== 'undefined' && 'performance' in window && 
-        'memory' in (window.performance as PerformanceWithMemory)) {
+    if (
+      typeof window !== 'undefined' &&
+      'performance' in window &&
+      'memory' in (window.performance as PerformanceWithMemory)
+    ) {
       const memoryInfo = (window.performance as PerformanceWithMemory).memory;
-      const memoryUsagePercentage = (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
-      
-      if (thresholds.memoryUsagePercentage && memoryUsagePercentage > thresholds.memoryUsagePercentage) {
+      const memoryUsagePercentage =
+        (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
+
+      if (
+        thresholds.memoryUsagePercentage &&
+        memoryUsagePercentage > thresholds.memoryUsagePercentage
+      ) {
         triggerPerformanceAlert('Memory usage above threshold', {
           current: memoryUsagePercentage,
           threshold: thresholds.memoryUsagePercentage,
@@ -571,7 +582,10 @@ export function checkPerformanceAlerts(thresholds: PerformanceAlertThresholds = 
 /**
  * Triggers a performance alert through Sentry and potentially other channels
  */
-function triggerPerformanceAlert(message: string, data: Record<string, unknown>) {
+function triggerPerformanceAlert(
+  message: string,
+  data: Record<string, unknown>
+) {
   // Send to Sentry as a high-priority event
   Sentry.captureMessage(message, {
     level: 'warning',

@@ -11,6 +11,7 @@ import {
   createBackgroundCacheManager,
   CachePerformanceMonitor,
 } from '~/lib/background-cache';
+import { ToastProvider, Toaster } from '~/components/ui/toast';
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') {
@@ -150,11 +151,14 @@ export function Providers({ children }: { children: ReactNode }) {
     <ErrorBoundary>
       <api.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          {children}
-          {/* Add React Query DevTools in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
+          <ToastProvider>
+            {children}
+            <Toaster />
+            {/* Add React Query DevTools in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
+          </ToastProvider>
         </QueryClientProvider>
       </api.Provider>
     </ErrorBoundary>
