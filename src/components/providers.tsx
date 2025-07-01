@@ -6,12 +6,13 @@ import { httpBatchLink, loggerLink } from '@trpc/client';
 import { useState, useEffect, type ReactNode } from 'react';
 import superjson from 'superjson';
 import { api } from '~/lib/trpc';
-import { ErrorBoundary } from './error-boundary';
+import { PageErrorBoundary } from './error';
 import {
   createBackgroundCacheManager,
   CachePerformanceMonitor,
 } from '~/lib/background-cache';
 import { ToastProvider, Toaster } from '~/components/ui/toast';
+import { initializeServiceMonitoring } from '~/lib/service-integrations';
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') {
@@ -116,8 +117,11 @@ export function Providers({ children }: { children: ReactNode }) {
     })
   );
 
-  // Set up background cache management
+  // Set up background cache management and service monitoring
   useEffect(() => {
+    // Initialize service monitoring in development
+    initializeServiceMonitoring();
+
     const cacheManager = createBackgroundCacheManager(queryClient);
     const performanceMonitor = new CachePerformanceMonitor(queryClient);
 
@@ -148,7 +152,12 @@ export function Providers({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   return (
-    <ErrorBoundary>
+    <PageErrorBoundary
+      showReportDialog={true}
+      onError={(error, errorInfo) => {
+        console.error('Application-level error:', error, errorInfo);
+      }}
+    >
       <api.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
@@ -161,6 +170,6 @@ export function Providers({ children }: { children: ReactNode }) {
           </ToastProvider>
         </QueryClientProvider>
       </api.Provider>
-    </ErrorBoundary>
+    </PageErrorBoundary>
   );
 }

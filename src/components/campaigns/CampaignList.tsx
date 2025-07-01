@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CampaignCard, CampaignCardData } from './CampaignCard';
+import { SectionErrorBoundary } from '~/components/error';
 
 export interface CampaignListProps {
   campaigns: CampaignCardData[];
@@ -24,7 +25,7 @@ export function CampaignList({
 
   const handleLoadMore = async () => {
     if (!onLoadMore || loadingMore) return;
-    
+
     setLoadingMore(true);
     try {
       await onLoadMore();
@@ -38,7 +39,10 @@ export function CampaignList({
       <div className="space-y-4">
         {/* Loading skeletons */}
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+          <div
+            key={i}
+            className="bg-white rounded-lg shadow-md border border-gray-200 p-6"
+          >
             <div className="animate-pulse">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -89,8 +93,12 @@ export function CampaignList({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">{emptyMessage}</h3>
-        <p className="text-gray-600 mb-6 max-w-md mx-auto">{emptyDescription}</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          {emptyMessage}
+        </h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          {emptyDescription}
+        </p>
         <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
           Create Campaign
         </button>
@@ -103,7 +111,16 @@ export function CampaignList({
       {/* Campaign Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {campaigns.map((campaign) => (
-          <CampaignCard key={campaign.id} campaign={campaign} />
+          <SectionErrorBoundary
+            key={campaign.id}
+            fallback={
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p className="text-red-600 text-sm">Failed to load campaign</p>
+              </div>
+            }
+          >
+            <CampaignCard campaign={campaign} />
+          </SectionErrorBoundary>
         ))}
       </div>
 
@@ -131,7 +148,10 @@ export function CampaignList({
       {loadingMore && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <div
+              key={i}
+              className="bg-white rounded-lg shadow-md border border-gray-200 p-6"
+            >
               <div className="animate-pulse">
                 <div className="h-5 bg-gray-300 rounded w-3/4 mb-4"></div>
                 <div className="space-y-2 mb-4">
