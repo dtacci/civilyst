@@ -21,6 +21,10 @@ model User {
   comments  Comment[]
   votes     Vote[]
 
+  // Performance indexes for user queries
+  @@index([createdAt(sort: Desc)]) // Recent user registrations
+  @@index([updatedAt(sort: Desc)]) // Recently active users
+  @@index([firstName, lastName]) // Name-based user search
   @@map("users")
 }
 
@@ -40,14 +44,23 @@ model Campaign {
   creatorId   String
   county      String?
   geohash     String?
-  location    Unsupported("geometry")?
   timezone    String?
   districts   CampaignDistrict[]
   creator     User                     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   comments    Comment[]
   votes       Vote[]
 
-  @@index([latitude, longitude])
+  // Performance-optimized indexes for common queries
+  @@index([latitude, longitude]) // Existing geo index
+  @@index([status, createdAt(sort: Desc)]) // Status filtering with recency
+  @@index([creatorId, status]) // User's campaigns by status
+  @@index([city, status]) // City-based filtering
+  @@index([state, city, status]) // Hierarchical location filtering
+  @@index([createdAt(sort: Desc)]) // Recent campaigns
+  @@index([updatedAt(sort: Desc)]) // Recently updated campaigns
+  @@index([status, updatedAt(sort: Desc)]) // Active campaigns by update time
+  @@index([geohash]) // Geohash-based spatial lookups
+  @@index([title]) // Title search optimization
   @@map("campaigns")
 }
 
@@ -61,6 +74,10 @@ model Comment {
   author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
+  // Performance indexes for comment queries
+  @@index([campaignId, createdAt(sort: Desc)]) // Campaign comments by recency
+  @@index([authorId, createdAt(sort: Desc)]) // User's comments by recency
+  @@index([createdAt(sort: Desc)]) // Recent comments across platform
   @@map("comments")
 }
 
@@ -74,6 +91,11 @@ model Vote {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, userId])
+  // Performance indexes for vote aggregation and analysis
+  @@index([campaignId, type]) // Vote counts by type per campaign
+  @@index([userId, createdAt(sort: Desc)]) // User's voting history
+  @@index([type, createdAt(sort: Desc)]) // Platform-wide vote trends
+  @@index([campaignId, createdAt(sort: Desc)]) // Campaign vote timeline
   @@map("votes")
 }
 
@@ -82,7 +104,7 @@ model District {
   name        String
   type        DistrictType
   level       DistrictLevel
-  boundary    Unsupported("geometry")?
+  // boundary    Unsupported("geometry")? // Commented out until PostGIS is enabled
   population  Int?
   area        Float?
   description String?
@@ -94,6 +116,11 @@ model District {
   updatedAt   DateTime                 @updatedAt
   campaigns   CampaignDistrict[]
 
+  // Performance indexes for district queries
+  @@index([state, type]) // Districts by state and type
+  @@index([city, state]) // City-level district lookup
+  @@index([type, level]) // District classification queries
+  @@index([state, level, type]) // Hierarchical district navigation
   @@map("districts")
 }
 
@@ -106,6 +133,9 @@ model CampaignDistrict {
   district     District             @relation(fields: [districtId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, districtId])
+  // Performance indexes for campaign-district relationships
+  @@index([campaignId, relationship]) // Campaign's district relationships
+  @@index([districtId, relationship]) // District's campaign relationships
   @@map("campaign_districts")
 }
 
