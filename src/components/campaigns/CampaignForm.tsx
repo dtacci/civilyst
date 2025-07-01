@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LocationPicker } from '~/components/map';
 import { GeocodeResult } from '~/lib/geocoding';
+import Image from 'next/image';
 
 export interface CampaignFormData {
   title: string;
@@ -199,10 +200,13 @@ export function CampaignForm({
         {watchedImages && watchedImages.length > 0 && (
           <div className="mt-4 grid grid-cols-3 gap-3">
             {watchedImages.map((url) => (
-              <img
+              <Image
                 key={url}
                 src={url}
                 alt="campaign upload preview"
+                width={192}
+                height={96}
+                priority={false}
                 className="h-24 w-full object-cover rounded-lg border"
               />
             ))}

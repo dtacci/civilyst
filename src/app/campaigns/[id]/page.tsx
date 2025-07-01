@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '~/lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsSection } from '~/components/comments';
+import Image from 'next/image';
 
 interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
@@ -155,10 +156,13 @@ export default function CampaignDetailPage({
             {/* Creator Info */}
             <div className="flex items-center mb-6">
               {campaign.creator?.imageUrl ? (
-                <img
+                <Image
                   src={campaign.creator.imageUrl}
                   alt={`${campaign.creator.firstName} ${campaign.creator.lastName}`}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full mr-3"
+                  priority={false}
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
