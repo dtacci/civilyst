@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '~/lib/trpc';
+import Image from 'next/image';
 
 export interface CommentData {
   id: string;
@@ -94,9 +95,12 @@ export function Comment({
         {/* Avatar */}
         <div className="flex-shrink-0">
           {comment.author.imageUrl ? (
-            <img
+            <Image
               src={comment.author.imageUrl}
               alt={authorName}
+              width={32}
+              height={32}
+              priority={false}
               className="w-8 h-8 rounded-full"
             />
           ) : (

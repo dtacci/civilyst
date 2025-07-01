@@ -16,6 +16,25 @@ const eslintConfig = [
       ".next/**/*",
       "src/generated/**/*",
       "node_modules/**/*",
+      // --- additional ignore patterns migrated from legacy `.eslintignore` ---
+      //
+      // Build / output directories
+      ".next/",          // framework output
+      "out/",            // static export output
+      "dist/",           // any compiled output
+
+      // PWA-generated assets (produced by next-pwa / workbox)
+      "public/sw.js",
+      "public/workbox-*.js",
+      "public/fallback-*.js",
+
+      // Environment & configuration artefacts
+      ".env*",          // all env files (.env, .env.local, etc.)
+
+      // IDE folders
+      ".vscode/",
+      ".idea/",
+
       "*.js",
       "*.mjs",
       "*.cjs"

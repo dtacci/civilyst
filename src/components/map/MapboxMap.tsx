@@ -46,7 +46,7 @@ export function MapboxMap({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   /** keep the latest onLocationSelect without re-initialising the map */
-  const onLocationSelectRef = useRef<typeof onLocationSelect>();
+  const onLocationSelectRef = useRef<typeof onLocationSelect>(undefined);
   // update ref when prop changes
   useEffect(() => {
     onLocationSelectRef.current = onLocationSelect;

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { CampaignStatus } from '~/generated/prisma';
 
@@ -141,10 +142,13 @@ export function CampaignCard({
             {showCreator && campaign.creator && (
               <div className="flex items-center text-sm text-gray-600">
                 {campaign.creator.imageUrl ? (
-                  <img
+                  <Image
                     src={campaign.creator.imageUrl}
                     alt={`${campaign.creator.firstName} ${campaign.creator.lastName}`}
+                    width={24}
+                    height={24}
                     className="w-6 h-6 rounded-full mr-2"
+                    priority={false}
                   />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-gray-300 mr-2 flex items-center justify-center">
