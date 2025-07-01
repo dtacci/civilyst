@@ -1,7 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from '~/components/ui/button';
-import { useToast } from '~/components/ui/use-toast'; // Assuming useToast is available
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -91,7 +90,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Oops! Something went wrong.
               </h2>
               <p className="mb-6 text-gray-700">
-                We're sorry for the inconvenience. Our team has been notified.
+                We&apos;re sorry for the inconvenience. Our team has been notified.
                 Please try one of the options below.
               </p>
 

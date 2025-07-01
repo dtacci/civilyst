@@ -1,7 +1,6 @@
 import { getCLS, getFID, getLCP, getTTFB, getFCP, type Metric } from 'web-vitals';
 import * as Sentry from '@sentry/nextjs';
-import { getCacheMetrics, getRedisClient, isRedisAvailable } from '~/lib/cache';
-import { db } from '~/lib/db'; // Assuming Prisma client is available
+import { getCacheMetrics, isRedisAvailable } from '~/lib/cache';
 
 // ----------------------------------------------------------------------------
 // Types and Interfaces
@@ -175,45 +174,11 @@ export function getCustomMetric(name: string): CustomMetric | undefined {
  * This function assumes Prisma's `$on` method is available for logging queries.
  */
 function initializeDatabaseQueryMonitoring() {
-  if (!options.enabled || !options.monitorDatabaseQueries || !db) return;
-
-  try {
-    // Prisma's $on method can be used to listen for query events
-    // Note: This might require specific Prisma client configuration (e.g., log: ['query'])
-    // and might not be available in all environments (e.g., Edge functions).
-    // For more robust monitoring, consider Sentry's Prisma integration or custom middleware.
-    (db as any).$on('query', (event: any) => {
-      Sentry.startSpan(
-        {
-          name: 'db.query',
-          op: 'db.query',
-          description: event.query,
-          data: {
-            params: event.params,
-            duration: event.duration, // duration in ms
-            target: event.target,
-          },
-          tags: {
-            db_provider: 'postgresql', // Assuming PostgreSQL for Supabase
-            db_operation: event.query.split(' ')[0].toLowerCase(), // e.g., select, insert, update
-          },
-        },
-        (span) => {
-          span.end();
-        }
-      );
-      recordCustomMetric({
-        name: 'db_query_duration',
-        value: event.duration,
-        unit: 'ms',
-        tags: { operation: event.query.split(' ')[0].toLowerCase() },
-      });
-    });
-    console.log('Database query monitoring initialized.');
-  } catch (error) {
-    console.warn('Failed to initialize database query monitoring (Prisma $on might not be available or configured):', error);
-    // Sentry.captureException(error, { tags: { feature: 'db_monitoring_init' } });
-  }
+  // Database monitoring disabled – Prisma client not available in this build.
+  if (!options.enabled || !options.monitorDatabaseQueries) return;
+  console.info(
+    '[performance] Database query monitoring is disabled (no Prisma client present).'
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -340,8 +305,18 @@ function initializePerformanceBudgetMonitoring() {
 function initializeMemoryMonitoring() {
   if (!options.enabled || typeof window === 'undefined') return;
 
-  if ('performance' in window && 'memory' in (window.performance as any)) {
-    const memoryInfo = (window.performance as any).memory;
+  interface PerformanceMemory {
+    jsHeapSizeLimit: number;
+    totalJSHeapSize: number;
+    usedJSHeapSize: number;
+  }
+
+  interface PerformanceWithMemory extends Performance {
+    memory: PerformanceMemory;
+  }
+
+  if ('performance' in window && 'memory' in (window.performance as PerformanceWithMemory)) {
+    const memoryInfo = (window.performance as PerformanceWithMemory).memory;
     recordCustomMetric({
       name: 'js_heap_size_limit',
       value: memoryInfo.jsHeapSizeLimit,
@@ -562,8 +537,19 @@ export function checkPerformanceAlerts(thresholds: PerformanceAlertThresholds = 
     }
 
     // Check memory usage (client-side only)
-    if (typeof window !== 'undefined' && 'performance' in window && 'memory' in (window.performance as any)) {
-      const memoryInfo = (window.performance as any).memory;
+    interface PerformanceMemory {
+      jsHeapSizeLimit: number;
+      totalJSHeapSize: number;
+      usedJSHeapSize: number;
+    }
+
+    interface PerformanceWithMemory extends Performance {
+      memory: PerformanceMemory;
+    }
+
+    if (typeof window !== 'undefined' && 'performance' in window && 
+        'memory' in (window.performance as PerformanceWithMemory)) {
+      const memoryInfo = (window.performance as PerformanceWithMemory).memory;
       const memoryUsagePercentage = (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
       
       if (thresholds.memoryUsagePercentage && memoryUsagePercentage > thresholds.memoryUsagePercentage) {
@@ -585,15 +571,15 @@ export function checkPerformanceAlerts(thresholds: PerformanceAlertThresholds = 
 /**
  * Triggers a performance alert through Sentry and potentially other channels
  */
-function triggerPerformanceAlert(message: string, data: Record<string, any>) {
+function triggerPerformanceAlert(message: string, data: Record<string, unknown>) {
   // Send to Sentry as a high-priority event
   Sentry.captureMessage(message, {
     level: 'warning',
     tags: {
       alert_type: 'performance',
-      current_value: data.current,
-      threshold: data.threshold,
-      unit: data.unit,
+      current_value: data.current as number,
+      threshold: data.threshold as number,
+      unit: data.unit as string,
     },
     extra: data,
   });
