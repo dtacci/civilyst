@@ -80,19 +80,9 @@ export interface CacheMetrics {
 // Redis client instance (singleton)
 let redisClient: Redis | null = null;
 
-// Simple development bypass - check if Redis is configured
-const isRedisConfigured = () => {
-  return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
-};
 
-// Development bypass for Redis operations
-const shouldUseRedis = () => {
-  // Always skip Redis in development if not configured
-  if (process.env.NODE_ENV === 'development' && !isRedisConfigured()) {
-    return false;
-  }
-  return isRedisConfigured();
-};
+
+
 
 /**
  * Cache metrics tracking
