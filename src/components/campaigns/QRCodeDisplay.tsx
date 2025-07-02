@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Download, Share2, Copy, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -37,15 +37,18 @@ export function QRCodeDisplay({
   const [error, setError] = useState<string>('');
   const [displayFormat, setDisplayFormat] = useState<'png' | 'svg'>('png');
 
-  const qrData: CampaignQRCodeData = {
-    campaignId,
-    campaignTitle,
-    baseUrl,
-    metadata: {
-      organizationName: 'Civilyst',
-      trackingCode: `qr-${campaignId}-${Date.now()}`,
-    },
-  };
+  const qrData = useMemo(
+    (): CampaignQRCodeData => ({
+      campaignId,
+      campaignTitle,
+      baseUrl,
+      metadata: {
+        organizationName: 'Civilyst',
+        trackingCode: `qr-${campaignId}-${Date.now()}`,
+      },
+    }),
+    [campaignId, campaignTitle, baseUrl]
+  );
 
   const generateQRCode = useCallback(async () => {
     if (!campaignId || !campaignTitle) return;
@@ -80,7 +83,7 @@ export function QRCodeDisplay({
     } finally {
       setIsLoading(false);
     }
-  }, [campaignId, campaignTitle, baseUrl, size, onError, onGenerated, qrData]);
+  }, [campaignId, campaignTitle, size, onError, onGenerated, qrData]);
 
   useEffect(() => {
     generateQRCode();
@@ -124,7 +127,7 @@ export function QRCodeDisplay({
     } else {
       handleCopyUrl();
     }
-  }, [campaignId, campaignTitle, handleCopyUrl]);
+  }, [baseUrl, campaignId, campaignTitle, handleCopyUrl]);
 
   if (error) {
     return (

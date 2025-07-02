@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { api } from '~/lib/trpc';
 import { CampaignStatus } from '~/generated/prisma';
+import { PushNotificationSettings } from '~/components/pwa';
 
 export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'ALL'>(
@@ -135,6 +136,11 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Push Notification Settings */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <PushNotificationSettings className="mb-6" />
       </div>
 
       {/* Filters */}

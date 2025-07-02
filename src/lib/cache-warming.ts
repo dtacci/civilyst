@@ -824,7 +824,6 @@ export async function warmActiveUserProfiles(): Promise<WarmingResult> {
           where: { id },
           select: {
             id: true,
-            clerkId: true,
             firstName: true,
             lastName: true,
             email: true,

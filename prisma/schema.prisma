@@ -9,75 +9,85 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  clerkId   String     @unique
-  email     String     @unique
-  firstName String?
-  lastName  String?
-  imageUrl  String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  campaigns Campaign[]
-  comments  Comment[]
-  votes     Vote[]
+  id                String   @id @default(cuid())
+  firstName         String?
+  lastName          String?
+  email             String   @unique
+  imageUrl          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relationships
+  campaigns         Campaign[]
+  votes             Vote[]
+  comments          Comment[]
+  pushSubscriptions PushSubscription[]
 
   // Performance indexes for user queries
-  @@index([createdAt(sort: Desc)]) // Recent user registrations
-  @@index([updatedAt(sort: Desc)]) // Recently active users
-  @@index([firstName, lastName]) // Name-based user search
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([firstName, lastName])
   @@map("users")
 }
 
 model Campaign {
-  id          String                   @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   description String
-  status      CampaignStatus           @default(DRAFT)
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
+  status      CampaignStatus @default(DRAFT)
+  
+  // Location data
   latitude    Float?
   longitude   Float?
   address     String?
   city        String?
   state       String?
   zipCode     String?
-  creatorId   String
-  county      String?
   geohash     String?
-  timezone    String?
-  districts   CampaignDistrict[]
-  creator     User                     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  comments    Comment[]
+  
+  // Media
+  imageUrl    String?
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   String
+  
+  // Relationships
+  creator     User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   votes       Vote[]
+  comments    Comment[]
+  districts   CampaignDistrict[]
 
   // Performance-optimized indexes for common queries
-  @@index([latitude, longitude]) // Existing geo index
-  @@index([status, createdAt(sort: Desc)]) // Status filtering with recency
-  @@index([creatorId, status]) // User's campaigns by status
-  @@index([city, status]) // City-based filtering
-  @@index([state, city, status]) // Hierarchical location filtering
-  @@index([createdAt(sort: Desc)]) // Recent campaigns
-  @@index([updatedAt(sort: Desc)]) // Recently updated campaigns
-  @@index([status, updatedAt(sort: Desc)]) // Active campaigns by update time
-  @@index([geohash]) // Geohash-based spatial lookups
-  @@index([title]) // Title search optimization
+  @@index([status, createdAt])
+  @@index([creatorId, status])
+  @@index([city, status])
+  @@index([state, city, status])
+  @@index([geohash])
+  @@index([title])
+  @@index([latitude, longitude])
+  @@index([createdAt])
+  @@index([updatedAt])
   @@map("campaigns")
 }
 
 model Comment {
-  id         String   @id @default(cuid())
-  content    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
   campaignId String
   authorId   String
-  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   // Performance indexes for comment queries
-  @@index([campaignId, createdAt(sort: Desc)]) // Campaign comments by recency
-  @@index([authorId, createdAt(sort: Desc)]) // User's comments by recency
-  @@index([createdAt(sort: Desc)]) // Recent comments across platform
+  @@index([campaignId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([createdAt])
   @@map("comments")
 }
 
@@ -85,58 +95,79 @@ model Vote {
   id         String   @id @default(cuid())
   type       VoteType
   createdAt  DateTime @default(now())
+  
+  // Relationships
   campaignId String
   userId     String
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  
   @@unique([campaignId, userId])
   // Performance indexes for vote aggregation and analysis
-  @@index([campaignId, type]) // Vote counts by type per campaign
-  @@index([userId, createdAt(sort: Desc)]) // User's voting history
-  @@index([type, createdAt(sort: Desc)]) // Platform-wide vote trends
-  @@index([campaignId, createdAt(sort: Desc)]) // Campaign vote timeline
+  @@index([campaignId, type])
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
   @@map("votes")
 }
 
 model District {
-  id          String                   @id @default(cuid())
-  name        String
-  type        DistrictType
-  level       DistrictLevel
-  // boundary    Unsupported("geometry")? // Commented out until PostGIS is enabled
-  population  Int?
-  area        Float?
-  description String?
-  city        String?
-  state       String
-  county      String?
-  zipCodes    String[]
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  campaigns   CampaignDistrict[]
+  id       String   @id @default(cuid())
+  name     String
+  type     DistrictType
+  state    String?
+  
+  // Geographic data
+  boundary Json?    // GeoJSON polygon
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  campaigns CampaignDistrict[]
 
   // Performance indexes for district queries
-  @@index([state, type]) // Districts by state and type
-  @@index([city, state]) // City-level district lookup
-  @@index([type, level]) // District classification queries
-  @@index([state, level, type]) // Hierarchical district navigation
+  @@index([state, type])
+  @@index([type])
   @@map("districts")
 }
 
 model CampaignDistrict {
-  id           String               @id @default(cuid())
-  campaignId   String
-  districtId   String
-  relationship DistrictRelationship @default(WITHIN)
-  campaign     Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  district     District             @relation(fields: [districtId], references: [id], onDelete: Cascade)
-
+  id         String   @id @default(cuid())
+  campaignId String
+  districtId String
+  
+  // Relationships
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  
   @@unique([campaignId, districtId])
   // Performance indexes for campaign-district relationships
-  @@index([campaignId, relationship]) // Campaign's district relationships
-  @@index([districtId, relationship]) // District's campaign relationships
+  @@index([campaignId])
+  @@index([districtId])
   @@map("campaign_districts")
+}
+
+model PushSubscription {
+  id               String   @id @default(cuid())
+  userId           String
+  endpoint         String
+  p256dh           String?
+  auth             String?
+  userAgent        String?
+  subscriptionData String?  // JSON string of full subscription object
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  lastUpdated      DateTime @updatedAt
+  
+  // Relationships
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@index([isActive])
+  @@index([createdAt])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -161,29 +192,10 @@ enum VoteType {
 }
 
 enum DistrictType {
-  CITY_COUNCIL
-  WARD
-  NEIGHBORHOOD
-  SCHOOL_DISTRICT
-  COUNTY
-  STATE_HOUSE
-  STATE_SENATE
   CONGRESSIONAL
-  PLANNING_ZONE
-  VOTING_PRECINCT
-}
-
-enum DistrictLevel {
-  NEIGHBORHOOD
-  MUNICIPAL
+  STATE_SENATE
+  STATE_HOUSE
   COUNTY
-  STATE
-  FEDERAL
-}
-
-enum DistrictRelationship {
-  WITHIN
-  INTERSECTS
-  NEARBY
-  AFFECTS
+  CITY
+  SCHOOL
 }

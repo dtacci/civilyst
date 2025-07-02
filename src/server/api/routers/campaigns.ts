@@ -89,19 +89,15 @@ export const campaignsRouter = createTRPCRouter({
       }
 
       /**
-       * Convert the Clerk user-id to an internal `User` record.
-       * If the user already exists we use it; otherwise we create
-       * a minimal placeholder row.  Additional user details can be
-       * filled in later when profile endpoints are implemented.
+       * Ensure user exists in our database
+       * This is a safeguard for cases where Clerk creates a user but our webhook hasn't fired yet
        */
       const internalUser = await db.user.upsert({
-        where: { clerkId: ctx.userId },
+        where: { id: ctx.userId },
         update: {},
         create: {
-          clerkId: ctx.userId,
-          // We need a unique email for NOT-NULL constraint; use a placeholder.
-          // This can be updated once we fetch real email from Clerk.
-          email: `${ctx.userId}@placeholder.local`,
+          id: ctx.userId,
+          email: `${ctx.userId}@temp.local`, // Temporary email until webhook provides real data
         },
       });
 
@@ -375,22 +371,9 @@ export const campaignsRouter = createTRPCRouter({
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
 
-      // 2. Resolve internal user record
-      const internalUser = await db.user.findUnique({
-        where: { clerkId: ctx.userId },
-        select: { id: true },
-      });
-
-      if (!internalUser) {
-        // User hasn't been upserted yet – treat as unauthorized
-        throw new TRPCError({ code: 'UNAUTHORIZED' });
-      }
-
-      const { id, ...updateData } = input;
-
-      // 3. Ensure campaign exists and ownership matches
+      // 2. Ensure campaign exists and ownership matches
       const existingCampaign = await db.campaign.findUnique({
-        where: { id },
+        where: { id: input.id },
         select: { creatorId: true },
       });
 
@@ -401,7 +384,7 @@ export const campaignsRouter = createTRPCRouter({
         });
       }
 
-      if (existingCampaign.creatorId !== internalUser.id) {
+      if (existingCampaign.creatorId !== ctx.userId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not campaign owner',
@@ -410,15 +393,15 @@ export const campaignsRouter = createTRPCRouter({
 
       // 4. Update campaign
       const updated = await db.campaign.update({
-        where: { id },
+        where: { id: input.id },
         data: {
-          ...updateData,
+          ...input,
           updatedAt: new Date(),
         },
       });
 
       // 5. Invalidate caches for this campaign
-      await invalidateCampaignCache(id);
+      await invalidateCampaignCache(input.id);
 
       return updated;
     }),
@@ -432,18 +415,7 @@ export const campaignsRouter = createTRPCRouter({
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
 
-      // 2. Resolve internal user record (creates placeholder if missing)
-      const internalUser = await db.user.upsert({
-        where: { clerkId: ctx.userId },
-        update: {},
-        create: {
-          clerkId: ctx.userId,
-          email: `${ctx.userId}@placeholder.local`,
-        },
-        select: { id: true },
-      });
-
-      // 3. Ensure campaign exists and is owned by current user
+      // 2. Ensure campaign exists and is owned by current user
       const campaign = await db.campaign.findUnique({
         where: { id: input.id },
         select: { creatorId: true },
@@ -456,7 +428,7 @@ export const campaignsRouter = createTRPCRouter({
         });
       }
 
-      if (campaign.creatorId !== internalUser.id) {
+      if (campaign.creatorId !== ctx.userId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not campaign owner',
@@ -488,11 +460,11 @@ export const campaignsRouter = createTRPCRouter({
 
       // 2. Ensure we have an internal user record
       const internalUser = await db.user.upsert({
-        where: { clerkId: ctx.userId },
+        where: { id: ctx.userId },
         update: {},
         create: {
-          clerkId: ctx.userId,
-          email: `${ctx.userId}@placeholder.local`,
+          id: ctx.userId,
+          email: `${ctx.userId}@temp.local`, // Temporary email until webhook provides real data
         },
         select: { id: true },
       });
@@ -539,19 +511,8 @@ export const campaignsRouter = createTRPCRouter({
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
 
-      // 2. Ensure we have an internal user record (create placeholder if missing)
-      const internalUser = await db.user.upsert({
-        where: { clerkId: ctx.userId },
-        update: {},
-        create: {
-          clerkId: ctx.userId,
-          email: `${ctx.userId}@placeholder.local`,
-        },
-        select: { id: true },
-      });
-
       // Generate cache key for user's campaigns
-      const cacheKey = `${CACHE_PREFIX.USER}:${internalUser.id}:campaigns:${input.status || 'all'}:${input.limit}:${input.cursor || 'start'}`;
+      const cacheKey = `${CACHE_PREFIX.USER}:${ctx.userId}:campaigns:${input.status || 'all'}:${input.limit}:${input.cursor || 'start'}`;
 
       // Try to get from cache first, with fallback to database
       const result = await getCacheWithFallback(
@@ -559,7 +520,7 @@ export const campaignsRouter = createTRPCRouter({
         async () => {
           // 3. Build where-clause
           const whereClause: Record<string, unknown> = {
-            creatorId: internalUser.id,
+            creatorId: ctx.userId,
           };
           if (input.status) {
             whereClause.status = input.status;
