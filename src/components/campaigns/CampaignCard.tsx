@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { MapPin, User, ThumbsUp, MessageCircle } from 'lucide-react';
 import { CampaignStatus } from '~/generated/prisma';
 import { Card, CardContent } from '~/components/ui/card';
+import { SocialShare } from '~/components/ui/social-share';
 import { cn } from '~/lib/utils';
 
 export interface CampaignCardData {
@@ -45,8 +46,6 @@ export function CampaignCard({
   compact = false,
   className,
 }: CampaignCardProps) {
-
-
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -63,19 +62,35 @@ export function CampaignCard({
   };
 
   const getStatusStyles = (status: string) => {
-    const baseStyles = "inline-flex items-center px-3 py-1 rounded-[--border-radius-full] text-[--font-size-xs] font-medium transition-colors duration-[--duration-normal]";
-    
+    const baseStyles =
+      'inline-flex items-center px-3 py-1 rounded-[--border-radius-full] text-[--font-size-xs] font-medium transition-colors duration-[--duration-normal]';
+
     switch (status) {
       case 'ACTIVE':
-        return cn(baseStyles, "bg-[--color-accent-light] text-[--color-accent] border border-[--color-accent]");
+        return cn(
+          baseStyles,
+          'bg-[--color-accent-light] text-[--color-accent] border border-[--color-accent]'
+        );
       case 'DRAFT':
-        return cn(baseStyles, "bg-[--color-warning-light] text-[--color-warning] border border-[--color-warning]");
+        return cn(
+          baseStyles,
+          'bg-[--color-warning-light] text-[--color-warning] border border-[--color-warning]'
+        );
       case 'COMPLETED':
-        return cn(baseStyles, "bg-[--color-primary-light] text-[--color-primary] border border-[--color-primary]");
+        return cn(
+          baseStyles,
+          'bg-[--color-primary-light] text-[--color-primary] border border-[--color-primary]'
+        );
       case 'CANCELLED':
-        return cn(baseStyles, "bg-[--color-danger-light] text-[--color-danger] border border-[--color-danger]");
+        return cn(
+          baseStyles,
+          'bg-[--color-danger-light] text-[--color-danger] border border-[--color-danger]'
+        );
       default:
-        return cn(baseStyles, "bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border]");
+        return cn(
+          baseStyles,
+          'bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border]'
+        );
     }
   };
 
@@ -87,7 +102,7 @@ export function CampaignCard({
   const maxDescriptionLength = compact ? 120 : 200;
 
   return (
-    <Link 
+    <Link
       href={`/campaigns/${campaign.id}`}
       className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-border-focus] focus-visible:ring-offset-2 rounded-[--border-radius-lg]"
     >
@@ -95,27 +110,30 @@ export function CampaignCard({
         interactive
         ripple
         className={cn(
-          "h-full transition-all duration-[--duration-normal]",
-          "group-hover:shadow-[--shadow-elevated] group-hover:-translate-y-1",
-          "group-active:translate-y-0 group-active:shadow-[--shadow-touch]",
-          "border-[--color-border] bg-[--color-surface-elevated]",
-          compact && "p-3",
+          'h-full transition-all duration-[--duration-normal]',
+          'group-hover:shadow-[--shadow-elevated] group-hover:-translate-y-1',
+          'group-active:translate-y-0 group-active:shadow-[--shadow-touch]',
+          'border-[--color-border] bg-[--color-surface-elevated]',
+          compact && 'p-3',
           className
         )}
         size={compact ? 'sm' : 'default'}
       >
-        <CardContent className={cn(
-          "p-0 space-y-4",
-          compact ? "space-y-3" : "space-y-4"
-        )}>
+        <CardContent
+          className={cn('p-0 space-y-4', compact ? 'space-y-3' : 'space-y-4')}
+        >
           {/* Header Section */}
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <h3 className={cn(
-                  "font-semibold text-[--color-text-primary] line-clamp-2 leading-[--line-height-tight]",
-                  compact ? "text-[--font-size-base]" : "text-[--font-size-lg]"
-                )}>
+                <h3
+                  className={cn(
+                    'font-semibold text-[--color-text-primary] line-clamp-2 leading-[--line-height-tight]',
+                    compact
+                      ? 'text-[--font-size-base]'
+                      : 'text-[--font-size-lg]'
+                  )}
+                >
                   {campaign.title}
                 </h3>
               </div>
@@ -133,10 +151,12 @@ export function CampaignCard({
           </div>
 
           {/* Description */}
-          <p className={cn(
-            "text-[--color-text-secondary] leading-[--line-height-relaxed]",
-            compact ? "text-[--font-size-sm]" : "text-[--font-size-base]"
-          )}>
+          <p
+            className={cn(
+              'text-[--color-text-secondary] leading-[--line-height-relaxed]',
+              compact ? 'text-[--font-size-sm]' : 'text-[--font-size-base]'
+            )}
+          >
             {truncateDescription(campaign.description, maxDescriptionLength)}
           </p>
 
@@ -178,14 +198,39 @@ export function CampaignCard({
 
             {/* Engagement Stats */}
             {campaign._count && (
-              <div className="flex items-center gap-4 text-[--font-size-sm] text-[--color-text-tertiary] flex-shrink-0">
-                <div className="flex items-center gap-1 touch-target">
-                  <ThumbsUp className="h-4 w-4" />
-                  <span className="font-medium">{campaign._count.votes}</span>
+              <div className="flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-4 text-[--font-size-sm] text-[--color-text-tertiary]">
+                  <div className="flex items-center gap-1 touch-target">
+                    <ThumbsUp className="h-4 w-4" />
+                    <span className="font-medium">{campaign._count.votes}</span>
+                  </div>
+                  <div className="flex items-center gap-1 touch-target">
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="font-medium">
+                      {campaign._count.comments}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 touch-target">
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="font-medium">{campaign._count.comments}</span>
+
+                {/* Compact Social Share */}
+                <div onClick={(e) => e.preventDefault()}>
+                  <SocialShare
+                    data={{
+                      id: campaign.id,
+                      title: campaign.title,
+                      description: campaign.description,
+                      url: `${typeof window !== 'undefined' ? window.location.origin : ''}/campaigns/${campaign.id}`,
+                      location: campaign.address || undefined,
+                      voteCount: campaign._count.votes,
+                      creatorName: campaign.creator
+                        ? `${campaign.creator.firstName} ${campaign.creator.lastName}`
+                        : undefined,
+                      tags: ['civic-engagement', campaign.status.toLowerCase()],
+                    }}
+                    variant="compact"
+                    showAnalytics={false}
+                    className="opacity-70 hover:opacity-100 transition-opacity"
+                  />
                 </div>
               </div>
             )}

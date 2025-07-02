@@ -4,6 +4,7 @@ import { CampaignDiscoveryMap } from '~/components/map/CampaignDiscoveryMap';
 import { AsyncBoundary } from '~/components/error';
 import { MobileNav } from '~/components/ui/mobile-nav';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
+import { FloatingShareFab } from '~/components/ui/floating-share-fab';
 import { useRouter } from 'next/navigation';
 
 export default function CampaignsPage() {
@@ -12,22 +13,30 @@ export default function CampaignsPage() {
   // Mobile-first action handlers
   const handleVoiceCapture = () => {
     // TODO: Implement voice-to-campaign creation
-    console.log('Voice capture initiated - Future: Voice-powered campaign creation');
+    console.log(
+      'Voice capture initiated - Future: Voice-powered campaign creation'
+    );
   };
 
   const handlePhotoCapture = () => {
     // TODO: Implement AI photo-to-campaign generation
-    console.log('Photo capture initiated - Future: AI vision for campaign content');
+    console.log(
+      'Photo capture initiated - Future: AI vision for campaign content'
+    );
   };
 
   const handleLocationCapture = () => {
     // TODO: Implement location-based campaign creation
-    console.log('Location capture initiated - Future: Location-aware campaign creation');
+    console.log(
+      'Location capture initiated - Future: Location-aware campaign creation'
+    );
   };
 
   const handleAIAssist = () => {
     // TODO: Implement AI-powered campaign suggestions
-    console.log('AI assist initiated - Future: AI-powered campaign optimization');
+    console.log(
+      'AI assist initiated - Future: AI-powered campaign optimization'
+    );
   };
 
   const handleQuickCreate = () => {
@@ -36,7 +45,9 @@ export default function CampaignsPage() {
 
   const handleFeedback = () => {
     // TODO: Implement feedback system
-    console.log('Feedback initiated - Future: User feedback and improvement suggestions');
+    console.log(
+      'Feedback initiated - Future: User feedback and improvement suggestions'
+    );
   };
 
   const handleVoiceSearch = (query: string) => {
@@ -56,14 +67,16 @@ export default function CampaignsPage() {
         onVoiceSearch={handleVoiceSearch}
         onSearch={handleSearch}
         user={{
-          name: "Demo User", // TODO: Replace with actual user data
-          email: "demo@example.com"
+          name: 'Demo User', // TODO: Replace with actual user data
+          email: 'demo@example.com',
         }}
         notifications={3} // TODO: Replace with actual notification count
       />
 
       {/* Main Content */}
-      <main className="pb-20"> {/* Bottom padding for mobile nav */}
+      <main className="pb-20">
+        {' '}
+        {/* Bottom padding for mobile nav */}
         <AsyncBoundary
           loadingFallback={
             <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
@@ -82,7 +95,8 @@ export default function CampaignsPage() {
                   Map Unavailable
                 </h2>
                 <p className="text-[--color-text-secondary] text-[--font-size-base]">
-                  The campaigns map could not be loaded. Please try refreshing the page.
+                  The campaigns map could not be loaded. Please try refreshing
+                  the page.
                 </p>
               </div>
             </div>
@@ -101,6 +115,23 @@ export default function CampaignsPage() {
         onQuickCreate={handleQuickCreate}
         onFeedback={handleFeedback}
         variant="ai-powered"
+      />
+
+      {/* Floating Share FAB - Viral Civic Engagement */}
+      <FloatingShareFab
+        data={{
+          id: 'platform',
+          title: 'Civilyst - Revolutionary Civic Engagement',
+          description:
+            'Join the mobile-first platform transforming how citizens engage with local campaigns and democracy.',
+          url: `${typeof window !== 'undefined' ? window.location.origin : ''}/campaigns`,
+          tags: ['civic-engagement', 'democracy', 'mobile-first', 'ai-powered'],
+          voteCount: 1247, // Sample engagement count
+          creatorName: 'Civilyst Community',
+        }}
+        showOnScroll={true}
+        scrollThreshold={200}
+        className="z-[--z-floating]"
       />
     </div>
   );

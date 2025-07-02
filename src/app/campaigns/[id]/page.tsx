@@ -10,6 +10,7 @@ import { VotingInterface } from '~/components/ui/voting-interface';
 import { MobileNav } from '~/components/ui/mobile-nav';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { SocialShare } from '~/components/ui/social-share';
 import {
   ArrowLeft,
   MapPin,
@@ -36,6 +37,7 @@ export default function CampaignDetailPage({
   const router = useRouter();
   const [userVote, setUserVote] = useState<'SUPPORT' | 'OPPOSE' | null>(null);
   const [viewMode, setViewMode] = useState<'default' | 'gesture'>('default');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const { data: campaign, isLoading } = api.campaigns.getById.useQuery({ id });
 
@@ -173,7 +175,12 @@ export default function CampaignDetailPage({
             </Button>
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowShareModal(true)}
+                className="relative"
+              >
                 <Share className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon">
@@ -316,6 +323,36 @@ export default function CampaignDetailPage({
 
       {/* Bottom Safe Area */}
       <div className="safe-area-bottom h-6"></div>
+
+      {/* Revolutionary Social Share Modal */}
+      {campaign && showShareModal && (
+        <div className="fixed inset-0 bg-black/50 z-[--z-modal] flex items-end justify-center p-4">
+          <div className="w-full max-w-md">
+            <SocialShare
+              data={{
+                id: campaign.id,
+                title: campaign.title,
+                description: campaign.description,
+                url: `${typeof window !== 'undefined' ? window.location.origin : ''}/campaigns/${campaign.id}`,
+                imageUrl: campaign.imageUrl || undefined,
+                tags: ['civic-engagement', campaign.status.toLowerCase()],
+                location: campaign.address || undefined,
+                voteCount: currentVoteCount,
+                creatorName:
+                  `${campaign.creator?.firstName} ${campaign.creator?.lastName}` ||
+                  'Unknown Creator',
+              }}
+              variant="default"
+              className="bg-[--color-surface-elevated] rounded-t-[--border-radius-xl] shadow-[--shadow-modal]"
+            />
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="absolute inset-0 bg-transparent"
+              aria-label="Close sharing options"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
