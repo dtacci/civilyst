@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation';
 import { api } from '~/lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsSection } from '~/components/comments';
+import { useCampaignOperations } from '~/hooks/use-campaign-operations';
 import Image from 'next/image';
 
 interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+// Extended campaign type to include optimistic user vote data
+interface CampaignWithUserVote {
+  userVote?: 'SUPPORT' | 'OPPOSE';
 }
 
 export default function CampaignDetailPage({
@@ -20,16 +26,8 @@ export default function CampaignDetailPage({
 
   const { data: campaign, isLoading } = api.campaigns.getById.useQuery({ id });
 
-  const voteMutation = api.campaigns.vote.useMutation({
-    onSuccess: (result) => {
-      setUserVote(result.voteType);
-      // You could refetch campaign data here to update vote counts
-    },
-    onError: (error) => {
-      alert('Failed to vote. Please try again.');
-      console.error('Vote error:', error);
-    },
-  });
+  // Use the new optimistic operations hook
+  const { voteCampaign, isVoting, voteError } = useCampaignOperations();
 
   const handleVote = (voteType: 'SUPPORT' | 'OPPOSE') => {
     if (userVote === voteType) {
@@ -38,11 +36,30 @@ export default function CampaignDetailPage({
       return;
     }
 
-    voteMutation.mutate({
-      campaignId: id,
-      voteType,
-    });
+    // Use optimistic voting mutation
+    voteCampaign.mutate(
+      {
+        campaignId: id,
+        voteType,
+      },
+      {
+        onSuccess: (result) => {
+          // Update local state to match the server result
+          setUserVote(result.voteType);
+        },
+        onError: (error) => {
+          // Error handling with user feedback
+          alert('Failed to vote. Please try again.');
+          console.error('Vote error:', error);
+        },
+      }
+    );
   };
+
+  // Show error message if voting fails
+  if (voteError) {
+    console.error('Voting error:', voteError);
+  }
 
   if (isLoading) {
     return (
@@ -102,6 +119,11 @@ export default function CampaignDetailPage({
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Get the current vote count, using optimistic update if available
+  const campaignWithOptimisticData = campaign as typeof campaign &
+    CampaignWithUserVote;
+  const currentVoteCount = campaign._count?.votes || 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -220,21 +242,52 @@ export default function CampaignDetailPage({
               </p>
             </div>
 
-            {/* Voting Section */}
+            {/* Voting Section with Optimistic Updates */}
             {campaign.status === 'ACTIVE' && (
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   Support this campaign
                 </h3>
+
+                {/* Show optimistic voting feedback */}
+                {isVoting && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center text-blue-800">
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-800"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Submitting your vote...
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => handleVote('SUPPORT')}
-                    disabled={voteMutation.isPending}
+                    disabled={isVoting}
                     className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
-                      userVote === 'SUPPORT'
+                      userVote === 'SUPPORT' ||
+                      campaignWithOptimisticData?.userVote === 'SUPPORT'
                         ? 'bg-green-600 text-white'
                         : 'bg-green-100 text-green-800 hover:bg-green-200'
-                    } disabled:opacity-50`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="flex items-center justify-center">
                       <svg
@@ -250,18 +303,19 @@ export default function CampaignDetailPage({
                           d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V18m-7-8a2 2 0 01-2-2V6a2 2 0 012-2h2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
                         />
                       </svg>
-                      Support ({campaign._count?.votes || 0})
+                      Support ({currentVoteCount})
                     </div>
                   </button>
 
                   <button
                     onClick={() => handleVote('OPPOSE')}
-                    disabled={voteMutation.isPending}
+                    disabled={isVoting}
                     className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
-                      userVote === 'OPPOSE'
+                      userVote === 'OPPOSE' ||
+                      campaignWithOptimisticData?.userVote === 'OPPOSE'
                         ? 'bg-red-600 text-white'
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    } disabled:opacity-50`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="flex items-center justify-center">
                       <svg

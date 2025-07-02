@@ -16,14 +16,82 @@ import {
 // type CampaignUpdateInput = RouterInputs['campaigns']['update'];
 // type CampaignVoteInput = RouterInputs['campaigns']['vote'];
 
+// Extended campaign type for optimistic updates
+interface OptimisticCampaign {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  createdAt: Date;
+  _count: { votes: number; comments: number };
+}
+
+// Extended campaign with user vote for optimistic UI
+interface CampaignWithUserVote {
+  userVote?: 'SUPPORT' | 'OPPOSE';
+  _count?: { votes?: number; comments?: number };
+}
+
 /**
  * Comprehensive campaign operations hook
  */
 export function useCampaignOperations() {
   const utils = api.useUtils();
 
-  // Campaign creation with cache invalidation
+  // Campaign creation with basic optimistic updates
   const createCampaign = api.campaigns.create.useMutation({
+    onMutate: async (newCampaign) => {
+      // Cancel any ongoing refetches for user campaigns to prevent overwriting optimistic update
+      await utils.campaigns.getMyCampaigns.cancel();
+
+      // Get current user campaigns data for rollback
+      const previousUserCampaigns = utils.campaigns.getMyCampaigns.getData({});
+
+      // Optimistically add to user campaigns if data exists
+      if (previousUserCampaigns) {
+        const optimisticCampaign: OptimisticCampaign = {
+          id: `temp-${Date.now()}`, // Temporary ID
+          title: newCampaign.title,
+          description: newCampaign.description,
+          status: newCampaign.status || 'DRAFT',
+          latitude: newCampaign.latitude || null,
+          longitude: newCampaign.longitude || null,
+          address: newCampaign.address || null,
+          city: newCampaign.city || null,
+          state: newCampaign.state || null,
+          createdAt: new Date(),
+          _count: { votes: 0, comments: 0 },
+        };
+
+        utils.campaigns.getMyCampaigns.setData({}, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            campaigns: [
+              optimisticCampaign as (typeof old.campaigns)[0],
+              ...old.campaigns,
+            ],
+          };
+        });
+      }
+
+      return { previousUserCampaigns };
+    },
+    onError: (error, variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousUserCampaigns) {
+        utils.campaigns.getMyCampaigns.setData(
+          {},
+          context.previousUserCampaigns
+        );
+      }
+      console.error('Campaign creation failed:', error);
+    },
     onSuccess: async () => {
       try {
         await simpleCacheStrategies.campaignCreated(utils);
@@ -34,13 +102,43 @@ export function useCampaignOperations() {
         );
       }
     },
-    onError: (error) => {
-      console.error('Campaign creation failed:', error);
-    },
   });
 
-  // Campaign update with cache invalidation
+  // Campaign update with optimistic updates
   const updateCampaign = api.campaigns.update.useMutation({
+    onMutate: async (updatedCampaign) => {
+      // Cancel any ongoing queries for this specific campaign
+      await utils.campaigns.getById.cancel({ id: updatedCampaign.id });
+
+      // Get current campaign data for rollback
+      const previousCampaign = utils.campaigns.getById.getData({
+        id: updatedCampaign.id,
+      });
+
+      // Optimistically update campaign details if data exists
+      if (previousCampaign) {
+        utils.campaigns.getById.setData({ id: updatedCampaign.id }, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            ...updatedCampaign,
+            updatedAt: new Date(),
+          };
+        });
+      }
+
+      return { previousCampaign };
+    },
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousCampaign) {
+        utils.campaigns.getById.setData(
+          { id: variables.id },
+          context.previousCampaign
+        );
+      }
+      console.error('Campaign update failed:', error);
+    },
     onSuccess: async (_, variables) => {
       try {
         await simpleCacheStrategies.campaignUpdated(utils, variables.id, 'all');
@@ -48,13 +146,46 @@ export function useCampaignOperations() {
         console.warn('Cache invalidation failed after campaign update:', error);
       }
     },
-    onError: (error) => {
-      console.error('Campaign update failed:', error);
-    },
   });
 
-  // Campaign deletion with cache cleanup
+  // Campaign deletion with optimistic updates
   const deleteCampaign = api.campaigns.delete.useMutation({
+    onMutate: async (variables) => {
+      // Cancel queries for this campaign
+      await utils.campaigns.getById.cancel({ id: variables.id });
+      await utils.campaigns.getMyCampaigns.cancel();
+
+      // Get current data for potential rollback
+      const previousCampaign = utils.campaigns.getById.getData({
+        id: variables.id,
+      });
+      const previousUserCampaigns = utils.campaigns.getMyCampaigns.getData({});
+
+      // Optimistically remove from user campaigns if data exists
+      if (previousUserCampaigns) {
+        utils.campaigns.getMyCampaigns.setData({}, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            campaigns: old.campaigns.filter(
+              (campaign) => campaign.id !== variables.id
+            ),
+          };
+        });
+      }
+
+      return { previousCampaign, previousUserCampaigns };
+    },
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousUserCampaigns) {
+        utils.campaigns.getMyCampaigns.setData(
+          {},
+          context.previousUserCampaigns
+        );
+      }
+      console.error('Campaign deletion failed:', error);
+    },
     onSuccess: async () => {
       try {
         await simpleCacheStrategies.campaignDeleted(utils);
@@ -65,22 +196,58 @@ export function useCampaignOperations() {
         );
       }
     },
-    onError: (error) => {
-      console.error('Campaign deletion failed:', error);
-    },
   });
 
-  // Campaign voting with cache invalidation
+  // Campaign voting with optimistic updates - MOST IMPORTANT FOR UX
   const voteCampaign = api.campaigns.vote.useMutation({
+    onMutate: async (voteData) => {
+      // Cancel any ongoing queries for this campaign
+      await utils.campaigns.getById.cancel({ id: voteData.campaignId });
+
+      // Get the current campaign data for rollback
+      const previousCampaign = utils.campaigns.getById.getData({
+        id: voteData.campaignId,
+      });
+
+      // Optimistically update the campaign's vote count and user vote status
+      if (previousCampaign) {
+        utils.campaigns.getById.setData({ id: voteData.campaignId }, (old) => {
+          if (!old) return old;
+
+          // Calculate new vote counts based on vote type
+          const currentVotes = old._count?.votes || 0;
+          const newVoteCount = currentVotes + 1; // Simplified - in real app you'd track vote types
+
+          return {
+            ...old,
+            _count: {
+              ...old._count,
+              votes: newVoteCount,
+            },
+            // Add user-specific vote tracking for immediate UI feedback
+            userVote: voteData.voteType, // Custom field for tracking user's vote
+          } as typeof old & CampaignWithUserVote; // Type assertion to allow custom userVote field
+        });
+      }
+
+      return { previousCampaign };
+    },
+    onError: (error, variables, context) => {
+      // Rollback the optimistic update on error
+      if (context?.previousCampaign) {
+        utils.campaigns.getById.setData(
+          { id: variables.campaignId },
+          context.previousCampaign
+        );
+      }
+      console.error('Vote failed:', error);
+    },
     onSuccess: async (_, variables) => {
       try {
         await simpleCacheStrategies.voteChanged(utils, variables.campaignId);
       } catch (error) {
         console.warn('Cache invalidation failed after vote:', error);
       }
-    },
-    onError: (error) => {
-      console.error('Vote failed:', error);
     },
   });
 
