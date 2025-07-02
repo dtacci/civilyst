@@ -100,7 +100,7 @@ export function VoiceInput({
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const audioContextRef = React.useRef<AudioContext | null>(null);
   const analyserRef = React.useRef<AnalyserNode | null>(null);
-  const animationRef = React.useRef<number>();
+  const animationRef = React.useRef<number | undefined>(undefined);
 
   // Check for speech recognition support
   React.useEffect(() => {
