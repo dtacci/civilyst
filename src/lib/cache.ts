@@ -80,10 +80,6 @@ export interface CacheMetrics {
 // Redis client instance (singleton)
 let redisClient: Redis | null = null;
 
-
-
-
-
 /**
  * Cache metrics tracking
  */
@@ -104,7 +100,9 @@ export function getRedisClient(): Redis | null {
   // In development, gracefully handle missing Redis
   if (process.env.NODE_ENV === 'development') {
     if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-      console.log('Redis not configured for development - using in-memory fallback');
+      console.log(
+        'Redis not configured for development - using in-memory fallback'
+      );
       return null;
     }
   }
@@ -278,6 +276,15 @@ export async function getCache<T>(key: string): Promise<CacheResult<T>> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return {
+        data: null,
+        hit: false,
+        latencyMs: performance.now() - startTime,
+        error: new Error('Redis is not available'),
+      };
+    }
+
     data = await redis.get<T>(key);
     hit = data !== null;
   } catch (e) {
@@ -330,6 +337,9 @@ export async function existsInCache(key: string): Promise<boolean> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
     return (await redis.exists(key)) > 0;
   } catch (error) {
     console.error(`Cache exists error for key ${key}:`, error);
@@ -348,6 +358,9 @@ export async function deleteFromCache(key: string): Promise<boolean> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
     await redis.del(key);
     return true;
   } catch (error) {
@@ -369,6 +382,9 @@ export async function deleteMultiFromCache(keys: string[]): Promise<number> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return 0;
+    }
     return await redis.del(...keys);
   } catch (error) {
     console.error(`Cache multi-delete error:`, error);
@@ -388,6 +404,9 @@ export async function deleteByPattern(pattern: string): Promise<number> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return 0;
+    }
     let cursor = 0;
     let deletedCount = 0;
 
@@ -430,6 +449,9 @@ export async function getMultiFromCache<T>(
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return new Map(keys.map((key) => [key, null]));
+    }
     const values = await redis.mget<T[]>(...keys);
 
     // Create a map of key to value
@@ -461,6 +483,9 @@ export async function setMultiInCache<T>(
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
     const pipeline = redis.pipeline();
 
     for (const [key, value] of entries) {
@@ -580,6 +605,9 @@ export async function clearAllCache(): Promise<boolean> {
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
     await redis.flushall();
     return true;
   } catch (error) {
@@ -605,6 +633,9 @@ export async function setRefreshingCache<T>(
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
 
     // Store the data with metadata including timestamp
     const entry = {
@@ -646,6 +677,14 @@ export async function getRefreshingCache<T>(
     }
 
     const redis = getRedisClient();
+    if (!redis) {
+      return {
+        data: null,
+        hit: false,
+        latencyMs: performance.now() - startTime,
+        error: new Error('Redis is not available'),
+      };
+    }
     const entry = await redis.get<{
       data: T;
       createdAt: number;

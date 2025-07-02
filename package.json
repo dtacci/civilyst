@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "NODE_ENV=development next dev --turbopack",
     "dev:fast": "NODE_ENV=development next dev --turbopack --port 3000",
+    "dev:clean": "rm -rf .next && NODE_ENV=development next dev --turbopack",
     "build": "next build",
+    "build:clean": "rm -rf .next && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",

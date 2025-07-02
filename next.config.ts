@@ -2,21 +2,19 @@ import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
-  // Performance optimizations for development
-  swcMinify: true,
+  // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  // Webpack configuration (fallback from Turbopack)
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+    return config;
+  },
   experimental: {
-    // Turbopack optimizations
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
     // Reduce bundle size in development
     optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
   },
