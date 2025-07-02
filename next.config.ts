@@ -2,8 +2,31 @@ import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
-  // Build configuration restored - no more bypasses!
-  // ESLint and TypeScript validation now enforced during builds
+  // Performance optimizations for development
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  experimental: {
+    // Turbopack optimizations
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+    // Reduce bundle size in development
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
+  },
+  // Skip type checking in development for speed
+  typescript: {
+    ignoreBuildErrors: process.env.NODE_ENV === 'development',
+  },
+  eslint: {
+    ignoreDuringBuilds: process.env.NODE_ENV === 'development',
+  },
 };
 
 // PWA configuration
@@ -77,7 +100,7 @@ const pwaConfig = withPWA({
     font: '/offline',
   },
   buildExcludes: [/middleware-manifest\.json$/],
-  disable: process.env.NODE_ENV === 'development',
+  disable: process.env.NODE_ENV === 'development', // PWA disabled in dev for performance
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

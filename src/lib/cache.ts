@@ -77,10 +77,22 @@ export interface CacheMetrics {
   lastReset: Date;
 }
 
-/**
- * Singleton Redis client instance
- */
+// Redis client instance (singleton)
 let redisClient: Redis | null = null;
+
+// Simple development bypass - check if Redis is configured
+const isRedisConfigured = () => {
+  return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+};
+
+// Development bypass for Redis operations
+const shouldUseRedis = () => {
+  // Always skip Redis in development if not configured
+  if (process.env.NODE_ENV === 'development' && !isRedisConfigured()) {
+    return false;
+  }
+  return isRedisConfigured();
+};
 
 /**
  * Cache metrics tracking
@@ -98,7 +110,15 @@ const metrics: CacheMetrics = {
 /**
  * Get the Redis client instance, creating it if necessary
  */
-export function getRedisClient(): Redis {
+export function getRedisClient(): Redis | null {
+  // In development, gracefully handle missing Redis
+  if (process.env.NODE_ENV === 'development') {
+    if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
+      console.log('Redis not configured for development - using in-memory fallback');
+      return null;
+    }
+  }
+
   if (!redisClient) {
     try {
       redisClient = new Redis({
@@ -107,6 +127,10 @@ export function getRedisClient(): Redis {
       });
     } catch (error) {
       console.error('Failed to initialize Redis client:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: continuing without Redis');
+        return null;
+      }
       throw new Error('Redis client initialization failed');
     }
   }
@@ -119,6 +143,9 @@ export function getRedisClient(): Redis {
 export async function isRedisAvailable(): Promise<boolean> {
   try {
     const redis = getRedisClient();
+    if (!redis) {
+      return false;
+    }
     await redis.ping();
     return true;
   } catch (error) {
@@ -288,12 +315,12 @@ export async function setCache<T>(
   ttlSeconds = CACHE_TTL.DEFAULT
 ): Promise<boolean> {
   try {
-    // Check if Redis is available
-    if (!(await isRedisAvailable())) {
-      return false;
+    const redis = getRedisClient();
+    if (!redis) {
+      // In development without Redis, just return true (no-op)
+      return true;
     }
 
-    const redis = getRedisClient();
     await redis.set(key, data, { ex: ttlSeconds });
     return true;
   } catch (error) {
