@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { MapPin, User, ThumbsUp, MessageCircle } from 'lucide-react';
 import { CampaignStatus } from '~/generated/prisma';
+import { Card, CardContent } from '~/components/ui/card';
+import { cn } from '~/lib/utils';
 
 export interface CampaignCardData {
   id: string;
@@ -32,6 +35,7 @@ export interface CampaignCardProps {
   showLocation?: boolean;
   showCreator?: boolean;
   compact?: boolean;
+  className?: string;
 }
 
 export function CampaignCard({
@@ -39,21 +43,9 @@ export function CampaignCard({
   showLocation = true,
   showCreator = true,
   compact = false,
+  className,
 }: CampaignCardProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800';
-      case 'DRAFT':
-        return 'bg-gray-100 text-gray-800';
-      case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -70,6 +62,23 @@ export function CampaignCard({
     }
   };
 
+  const getStatusStyles = (status: string) => {
+    const baseStyles = "inline-flex items-center px-3 py-1 rounded-[--border-radius-full] text-[--font-size-xs] font-medium transition-colors duration-[--duration-normal]";
+    
+    switch (status) {
+      case 'ACTIVE':
+        return cn(baseStyles, "bg-[--color-accent-light] text-[--color-accent] border border-[--color-accent]");
+      case 'DRAFT':
+        return cn(baseStyles, "bg-[--color-warning-light] text-[--color-warning] border border-[--color-warning]");
+      case 'COMPLETED':
+        return cn(baseStyles, "bg-[--color-primary-light] text-[--color-primary] border border-[--color-primary]");
+      case 'CANCELLED':
+        return cn(baseStyles, "bg-[--color-danger-light] text-[--color-danger] border border-[--color-danger]");
+      default:
+        return cn(baseStyles, "bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border]");
+    }
+  };
+
   const truncateDescription = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + '...';
@@ -78,57 +87,63 @@ export function CampaignCard({
   const maxDescriptionLength = compact ? 120 : 200;
 
   return (
-    <Link href={`/campaigns/${campaign.id}`}>
-      <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 overflow-hidden cursor-pointer">
-        {/* Header */}
-        <div className="p-4 sm:p-6">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
-                {campaign.title}
-              </h3>
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                    campaign.status
-                  )}`}
-                >
-                  {getStatusLabel(campaign.status)}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
-                </span>
+    <Link 
+      href={`/campaigns/${campaign.id}`}
+      className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-border-focus] focus-visible:ring-offset-2 rounded-[--border-radius-lg]"
+    >
+      <Card
+        interactive
+        ripple
+        className={cn(
+          "h-full transition-all duration-[--duration-normal]",
+          "group-hover:shadow-[--shadow-elevated] group-hover:-translate-y-1",
+          "group-active:translate-y-0 group-active:shadow-[--shadow-touch]",
+          "border-[--color-border] bg-[--color-surface-elevated]",
+          compact && "p-3",
+          className
+        )}
+        size={compact ? 'sm' : 'default'}
+      >
+        <CardContent className={cn(
+          "p-0 space-y-4",
+          compact ? "space-y-3" : "space-y-4"
+        )}>
+          {/* Header Section */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className={cn(
+                  "font-semibold text-[--color-text-primary] line-clamp-2 leading-[--line-height-tight]",
+                  compact ? "text-[--font-size-base]" : "text-[--font-size-lg]"
+                )}>
+                  {campaign.title}
+                </h3>
               </div>
+            </div>
+
+            {/* Status and Time */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={getStatusStyles(campaign.status)}>
+                {getStatusLabel(campaign.status)}
+              </span>
+              <span className="text-[--font-size-sm] text-[--color-text-tertiary]">
+                {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
+              </span>
             </div>
           </div>
 
           {/* Description */}
-          <p className="text-gray-600 text-sm leading-relaxed mb-4">
+          <p className={cn(
+            "text-[--color-text-secondary] leading-[--line-height-relaxed]",
+            compact ? "text-[--font-size-sm]" : "text-[--font-size-base]"
+          )}>
             {truncateDescription(campaign.description, maxDescriptionLength)}
           </p>
 
           {/* Location */}
           {showLocation && (campaign.address || campaign.city) && (
-            <div className="flex items-center text-sm text-gray-500 mb-4">
-              <svg
-                className="w-4 h-4 mr-1 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+            <div className="flex items-center gap-2 text-[--font-size-sm] text-[--color-text-tertiary]">
+              <MapPin className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">
                 {campaign.address ||
                   [campaign.city, campaign.state].filter(Boolean).join(', ')}
@@ -137,35 +152,25 @@ export function CampaignCard({
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-3 border-t border-[--color-border] gap-3">
             {/* Creator */}
             {showCreator && campaign.creator && (
-              <div className="flex items-center text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-[--font-size-sm] text-[--color-text-secondary] min-w-0 flex-1">
                 {campaign.creator.imageUrl ? (
                   <Image
                     src={campaign.creator.imageUrl}
                     alt={`${campaign.creator.firstName} ${campaign.creator.lastName}`}
                     width={24}
                     height={24}
-                    className="w-6 h-6 rounded-full mr-2"
+                    className="w-6 h-6 rounded-[--border-radius-full] flex-shrink-0 object-cover"
                     priority={false}
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gray-300 mr-2 flex items-center justify-center">
-                    <svg
-                      className="w-3 h-3 text-gray-600"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                  <div className="w-6 h-6 rounded-[--border-radius-full] bg-[--color-surface] border border-[--color-border] flex items-center justify-center flex-shrink-0">
+                    <User className="w-3 h-3 text-[--color-text-tertiary]" />
                   </div>
                 )}
-                <span>
+                <span className="truncate">
                   {campaign.creator.firstName} {campaign.creator.lastName}
                 </span>
               </div>
@@ -173,44 +178,20 @@ export function CampaignCard({
 
             {/* Engagement Stats */}
             {campaign._count && (
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V18m-7-8a2 2 0 01-2-2V6a2 2 0 012-2h2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                    />
-                  </svg>
-                  <span>{campaign._count.votes}</span>
+              <div className="flex items-center gap-4 text-[--font-size-sm] text-[--color-text-tertiary] flex-shrink-0">
+                <div className="flex items-center gap-1 touch-target">
+                  <ThumbsUp className="h-4 w-4" />
+                  <span className="font-medium">{campaign._count.votes}</span>
                 </div>
-                <div className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  <span>{campaign._count.comments}</span>
+                <div className="flex items-center gap-1 touch-target">
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="font-medium">{campaign._count.comments}</span>
                 </div>
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

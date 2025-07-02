@@ -1,56 +1,183 @@
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '~/lib/utils';
 
-// Define button variants using class-variance-authority
+// Mobile-first button variants using our design tokens
 const buttonVariants = cva(
-  // Base styles applied to all buttons
-  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+  // Base styles - mobile-first with touch optimization
+  [
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap',
+    'text-sm font-medium transition-all duration-[--duration-normal]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-border-focus]',
+    'disabled:pointer-events-none disabled:opacity-50',
+    // Mobile touch optimizations
+    'min-h-[--space-touch-target] min-w-[--space-touch-target]',
+    'rounded-[--border-radius-md] px-4 py-2',
+    'touch-manipulation select-none',
+    // Active state with scale feedback
+    'active:scale-[0.98] active:transition-transform active:duration-[--duration-fast]',
+    // Remove default button styles
+    'border-0 outline-none',
+  ],
   {
     variants: {
       variant: {
-        default:
-          'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500',
-        destructive:
-          'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
-        outline:
-          'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-900',
-        secondary:
-          'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-400',
-        ghost:
-          'bg-transparent hover:bg-gray-100 text-gray-900 hover:text-gray-900 data-[state=open]:bg-transparent',
-        link: 'bg-transparent text-blue-600 hover:text-blue-700 underline-offset-4 hover:underline',
+        default: [
+          'bg-[--color-primary] text-[--color-text-inverse]',
+          'hover:bg-[--color-primary-hover]',
+          'active:bg-[--color-primary-active]',
+          'shadow-[--shadow-touch]',
+          'hover:shadow-[--shadow-elevated]',
+        ],
+        destructive: [
+          'bg-[--color-danger] text-[--color-text-inverse]',
+          'hover:bg-[--color-danger-hover]',
+          'shadow-[--shadow-touch]',
+          'hover:shadow-[--shadow-elevated]',
+        ],
+        success: [
+          'bg-[--color-accent] text-[--color-text-inverse]',
+          'hover:bg-[--color-accent-hover]',
+          'shadow-[--shadow-touch]',
+          'hover:shadow-[--shadow-elevated]',
+        ],
+        outline: [
+          'border-2 border-[--color-border] bg-transparent',
+          'text-[--color-text-primary]',
+          'hover:bg-[--color-surface] hover:border-[--color-primary]',
+          'hover:text-[--color-primary]',
+        ],
+        secondary: [
+          'bg-[--color-secondary] text-[--color-text-inverse]',
+          'hover:bg-[--color-secondary-hover]',
+          'shadow-[--shadow-touch]',
+          'hover:shadow-[--shadow-elevated]',
+        ],
+        ghost: [
+          'bg-transparent text-[--color-text-primary]',
+          'hover:bg-[--color-surface]',
+          'hover:text-[--color-primary]',
+        ],
+        link: [
+          'text-[--color-primary] underline-offset-4',
+          'hover:underline hover:text-[--color-primary-hover]',
+          'min-h-auto min-w-auto p-0',
+          'active:scale-100', // No scale effect for links
+        ],
       },
       size: {
-        default: 'h-10 py-2 px-4',
-        sm: 'h-8 px-3 text-xs',
-        lg: 'h-12 px-6 text-base',
-        icon: 'h-10 w-10 p-2',
+        default: [
+          'h-11 px-4 py-2',
+          'text-[--font-size-base]',
+          'rounded-[--border-radius-md]',
+        ],
+        sm: [
+          'h-9 px-3 py-1',
+          'text-[--font-size-sm]',
+          'rounded-[--border-radius-sm]',
+        ],
+        lg: [
+          'h-12 px-6 py-3',
+          'text-[--font-size-lg]', 
+          'rounded-[--border-radius-lg]',
+          'font-semibold',
+        ],
+        xl: [
+          'h-14 px-8 py-4',
+          'text-[--font-size-xl]',
+          'rounded-[--border-radius-xl]',
+          'font-semibold',
+        ],
+        icon: [
+          'h-11 w-11 p-0',
+          'rounded-[--border-radius-md]',
+          'flex items-center justify-center',
+        ],
+        fab: [
+          'h-14 w-14 p-0',
+          'rounded-[--border-radius-full]',
+          'shadow-[--shadow-elevated]',
+          'hover:shadow-[--shadow-modal]',
+          'fixed bottom-4 right-4 z-[--z-fixed]',
+        ],
       },
       fullWidth: {
         true: 'w-full',
+        false: '',
+      },
+      loading: {
+        true: 'cursor-not-allowed opacity-70',
+        false: '',
       },
     },
     defaultVariants: {
       variant: 'default',
       size: 'default',
       fullWidth: false,
+      loading: false,
     },
   }
 );
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  loading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  loadingText?: string;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, ...props }, ref) => (
-    <button
-      className={cn(buttonVariants({ variant, size, fullWidth, className }))}
-      ref={ref}
-      {...props}
-    />
-  )
+  (
+    { 
+      className, 
+      variant, 
+      size, 
+      fullWidth, 
+      loading, 
+      leftIcon, 
+      rightIcon, 
+      asChild = false, 
+      children, 
+      disabled,
+      loadingText,
+      ...props 
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : 'button';
+    
+    // Disable button when loading
+    const isDisabled = disabled || loading;
+
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, fullWidth, loading, className }))}
+        ref={ref}
+        disabled={isDisabled}
+        aria-disabled={isDisabled}
+        {...props}
+      >
+        {loading && (
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        )}
+        {!loading && leftIcon && (
+          <span className="flex-shrink-0">{leftIcon}</span>
+        )}
+        
+        <span className="flex-1 truncate">
+          {loading && loadingText ? loadingText : children}
+        </span>
+        
+        {!loading && rightIcon && (
+          <span className="flex-shrink-0">{rightIcon}</span>
+        )}
+      </Comp>
+    );
+  }
 );
 
 Button.displayName = 'Button';

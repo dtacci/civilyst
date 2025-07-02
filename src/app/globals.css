@@ -1,26 +1,270 @@
 @import "tailwindcss";
 
+/* ========================================
+   CIVILYST MOBILE-FIRST DESIGN SYSTEM
+   Phase 5: Mobile UX Revolution
+   ======================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ===== CORE COLORS ===== */
+  --color-primary: #2563eb; /* Blue-600 - Primary brand */
+  --color-primary-hover: #1d4ed8; /* Blue-700 */
+  --color-primary-active: #1e40af; /* Blue-800 */
+  --color-primary-light: #dbeafe; /* Blue-100 */
+  --color-primary-dark: #1e3a8a; /* Blue-900 */
+  
+  --color-secondary: #7c3aed; /* Violet-600 - Civic engagement */
+  --color-secondary-hover: #6d28d9; /* Violet-700 */
+  --color-secondary-light: #ede9fe; /* Violet-100 */
+  
+  --color-accent: #059669; /* Emerald-600 - Success/Action */
+  --color-accent-hover: #047857; /* Emerald-700 */
+  --color-accent-light: #d1fae5; /* Emerald-100 */
+  
+  --color-warning: #d97706; /* Amber-600 */
+  --color-warning-light: #fef3c7; /* Amber-100 */
+  
+  --color-danger: #dc2626; /* Red-600 */
+  --color-danger-hover: #b91c1c; /* Red-700 */
+  --color-danger-light: #fee2e2; /* Red-100 */
+  
+  /* ===== NEUTRAL COLORS ===== */
+  --color-background: #ffffff;
+  --color-surface: #f8fafc; /* Slate-50 */
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8f0; /* Slate-200 */
+  --color-border-focus: #3b82f6; /* Blue-500 */
+  
+  --color-text-primary: #0f172a; /* Slate-900 */
+  --color-text-secondary: #475569; /* Slate-600 */
+  --color-text-tertiary: #94a3b8; /* Slate-400 */
+  --color-text-inverse: #ffffff;
+  
+  /* ===== MOBILE-OPTIMIZED SPACING ===== */
+  --space-touch-target: 44px; /* iOS/WCAG minimum touch target */
+  --space-touch-margin: 8px; /* Space between touch targets */
+  --space-safe-area-top: env(safe-area-inset-top, 0px);
+  --space-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --space-safe-area-left: env(safe-area-inset-left, 0px);
+  --space-safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* Mobile spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  
+  /* ===== MOBILE-FIRST TYPOGRAPHY ===== */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px; /* Minimum for mobile readability */
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* ===== MOBILE INTERACTION ===== */
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-full: 9999px;
+  
+  --shadow-touch: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.2);
+  
+  /* ===== ANIMATION & MOTION ===== */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* ===== MOBILE FEEDBACK ===== */
+  --haptic-light: var(--duration-fast);
+  --haptic-medium: var(--duration-normal);
+  --haptic-heavy: var(--duration-slow);
+  
+  /* ===== Z-INDEX SCALE ===== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-notification: 1080;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* ===== DARK MODE OPTIMIZATIONS ===== */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-background: #0f172a; /* Slate-900 */
+    --color-surface: #1e293b; /* Slate-800 */
+    --color-surface-elevated: #334155; /* Slate-700 */
+    --color-border: #475569; /* Slate-600 */
+    --color-border-focus: #60a5fa; /* Blue-400 */
+    
+    --color-text-primary: #f1f5f9; /* Slate-100 */
+    --color-text-secondary: #cbd5e1; /* Slate-300 */
+    --color-text-tertiary: #64748b; /* Slate-500 */
+    
+    /* Adjust primary colors for dark mode contrast */
+    --color-primary: #3b82f6; /* Blue-500 */
+    --color-primary-hover: #60a5fa; /* Blue-400 */
+    --color-primary-light: #1e3a8a; /* Blue-900 for dark bg */
+    
+    --color-secondary: #8b5cf6; /* Violet-500 */
+    --color-secondary-light: #4c1d95; /* Violet-900 for dark bg */
+    
+    --color-accent: #10b981; /* Emerald-500 */
+    --color-accent-light: #064e3b; /* Emerald-900 for dark bg */
   }
 }
 
+/* ===== MOBILE-FIRST BASE STYLES ===== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent zoom on input focus (iOS) */
+  font-size: max(16px, 1rem);
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  margin: 0;
+  padding: 0;
+  
+  /* Mobile optimizations */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  
+  /* Support for safe areas */
+  padding-top: var(--space-safe-area-top);
+  padding-bottom: var(--space-safe-area-bottom);
+  padding-left: var(--space-safe-area-left);
+  padding-right: var(--space-safe-area-right);
+}
+
+/* ===== MOBILE TOUCH OPTIMIZATIONS ===== */
+button, 
+[role="button"], 
+[tabindex="0"] {
+  min-height: var(--space-touch-target);
+  min-width: var(--space-touch-target);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch feedback */
+button:active,
+[role="button"]:active {
+  transform: scale(0.98);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+/* ===== FOCUS MANAGEMENT ===== */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* ===== UTILITY CLASSES ===== */
+.mobile-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.touch-target {
+  min-height: var(--space-touch-target);
+  min-width: var(--space-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.safe-area-top {
+  padding-top: var(--space-safe-area-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--space-safe-area-bottom);
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* ===== MOBILE BREAKPOINTS ===== */
+/* Small phones */
+@media (max-width: 360px) {
+  :root {
+    --space-md: 12px;
+    --font-size-base: 15px;
+  }
+}
+
+/* Large phones/small tablets */
+@media (min-width: 768px) {
+  .mobile-container {
+    max-width: 768px;
+    padding: 0 var(--space-lg);
+  }
+}
+
+/* Tablets */
+@media (min-width: 1024px) {
+  .mobile-container {
+    max-width: 1024px;
+    padding: 0 var(--space-xl);
+  }
+}
+
+/* ===== THEME INTEGRATION ===== */
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text-primary);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }

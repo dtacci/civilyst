@@ -1,101 +1,313 @@
 'use client';
 
 import { api } from '~/lib/trpc';
-import { SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/nextjs';
+import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
+import { MobileNav } from '~/components/ui/mobile-nav';
+import { FloatingActionButton } from '~/components/ui/floating-action-button';
+import { useRouter } from 'next/navigation';
+import {
+  Zap,
+  MapPin,
+  Users,
+  Vote,
+  Smartphone,
+  Mic,
+  Camera,
+  Heart,
+  Shield,
+  Globe
+} from 'lucide-react';
 
 export default function Home() {
   const healthCheck = api.health.check.useQuery();
   const { isSignedIn } = useAuth();
+  const router = useRouter();
+
+  // Mobile-first action handlers for homepage
+  const handleVoiceCapture = () => {
+    if (isSignedIn) {
+      router.push('/campaigns/create?voice=true');
+    } else {
+      console.log('Voice capture - requires login');
+    }
+  };
+
+  const handlePhotoCapture = () => {
+    if (isSignedIn) {
+      router.push('/campaigns/create?photo=true');
+    } else {
+      console.log('Photo capture - requires login');
+    }
+  };
+
+  const handleLocationCapture = () => {
+    if (isSignedIn) {
+      router.push('/campaigns/create?location=true');
+    } else {
+      console.log('Location capture - requires login');
+    }
+  };
+
+  const handleAIAssist = () => {
+    router.push('/campaigns?ai=true');
+  };
+
+  const handleQuickCreate = () => {
+    if (isSignedIn) {
+      router.push('/campaigns/create');
+    } else {
+      router.push('/sign-up');
+    }
+  };
+
+  const handleFeedback = () => {
+    console.log('Feedback - Future: User feedback system');
+  };
+
+  const handleVoiceSearch = (query: string) => {
+    router.push(`/campaigns?search=${encodeURIComponent(query)}`);
+  };
+
+  const handleSearch = (query: string) => {
+    router.push(`/campaigns?search=${encodeURIComponent(query)}`);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="text-center mb-12">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900">Civilyst</h1>
-            <div className="flex gap-4">
-              {isSignedIn ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                  <UserButton />
-                </>
-              ) : (
-                <>
-                  <SignInButton mode="modal">
-                    <button className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                      Sign In
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                      Sign Up
-                    </button>
-                  </SignUpButton>
-                </>
-              )}
-            </div>
-          </div>
-          <p className="text-xl text-gray-600">
-            Digital civic engagement platform for municipal development
-          </p>
-        </header>
+    <div className="relative min-h-screen bg-gradient-to-br from-[--color-background] via-[--color-surface] to-[--color-primary-light]">
+      {/* Mobile Navigation */}
+      <MobileNav
+        onVoiceSearch={handleVoiceSearch}
+        onSearch={handleSearch}
+        user={isSignedIn ? {
+          name: "User", // TODO: Replace with actual user data
+          email: "user@example.com"
+        } : undefined}
+      />
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">System Status</h2>
-          {healthCheck.isLoading && (
-            <div className="text-gray-500">Loading health check...</div>
-          )}
-          {healthCheck.error && (
-            <div className="text-red-500">
-              Error: {healthCheck.error.message}
-            </div>
-          )}
-          {healthCheck.data && (
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <span className="w-3 h-3 bg-green-500 rounded-full mr-3"></span>
-                <span className="text-green-700 font-medium">
-                  System Operational
-                </span>
+      {/* Hero Section - Mobile-First */}
+      <main className="pb-20 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            {/* Hero Header */}
+            <section className="text-center mb-16">
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 bg-[--color-primary-light] text-[--color-primary] px-4 py-2 rounded-[--border-radius-full] text-[--font-size-sm] font-medium mb-6">
+                  <Zap className="h-4 w-4" />
+                  Mobile-First Civic Engagement
+                </div>
+                <h1 className="text-[--font-size-4xl] md:text-[--font-size-5xl] font-bold text-[--color-text-primary] mb-4 leading-[--line-height-tight]">
+                  Transform Your Community with
+                  <span className="text-[--color-primary]"> Voice-Powered </span>
+                  Civic Action
+                </h1>
+                <p className="text-[--font-size-xl] text-[--color-text-secondary] max-w-2xl mx-auto leading-[--line-height-relaxed]">
+                  The first mobile-native platform for civic engagement. Create campaigns with your voice,
+                  discover local issues through AI, and drive real change in your community.
+                </p>
               </div>
-              <div className="text-sm text-gray-600">
-                Last checked: {healthCheck.data.timestamp}
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                {isSignedIn ? (
+                  <>
+                    <Button asChild size="lg" className="w-full sm:w-auto">
+                      <Link href="/campaigns">
+                        <MapPin className="h-5 w-5 mr-2" />
+                        Explore Campaigns
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+                      <Link href="/dashboard">
+                        Dashboard
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <SignUpButton mode="modal">
+                      <Button size="lg" className="w-full sm:w-auto">
+                        <Mic className="h-5 w-5 mr-2" />
+                        Start Creating
+                      </Button>
+                    </SignUpButton>
+                    <SignInButton mode="modal">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                        Sign In
+                      </Button>
+                    </SignInButton>
+                  </>
+                )}
               </div>
-              <div className="text-sm text-gray-600">
-                Uptime: {Math.floor(healthCheck.data.uptime)} seconds
-              </div>
-            </div>
-          )}
+
+              {/* System Status - Mobile Optimized */}
+              <Card className="mb-16">
+                <CardContent className="p-6">
+                  <h2 className="text-[--font-size-lg] font-semibold mb-4 text-[--color-text-primary]">System Status</h2>
+                  {healthCheck.isLoading && (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--color-primary] border-t-transparent mr-3"></div>
+                      <span className="text-[--color-text-secondary]">Checking system health...</span>
+                    </div>
+                  )}
+                  {healthCheck.error && (
+                    <div className="flex items-center justify-center py-4 text-[--color-danger]">
+                      <Shield className="h-5 w-5 mr-2" />
+                      Error: {healthCheck.error.message}
+                    </div>
+                  )}
+                  {healthCheck.data && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center">
+                        <div className="w-3 h-3 bg-[--color-accent] rounded-full mr-3 animate-pulse"></div>
+                        <span className="text-[--color-accent] font-medium">
+                          🚀 All Systems Operational
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[--font-size-sm] text-[--color-text-tertiary]">
+                        <div>Last checked: {new Date(healthCheck.data.timestamp).toLocaleTimeString()}</div>
+                        <div>Uptime: {Math.floor(healthCheck.data.uptime / 60)} minutes</div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Feature Cards - Mobile-First Grid */}
+            <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-16">
+              {/* Voice-Powered Creation */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-primary-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <Mic className="h-6 w-6 text-[--color-primary]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    Voice-Powered Creation
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Create campaigns in seconds using natural voice commands. Perfect for accessibility and on-the-go engagement.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* AI-Enhanced Discovery */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-secondary-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <Camera className="h-6 w-6 text-[--color-secondary]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    AI Vision & Content
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Take a photo and let AI suggest campaign content, optimize visuals, and enhance accessibility.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Location-Aware Engagement */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-accent-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <MapPin className="h-6 w-6 text-[--color-accent]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    Smart Location Discovery
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Discover campaigns near you, get location-based notifications, and engage with your immediate community.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Touch-Optimized Voting */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-warning-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <Vote className="h-6 w-6 text-[--color-warning]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    Gesture-Based Voting
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Swipe to vote, touch to engage. Intuitive mobile interactions make civic participation effortless.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Real-Time Community */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-info-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <Users className="h-6 w-6 text-[--color-info]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    Real-Time Community
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Live updates, instant notifications, and real-time collaboration with your community.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Progressive Web App */}
+              <Card interactive ripple className="group">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[--color-primary-light] rounded-[--border-radius-lg] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-[--duration-normal]">
+                    <Smartphone className="h-6 w-6 text-[--color-primary]" />
+                  </div>
+                  <h3 className="text-[--font-size-lg] font-semibold mb-3 text-[--color-text-primary]">
+                    Native App Experience
+                  </h3>
+                  <p className="text-[--color-text-secondary] text-[--font-size-sm]">
+                    Install on any device for native app performance with offline support and push notifications.
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Call-to-Action Section */}
+            <section className="text-center">
+              <Card className="bg-gradient-to-r from-[--color-primary] to-[--color-secondary] text-white border-0">
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center mb-4">
+                    <Heart className="h-8 w-8 mr-2" />
+                    <Globe className="h-8 w-8" />
+                  </div>
+                  <h2 className="text-[--font-size-2xl] font-bold mb-4">
+                    Ready to Transform Your Community?
+                  </h2>
+                  <p className="text-[--font-size-lg] mb-6 opacity-90">
+                    Join thousands of citizens already making a difference through mobile-first civic engagement.
+                  </p>
+                  {!isSignedIn && (
+                    <SignUpButton mode="modal">
+                      <Button size="lg" variant="secondary" className="text-[--color-primary]">
+                        <Mic className="h-5 w-5 mr-2" />
+                        Get Started Today
+                      </Button>
+                    </SignUpButton>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+          </div>
         </div>
+      </main>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-blue-50 rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-3 text-blue-900">
-              For Citizens
-            </h3>
-            <p className="text-blue-700">
-              Participate in local municipal projects, voice your opinions, and
-              track community developments in your area.
-            </p>
-          </div>
-
-          <div className="bg-green-50 rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-3 text-green-900">
-              For Municipalities
-            </h3>
-            <p className="text-green-700">
-              Engage with your community efficiently, gather feedback, and
-              manage development projects with transparency.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Floating Action Button */}
+      <FloatingActionButton
+        onVoiceCapture={handleVoiceCapture}
+        onPhotoCapture={handlePhotoCapture}
+        onLocationCapture={handleLocationCapture}
+        onAIAssist={handleAIAssist}
+        onQuickCreate={handleQuickCreate}
+        onFeedback={handleFeedback}
+        variant="voice-first"
+      />
     </div>
   );
 }
