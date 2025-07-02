@@ -10,28 +10,23 @@ import { VotingInterface } from '~/components/ui/voting-interface';
 import { MobileNav } from '~/components/ui/mobile-nav';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { 
-  ArrowLeft, 
-  MapPin, 
-  User, 
+import {
+  ArrowLeft,
+  MapPin,
+  User,
   Calendar,
   Eye,
   Share,
   Bookmark,
   MoreVertical,
   Users,
-  Activity
+  Activity,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import Image from 'next/image';
 
 interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-// Extended campaign type to include optimistic user vote data
-interface CampaignWithUserVote {
-  userVote?: 'SUPPORT' | 'OPPOSE';
 }
 
 export default function CampaignDetailPage({
@@ -105,7 +100,7 @@ export default function CampaignDetailPage({
               <div className="h-10 w-10 bg-[--color-border] rounded-[--border-radius-full]"></div>
               <div className="h-6 bg-[--color-border] rounded w-24"></div>
             </div>
-            
+
             {/* Content skeleton */}
             <Card>
               <CardContent className="p-6">
@@ -140,9 +135,10 @@ export default function CampaignDetailPage({
                   Campaign Not Found
                 </h1>
                 <p className="text-[--color-text-secondary] mb-6">
-                  The campaign you're looking for doesn't exist or has been removed.
+                  The campaign you&apos;re looking for doesn&apos;t exist or has
+                  been removed.
                 </p>
-                <Button 
+                <Button
                   onClick={() => router.push('/campaigns')}
                   className="w-full"
                 >
@@ -156,14 +152,13 @@ export default function CampaignDetailPage({
     );
   }
 
-  // Get the current vote count, using optimistic update if available
-  const campaignWithOptimisticData = campaign as typeof campaign & CampaignWithUserVote;
+  // Get the current vote count
   const currentVoteCount = campaign._count?.votes || 0;
 
   return (
     <div className="min-h-screen bg-[--color-background]">
       <MobileNav />
-      
+
       {/* Mobile-First Header */}
       <div className="sticky top-0 z-[--z-sticky] bg-[--color-surface]/95 backdrop-blur-md border-b border-[--color-border] safe-area-top">
         <div className="mobile-container">
@@ -176,7 +171,7 @@ export default function CampaignDetailPage({
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon">
                 <Share className="h-5 w-5" />
@@ -195,8 +190,8 @@ export default function CampaignDetailPage({
       <div className="mobile-container py-6 space-y-6">
         {/* Status Badge */}
         <div className="flex items-center gap-3">
-          <Card 
-            variant={getStatusVariant(campaign.status)} 
+          <Card
+            variant={getStatusVariant(campaign.status)}
             className="inline-flex px-3 py-1.5"
           >
             <span className="text-sm font-medium">{campaign.status}</span>
@@ -237,7 +232,9 @@ export default function CampaignDetailPage({
                 <div className="font-medium text-[--color-text-primary]">
                   {campaign.creator?.firstName} {campaign.creator?.lastName}
                 </div>
-                <div className="text-sm text-[--color-text-secondary]">Campaign Creator</div>
+                <div className="text-sm text-[--color-text-secondary]">
+                  Campaign Creator
+                </div>
               </div>
               <div className="flex items-center gap-1 text-[--color-text-secondary]">
                 <Users className="h-4 w-4" />
@@ -249,7 +246,9 @@ export default function CampaignDetailPage({
             {campaign.address && (
               <div className="flex items-center gap-2 p-3 bg-[--color-accent]/5 rounded-[--border-radius-lg] border border-[--color-accent]/20">
                 <MapPin className="h-5 w-5 text-[--color-accent] flex-shrink-0" />
-                <span className="text-[--color-text-primary] text-sm">{campaign.address}</span>
+                <span className="text-[--color-text-primary] text-sm">
+                  {campaign.address}
+                </span>
               </div>
             )}
 
@@ -268,10 +267,12 @@ export default function CampaignDetailPage({
                   Active Campaign
                 </span>
               </div>
-              <Button 
+              <Button
                 variant={viewMode === 'gesture' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setViewMode(viewMode === 'gesture' ? 'default' : 'gesture')}
+                onClick={() =>
+                  setViewMode(viewMode === 'gesture' ? 'default' : 'gesture')
+                }
               >
                 {viewMode === 'gesture' ? 'Button Mode' : 'Gesture Mode'}
               </Button>
@@ -290,8 +291,9 @@ export default function CampaignDetailPage({
             variant={viewMode}
             disabled={false}
             className={cn(
-              "transition-all duration-500",
-              viewMode === 'gesture' && "bg-gradient-to-r from-[--color-primary]/5 to-[--color-success]/5"
+              'transition-all duration-500',
+              viewMode === 'gesture' &&
+                'bg-gradient-to-r from-[--color-primary]/5 to-[--color-success]/5'
             )}
           />
         )}
@@ -304,7 +306,7 @@ export default function CampaignDetailPage({
             </h2>
             <div className="h-px flex-1 bg-[--color-border]"></div>
           </div>
-          
+
           <CommentsSection
             campaignId={id}
             currentUserId="mock_user_id" // TODO: Replace with actual user ID from auth

@@ -4,15 +4,15 @@ import React, { useState, useRef } from 'react';
 import { cn } from '~/lib/utils';
 import { Button } from './button';
 import { Card, CardContent } from './card';
-import { 
-  ThumbsUp, 
-  ThumbsDown, 
-  Heart, 
-  Users, 
+import {
+  ThumbsUp,
+  ThumbsDown,
+  Heart,
+  Users,
   Zap,
   Loader2,
   Check,
-  X
+  X,
 } from 'lucide-react';
 
 export interface VotingInterfaceProps {
@@ -27,7 +27,7 @@ export interface VotingInterfaceProps {
 }
 
 export const VotingInterface: React.FC<VotingInterfaceProps> = ({
-  campaignId,
+  campaignId, // Used for analytics and debugging
   currentVoteCount,
   userVote,
   isVoting = false,
@@ -41,10 +41,10 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
     direction: 'SUPPORT' | 'OPPOSE' | null;
     progress: number;
   }>({ isActive: false, direction: null, progress: 0 });
-  
+
   const [showFeedback, setShowFeedback] = useState(false);
   const [lastVote, setLastVote] = useState<'SUPPORT' | 'OPPOSE' | null>(null);
-  
+
   const gestureRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number>(0);
   const startY = useRef<number>(0);
@@ -55,7 +55,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
       const patterns = {
         light: [10],
         medium: [20],
-        heavy: [50]
+        heavy: [50],
       };
       navigator.vibrate(patterns[type]);
     }
@@ -64,82 +64,84 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   // Handle touch start for gesture voting
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled || isVoting || variant !== 'gesture') return;
-    
+
     const touch = e.touches[0];
     startX.current = touch.clientX;
     startY.current = touch.clientY;
-    
-    setGestureState(prev => ({ ...prev, isActive: true }));
+
+    setGestureState((prev) => ({ ...prev, isActive: true }));
     simulateHaptic('light');
   };
 
   // Handle touch move for gesture progress
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!gestureState.isActive || disabled || isVoting) return;
-    
+
     const touch = e.touches[0];
     const deltaX = touch.clientX - startX.current;
     const deltaY = Math.abs(touch.clientY - startY.current);
-    
+
     // Only horizontal gestures
     if (deltaY > 50) return;
-    
+
     const threshold = 100; // pixels to trigger vote
     const progress = Math.min(Math.abs(deltaX) / threshold, 1);
-    
+
     let direction: 'SUPPORT' | 'OPPOSE' | null = null;
     if (Math.abs(deltaX) > 20) {
       direction = deltaX > 0 ? 'SUPPORT' : 'OPPOSE';
       if (progress > 0.3) simulateHaptic('light');
     }
-    
-    setGestureState(prev => ({
+
+    setGestureState((prev) => ({
       ...prev,
       direction,
-      progress
+      progress,
     }));
   };
 
   // Handle touch end for gesture completion
   const handleTouchEnd = () => {
     if (!gestureState.isActive || disabled || isVoting) return;
-    
+
     if (gestureState.progress >= 1 && gestureState.direction) {
       // Complete the vote
       simulateHaptic('heavy');
       onVote(gestureState.direction);
       setLastVote(gestureState.direction);
       setShowFeedback(true);
-      
+
       // Hide feedback after animation
       setTimeout(() => setShowFeedback(false), 2000);
     } else {
       // Reset gesture
       simulateHaptic('light');
     }
-    
+
     setGestureState({ isActive: false, direction: null, progress: 0 });
   };
 
   // Handle button vote
   const handleButtonVote = (voteType: 'SUPPORT' | 'OPPOSE') => {
     if (disabled || isVoting) return;
-    
+
     simulateHaptic('medium');
     onVote(voteType);
     setLastVote(voteType);
     setShowFeedback(true);
-    
+
     setTimeout(() => setShowFeedback(false), 2000);
   };
 
   // Render compact variant
   if (variant === 'compact') {
     return (
-      <div className={cn(
-        "flex items-center gap-3 p-4 bg-gradient-to-r from-[--color-surface] to-[--color-surface-elevated] rounded-[--border-radius-lg] border border-[--color-border]",
-        className
-      )}>
+      <div
+        className={cn(
+          'flex items-center gap-3 p-4 bg-gradient-to-r from-[--color-surface] to-[--color-surface-elevated] rounded-[--border-radius-lg] border border-[--color-border]',
+          className
+        )}
+      >
         <Button
           variant={userVote === 'SUPPORT' ? 'default' : 'outline'}
           size="sm"
@@ -150,7 +152,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
           <ThumbsUp className="h-4 w-4 mr-2" />
           {currentVoteCount}
         </Button>
-        
+
         <Button
           variant={userVote === 'OPPOSE' ? 'destructive' : 'outline'}
           size="sm"
@@ -168,9 +170,9 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   // Render gesture variant
   if (variant === 'gesture') {
     return (
-      <Card className={cn("overflow-hidden", className)}>
+      <Card className={cn('overflow-hidden', className)}>
         <CardContent className="p-0">
-          <div 
+          <div
             ref={gestureRef}
             className="relative min-h-[120px] bg-gradient-to-r from-[--color-primary]/5 via-[--color-surface] to-[--color-success]/5 touch-pan-y"
             onTouchStart={handleTouchStart}
@@ -180,20 +182,23 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
             {/* Gesture Indicators */}
             <div className="absolute inset-0 flex">
               {/* Support Side */}
-              <div 
+              <div
                 className={cn(
-                  "flex-1 flex items-center justify-center transition-all duration-300",
-                  gestureState.direction === 'SUPPORT' && gestureState.progress > 0.3
-                    ? "bg-[--color-success]/20 scale-105"
-                    : "bg-transparent"
+                  'flex-1 flex items-center justify-center transition-all duration-300',
+                  gestureState.direction === 'SUPPORT' &&
+                    gestureState.progress > 0.3
+                    ? 'bg-[--color-success]/20 scale-105'
+                    : 'bg-transparent'
                 )}
               >
-                <div className={cn(
-                  "flex flex-col items-center transition-all duration-300",
-                  gestureState.direction === 'SUPPORT' 
-                    ? "scale-110 text-[--color-success]" 
-                    : "text-[--color-text-secondary]"
-                )}>
+                <div
+                  className={cn(
+                    'flex flex-col items-center transition-all duration-300',
+                    gestureState.direction === 'SUPPORT'
+                      ? 'scale-110 text-[--color-success]'
+                      : 'text-[--color-text-secondary]'
+                  )}
+                >
                   <ThumbsUp className="h-8 w-8 mb-2" />
                   <span className="text-sm font-medium">Support</span>
                   <span className="text-xs">{currentVoteCount}</span>
@@ -201,20 +206,23 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
               </div>
 
               {/* Oppose Side */}
-              <div 
+              <div
                 className={cn(
-                  "flex-1 flex items-center justify-center transition-all duration-300",
-                  gestureState.direction === 'OPPOSE' && gestureState.progress > 0.3
-                    ? "bg-[--color-danger]/20 scale-105"
-                    : "bg-transparent"
+                  'flex-1 flex items-center justify-center transition-all duration-300',
+                  gestureState.direction === 'OPPOSE' &&
+                    gestureState.progress > 0.3
+                    ? 'bg-[--color-danger]/20 scale-105'
+                    : 'bg-transparent'
                 )}
               >
-                <div className={cn(
-                  "flex flex-col items-center transition-all duration-300",
-                  gestureState.direction === 'OPPOSE' 
-                    ? "scale-110 text-[--color-danger]" 
-                    : "text-[--color-text-secondary]"
-                )}>
+                <div
+                  className={cn(
+                    'flex flex-col items-center transition-all duration-300',
+                    gestureState.direction === 'OPPOSE'
+                      ? 'scale-110 text-[--color-danger]'
+                      : 'text-[--color-text-secondary]'
+                  )}
+                >
                   <ThumbsDown className="h-8 w-8 mb-2" />
                   <span className="text-sm font-medium">Oppose</span>
                 </div>
@@ -224,12 +232,12 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
             {/* Progress Indicator */}
             {gestureState.isActive && gestureState.direction && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-[--color-border]">
-                <div 
+                <div
                   className={cn(
-                    "h-full transition-all duration-100",
-                    gestureState.direction === 'SUPPORT' 
-                      ? "bg-[--color-success]" 
-                      : "bg-[--color-danger]"
+                    'h-full transition-all duration-100',
+                    gestureState.direction === 'SUPPORT'
+                      ? 'bg-[--color-success]'
+                      : 'bg-[--color-danger]'
                   )}
                   style={{ width: `${gestureState.progress * 100}%` }}
                 />
@@ -252,7 +260,10 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
 
   // Default variant
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card
+      className={cn('overflow-hidden', className)}
+      data-campaign-id={campaignId}
+    >
       <CardContent className="p-6">
         {/* Header */}
         <div className="text-center mb-6">
@@ -277,12 +288,14 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
 
         {/* Success Feedback */}
         {showFeedback && lastVote && (
-          <div className={cn(
-            "mb-6 p-4 border rounded-[--border-radius-lg] animate-[slideUp_0.3s_ease-out]",
-            lastVote === 'SUPPORT' 
-              ? "bg-[--color-success]/10 border-[--color-success]/20 text-[--color-success]"
-              : "bg-[--color-danger]/10 border-[--color-danger]/20 text-[--color-danger]"
-          )}>
+          <div
+            className={cn(
+              'mb-6 p-4 border rounded-[--border-radius-lg] animate-[slideUp_0.3s_ease-out]',
+              lastVote === 'SUPPORT'
+                ? 'bg-[--color-success]/10 border-[--color-success]/20 text-[--color-success]'
+                : 'bg-[--color-danger]/10 border-[--color-danger]/20 text-[--color-danger]'
+            )}
+          >
             <div className="flex items-center justify-center">
               {lastVote === 'SUPPORT' ? (
                 <Check className="h-5 w-5 mr-3" />
@@ -304,10 +317,10 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
             onClick={() => handleButtonVote('SUPPORT')}
             disabled={disabled || isVoting}
             className={cn(
-              "flex-1 h-14 text-base font-medium transition-all duration-300 group",
-              userVote === 'SUPPORT' 
-                ? "bg-[--color-success] hover:bg-[--color-success-hover] text-white shadow-[--shadow-button]" 
-                : "border-[--color-success] text-[--color-success] hover:bg-[--color-success]/10"
+              'flex-1 h-14 text-base font-medium transition-all duration-300 group',
+              userVote === 'SUPPORT'
+                ? 'bg-[--color-success] hover:bg-[--color-success-hover] text-white shadow-[--shadow-button]'
+                : 'border-[--color-success] text-[--color-success] hover:bg-[--color-success]/10'
             )}
           >
             <div className="flex items-center justify-center gap-3">
@@ -326,10 +339,10 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
             onClick={() => handleButtonVote('OPPOSE')}
             disabled={disabled || isVoting}
             className={cn(
-              "flex-1 h-14 text-base font-medium transition-all duration-300 group",
-              userVote === 'OPPOSE' 
-                ? "bg-[--color-danger] hover:bg-[--color-danger-hover] text-white shadow-[--shadow-button]" 
-                : "border-[--color-danger] text-[--color-danger] hover:bg-[--color-danger]/10"
+              'flex-1 h-14 text-base font-medium transition-all duration-300 group',
+              userVote === 'OPPOSE'
+                ? 'bg-[--color-danger] hover:bg-[--color-danger-hover] text-white shadow-[--shadow-button]'
+                : 'border-[--color-danger] text-[--color-danger] hover:bg-[--color-danger]/10'
             )}
           >
             <div className="flex items-center justify-center gap-3">
@@ -354,4 +367,4 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   );
 };
 
-export default VotingInterface; 
+export default VotingInterface;
