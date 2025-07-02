@@ -6,6 +6,23 @@ import { api } from '~/lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsSection } from '~/components/comments';
 import { useCampaignOperations } from '~/hooks/use-campaign-operations';
+import { VotingInterface } from '~/components/ui/voting-interface';
+import { MobileNav } from '~/components/ui/mobile-nav';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
+import { 
+  ArrowLeft, 
+  MapPin, 
+  User, 
+  Calendar,
+  Eye,
+  Share,
+  Bookmark,
+  MoreVertical,
+  Users,
+  Activity
+} from 'lucide-react';
+import { cn } from '~/lib/utils';
 import Image from 'next/image';
 
 interface CampaignDetailPageProps {
@@ -23,6 +40,7 @@ export default function CampaignDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const [userVote, setUserVote] = useState<'SUPPORT' | 'OPPOSE' | null>(null);
+  const [viewMode, setViewMode] = useState<'default' | 'gesture'>('default');
 
   const { data: campaign, isLoading } = api.campaigns.getById.useQuery({ id });
 
@@ -61,22 +79,46 @@ export default function CampaignDetailPage({
     console.error('Voting error:', voteError);
   }
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'success';
+      case 'DRAFT':
+        return 'warning';
+      case 'COMPLETED':
+        return 'primary';
+      case 'CANCELLED':
+        return 'danger';
+      default:
+        return 'default';
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-              <div className="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
-              <div className="space-y-3 mb-8">
-                <div className="h-4 bg-gray-300 rounded w-full"></div>
-                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-300 rounded w-4/6"></div>
-              </div>
-              <div className="h-64 bg-gray-300 rounded mb-6"></div>
+      <div className="min-h-screen bg-[--color-background]">
+        <MobileNav />
+        <div className="mobile-container py-8">
+          <div className="animate-pulse space-y-6">
+            {/* Header skeleton */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-10 w-10 bg-[--color-border] rounded-[--border-radius-full]"></div>
+              <div className="h-6 bg-[--color-border] rounded w-24"></div>
             </div>
+            
+            {/* Content skeleton */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="h-8 bg-[--color-border] rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-[--color-border] rounded w-1/2 mb-6"></div>
+                <div className="space-y-3 mb-8">
+                  <div className="h-4 bg-[--color-border] rounded w-full"></div>
+                  <div className="h-4 bg-[--color-border] rounded w-5/6"></div>
+                  <div className="h-4 bg-[--color-border] rounded w-4/6"></div>
+                </div>
+                <div className="h-32 bg-[--color-border] rounded-[--border-radius-lg]"></div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -85,267 +127,193 @@ export default function CampaignDetailPage({
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Campaign Not Found
-          </h1>
-          <p className="text-gray-600 mb-6">
-            The campaign you&apos;re looking for doesn&apos;t exist or has been
-            removed.
-          </p>
-          <button
-            onClick={() => router.push('/campaigns')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Browse Campaigns
-          </button>
+      <div className="min-h-screen bg-[--color-background]">
+        <MobileNav />
+        <div className="mobile-container">
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <Card variant="outline" className="max-w-md">
+              <CardContent className="p-8 text-center">
+                <div className="h-16 w-16 bg-[--color-danger]/10 rounded-[--border-radius-full] flex items-center justify-center mx-auto mb-4">
+                  <Eye className="h-8 w-8 text-[--color-danger]" />
+                </div>
+                <h1 className="text-xl font-semibold text-[--color-text-primary] mb-2">
+                  Campaign Not Found
+                </h1>
+                <p className="text-[--color-text-secondary] mb-6">
+                  The campaign you're looking for doesn't exist or has been removed.
+                </p>
+                <Button 
+                  onClick={() => router.push('/campaigns')}
+                  className="w-full"
+                >
+                  Browse Campaigns
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800';
-      case 'DRAFT':
-        return 'bg-gray-100 text-gray-800';
-      case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   // Get the current vote count, using optimistic update if available
-  const campaignWithOptimisticData = campaign as typeof campaign &
-    CampaignWithUserVote;
+  const campaignWithOptimisticData = campaign as typeof campaign & CampaignWithUserVote;
   const currentVoteCount = campaign._count?.votes || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center mb-4">
-            <button
+    <div className="min-h-screen bg-[--color-background]">
+      <MobileNav />
+      
+      {/* Mobile-First Header */}
+      <div className="sticky top-0 z-[--z-sticky] bg-[--color-surface]/95 backdrop-blur-md border-b border-[--color-border] safe-area-top">
+        <div className="mobile-container">
+          <div className="flex items-center justify-between h-14">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => router.back()}
-              className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[--color-text-secondary] hover:text-[--color-text-primary]"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <div className="flex items-center gap-3">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  campaign.status
-                )}`}
-              >
-                {campaign.status}
-              </span>
-              <span className="text-sm text-gray-500">
-                Created{' '}
-                {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
-              </span>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon">
+                <Share className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <Bookmark className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mobile-container py-6 space-y-6">
+        {/* Status Badge */}
+        <div className="flex items-center gap-3">
+          <Card 
+            variant={getStatusVariant(campaign.status)} 
+            className="inline-flex px-3 py-1.5"
+          >
+            <span className="text-sm font-medium">{campaign.status}</span>
+          </Card>
+          <div className="flex items-center gap-2 text-[--color-text-secondary]">
+            <Calendar className="h-4 w-4" />
+            <span className="text-sm">
+              {formatDistanceToNow(campaign.createdAt, { addSuffix: true })}
+            </span>
+          </div>
+        </div>
+
         {/* Campaign Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
-          <div className="p-8">
-            {/* Title and Creator */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <Card variant="elevated">
+          <CardContent className="p-6 space-y-6">
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-[--color-text-primary] leading-tight">
               {campaign.title}
             </h1>
 
             {/* Creator Info */}
-            <div className="flex items-center mb-6">
+            <div className="flex items-center gap-3 p-4 bg-[--color-surface] rounded-[--border-radius-lg]">
               {campaign.creator?.imageUrl ? (
                 <Image
                   src={campaign.creator.imageUrl}
                   alt={`${campaign.creator.firstName} ${campaign.creator.lastName}`}
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-full mr-3"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-[--border-radius-full] object-cover"
                   priority={false}
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-gray-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <div className="w-12 h-12 rounded-[--border-radius-full] bg-[--color-primary]/10 flex items-center justify-center">
+                  <User className="w-6 h-6 text-[--color-primary]" />
                 </div>
               )}
-              <div>
-                <div className="font-medium text-gray-900">
+              <div className="flex-1">
+                <div className="font-medium text-[--color-text-primary]">
                   {campaign.creator?.firstName} {campaign.creator?.lastName}
                 </div>
-                <div className="text-sm text-gray-500">Campaign Creator</div>
+                <div className="text-sm text-[--color-text-secondary]">Campaign Creator</div>
+              </div>
+              <div className="flex items-center gap-1 text-[--color-text-secondary]">
+                <Users className="h-4 w-4" />
+                <span className="text-sm">{currentVoteCount}</span>
               </div>
             </div>
 
             {/* Location */}
             {campaign.address && (
-              <div className="flex items-center text-gray-600 mb-6">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span>{campaign.address}</span>
+              <div className="flex items-center gap-2 p-3 bg-[--color-accent]/5 rounded-[--border-radius-lg] border border-[--color-accent]/20">
+                <MapPin className="h-5 w-5 text-[--color-accent] flex-shrink-0" />
+                <span className="text-[--color-text-primary] text-sm">{campaign.address}</span>
               </div>
             )}
 
             {/* Description */}
-            <div className="prose max-w-none mb-8">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <div className="prose max-w-none">
+              <p className="text-[--color-text-primary] leading-relaxed whitespace-pre-wrap">
                 {campaign.description}
               </p>
             </div>
 
-            {/* Voting Section with Optimistic Updates */}
-            {campaign.status === 'ACTIVE' && (
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Support this campaign
-                </h3>
-
-                {/* Show optimistic voting feedback */}
-                {isVoting && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center text-blue-800">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-800"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Submitting your vote...
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button
-                    onClick={() => handleVote('SUPPORT')}
-                    disabled={isVoting}
-                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
-                      userVote === 'SUPPORT' ||
-                      campaignWithOptimisticData?.userVote === 'SUPPORT'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-green-100 text-green-800 hover:bg-green-200'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V18m-7-8a2 2 0 01-2-2V6a2 2 0 012-2h2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                        />
-                      </svg>
-                      Support ({currentVoteCount})
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleVote('OPPOSE')}
-                    disabled={isVoting}
-                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
-                      userVote === 'OPPOSE' ||
-                      campaignWithOptimisticData?.userVote === 'OPPOSE'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 13l3 3 7-7"
-                        />
-                      </svg>
-                      Oppose
-                    </div>
-                  </button>
-                </div>
+            {/* Engagement Stats */}
+            <div className="flex items-center justify-between p-4 bg-[--color-surface] rounded-[--border-radius-lg] border border-[--color-border]">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-[--color-primary]" />
+                <span className="text-sm font-medium text-[--color-text-primary]">
+                  Active Campaign
+                </span>
               </div>
+              <Button 
+                variant={viewMode === 'gesture' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode(viewMode === 'gesture' ? 'default' : 'gesture')}
+              >
+                {viewMode === 'gesture' ? 'Button Mode' : 'Gesture Mode'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Revolutionary Voting Interface */}
+        {campaign.status === 'ACTIVE' && (
+          <VotingInterface
+            campaignId={id}
+            currentVoteCount={currentVoteCount}
+            userVote={userVote}
+            isVoting={isVoting}
+            onVote={handleVote}
+            variant={viewMode}
+            disabled={false}
+            className={cn(
+              "transition-all duration-500",
+              viewMode === 'gesture' && "bg-gradient-to-r from-[--color-primary]/5 to-[--color-success]/5"
             )}
-          </div>
-        </div>
+          />
+        )}
 
         {/* Comments Section */}
-        <CommentsSection
-          campaignId={id}
-          currentUserId="mock_user_id" // TODO: Replace with actual user ID from auth
-        />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-[--color-text-primary]">
+              Community Discussion
+            </h2>
+            <div className="h-px flex-1 bg-[--color-border]"></div>
+          </div>
+          
+          <CommentsSection
+            campaignId={id}
+            currentUserId="mock_user_id" // TODO: Replace with actual user ID from auth
+          />
+        </div>
       </div>
+
+      {/* Bottom Safe Area */}
+      <div className="safe-area-bottom h-6"></div>
     </div>
   );
 }
