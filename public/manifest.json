@@ -128,5 +128,27 @@
       "protocol": "web+civilyst",
       "url": "/campaign-join?id=%s"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/campaigns/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/campaigns/import",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"]
+      }
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
