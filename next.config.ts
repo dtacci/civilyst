@@ -18,13 +18,6 @@ const nextConfig: NextConfig = {
     // Reduce bundle size in development
     optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
   },
-  // Skip type checking in development for speed
-  typescript: {
-    ignoreBuildErrors: process.env.NODE_ENV === 'development',
-  },
-  eslint: {
-    ignoreDuringBuilds: process.env.NODE_ENV === 'development',
-  },
 };
 
 // PWA configuration

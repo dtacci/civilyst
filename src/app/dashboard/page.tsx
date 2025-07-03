@@ -248,8 +248,7 @@ export default function DashboardPage() {
                             </Link>
                           </div>
                           <div className="text-sm text-gray-500">
-                            Created{' '}
-                            {new Date(campaign.createdAt).toLocaleDateString()}
+                            Created {campaign.createdAt.toLocaleDateString()}
                           </div>
                         </div>
                       </div>
