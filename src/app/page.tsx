@@ -114,8 +114,8 @@ export default function Home() {
                 {isSignedIn ? (
                   <>
                     <Button asChild size="lg" className="w-full sm:w-auto">
-                      <Link href="/campaigns">
-                        <MapPin className="h-5 w-5 mr-2" />
+                      <Link href="/campaigns" className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
                         Explore Campaigns
                       </Link>
                     </Button>

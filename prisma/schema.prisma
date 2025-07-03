@@ -9,19 +9,24 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  firstName         String?
-  lastName          String?
-  email             String   @unique
-  imageUrl          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
+  id                     String   @id @default(cuid())
+  firstName              String?
+  lastName               String?
+  email                  String   @unique
+  imageUrl               String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  // Notification preferences stored as JSON
+  notificationPreferences String?  // JSON string of NotificationPreferencesData
+  
   // Relationships
   campaigns         Campaign[]
   votes             Vote[]
   comments          Comment[]
   pushSubscriptions PushSubscription[]
+  wonders           Wonder[]           // Wonders created by user
+  wonderResponses   WonderResponse[]   // Wonder responses by user
 
   // Performance indexes for user queries
   @@index([createdAt])
@@ -58,6 +63,8 @@ model Campaign {
   votes       Vote[]
   comments    Comment[]
   districts   CampaignDistrict[]
+  fromWonder  Wonder[]        // If originated from a wonder
+  fromPattern WonderPattern[] // If originated from a pattern
 
   // Performance-optimized indexes for common queries
   @@index([status, createdAt])
@@ -170,6 +177,129 @@ model PushSubscription {
   @@index([createdAt])
 }
 
+model Wonder {
+  id               String           @id @default(cuid())
+  question         String
+  category         WonderCategory   @default(GENERAL)
+  authorId         String?
+  
+  // Context data
+  locationContext  String?          // e.g., "commute", "neighborhood"
+  timeContext      WonderTimeContext @default(ANYTIME)
+  
+  // Aggregation data
+  responseCount    Int              @default(0)
+  patternDetected  Boolean          @default(false)
+  campaignId       String?          // If evolved into campaign
+  
+  // Status
+  status           WonderStatus     @default(ACTIVE)
+  isSeeded         Boolean          @default(false) // System-generated vs user-generated
+  
+  // Metadata
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  
+  // Relationships
+  author           User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  responses        WonderResponse[]
+  patterns         WonderPattern[]
+  campaign         Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  // Performance indexes
+  @@index([status, createdAt])
+  @@index([category, status])
+  @@index([timeContext, status])
+  @@index([responseCount])
+  @@index([patternDetected])
+  @@index([authorId])
+  @@map("wonders")
+}
+
+model WonderResponse {
+  id                String    @id @default(cuid())
+  wonderId          String
+  userId            String
+  
+  // Audio and text content
+  audioUrl          String?   // Uploadthing URL
+  transcription     String?   // AI transcription
+  textResponse      String?   // Direct text input (fallback)
+  
+  // AI-extracted data
+  parsedLocation    String?   // Extracted location mentions
+  parsedNeed        String?   // Extracted need/desire
+  parsedSentiment   String?   // Positive/negative/neutral
+  extractedEntities Json?     // Full GPT-4 extraction results
+  
+  // Geographic data (if location detected)
+  latitude          Float?
+  longitude         Float?
+  address           String?
+  city              String?
+  state             String?
+  geohash           String?
+  
+  // Processing status
+  isProcessed       Boolean   @default(false)
+  processingError   String?
+  
+  // Metadata
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relationships
+  wonder            Wonder    @relation(fields: [wonderId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([wonderId, userId]) // One response per user per wonder
+  @@index([wonderId, createdAt])
+  @@index([userId, createdAt])
+  @@index([parsedLocation])
+  @@index([geohash])
+  @@index([isProcessed])
+  @@index([createdAt])
+  @@map("wonder_responses")
+}
+
+model WonderPattern {
+  id                    String           @id @default(cuid())
+  wonderId              String
+  
+  // Pattern identification
+  pattern               String           // e.g., "coffee shop need"
+  confidence            Float            // 0.0 to 1.0
+  supportCount          Int              @default(0)
+  
+  // Geographic clustering
+  locationCluster       String?          // Identified area/neighborhood
+  centerLatitude        Float?
+  centerLongitude       Float?
+  radius                Float?           // In meters
+  
+  // Auto-campaign generation
+  suggestedCampaignTitle String?
+  campaignId            String?          // If auto-generated campaign
+  
+  // Pattern evolution
+  status                PatternStatus    @default(EMERGING)
+  threshold             Int              @default(10) // Responses needed for action
+  
+  // Metadata
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  
+  // Relationships
+  wonder                Wonder           @relation(fields: [wonderId], references: [id], onDelete: Cascade)
+  campaign              Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  @@index([wonderId, confidence])
+  @@index([status, supportCount])
+  @@index([locationCluster])
+  @@index([createdAt])
+  @@map("wonder_patterns")
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model spatial_ref_sys {
   srid      Int     @id
@@ -198,4 +328,34 @@ enum DistrictType {
   COUNTY
   CITY
   SCHOOL
+}
+
+enum WonderCategory {
+  GENERAL
+  BUSINESS
+  RECREATION
+  INFRASTRUCTURE
+  COMMUNITY
+  ENVIRONMENT
+}
+
+enum WonderTimeContext {
+  MORNING
+  LUNCH
+  EVENING
+  WEEKEND
+  ANYTIME
+}
+
+enum WonderStatus {
+  ACTIVE
+  ARCHIVED
+  CONVERTED_TO_CAMPAIGN
+}
+
+enum PatternStatus {
+  EMERGING
+  STRONG
+  ACTIONABLE
+  CONVERTED
 }
