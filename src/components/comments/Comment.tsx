@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '~/lib/trpc';
 import Image from 'next/image';
+import { User } from 'lucide-react';
 
 export interface CommentData {
   id: string;
@@ -104,18 +105,8 @@ export function Comment({
               className="w-8 h-8 rounded-full"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-gray-600"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                  clipRule="evenodd"
-                />
-              </svg>
+            <div className="w-8 h-8 rounded-full bg-[--color-surface] border border-[--color-border] flex items-center justify-center">
+              <User className="w-4 h-4 text-[--color-text-tertiary]" />
             </div>
           )}
         </div>
@@ -124,11 +115,13 @@ export function Comment({
         <div className="flex-1 min-w-0">
           {/* Author and timestamp */}
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-medium text-gray-900 text-sm">
+            <span className="font-medium text-[--color-text-primary] text-[--font-size-sm]">
               {authorName}
             </span>
-            <span className="text-gray-500 text-xs">•</span>
-            <span className="text-gray-500 text-xs">
+            <span className="text-[--color-text-tertiary] text-[--font-size-xs]">
+              •
+            </span>
+            <span className="text-[--color-text-tertiary] text-[--font-size-xs]">
               {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
               {isUpdated && <span className="ml-1">(edited)</span>}
             </span>
@@ -146,14 +139,14 @@ export function Comment({
                 placeholder="Write your comment..."
               />
               <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-500">
+                <div className="text-[--font-size-xs] text-[--color-text-tertiary]">
                   {editContent.length}/2000 characters
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleCancelEdit}
                     disabled={updateMutation.isPending}
-                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                    className="px-3 py-1 text-[--font-size-sm] text-[--color-text-secondary] hover:text-[--color-text-primary] transition-colors"
                   >
                     Cancel
                   </button>
@@ -163,7 +156,7 @@ export function Comment({
                       updateMutation.isPending ||
                       editContent.trim().length === 0
                     }
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="px-3 py-1 text-[--font-size-sm] bg-[--color-primary] text-white rounded hover:bg-[--color-primary-hover] transition-colors disabled:opacity-50"
                   >
                     {updateMutation.isPending ? 'Saving...' : 'Save'}
                   </button>
@@ -171,7 +164,7 @@ export function Comment({
               </div>
             </div>
           ) : (
-            <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="text-[--color-text-secondary] text-[--font-size-sm] leading-[--line-height-relaxed] whitespace-pre-wrap">
               {comment.content}
             </div>
           )}
@@ -181,14 +174,14 @@ export function Comment({
             <div className="flex items-center space-x-4 mt-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                className="text-[--font-size-xs] text-[--color-text-tertiary] hover:text-[--color-primary] transition-colors"
               >
                 Edit
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="text-xs text-gray-500 hover:text-red-600 transition-colors"
+                className="text-[--font-size-xs] text-[--color-text-tertiary] hover:text-[--color-danger] transition-colors"
               >
                 {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
