@@ -9,14 +9,17 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  firstName         String?
-  lastName          String?
-  email             String   @unique
-  imageUrl          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
+  id                     String   @id @default(cuid())
+  firstName              String?
+  lastName               String?
+  email                  String   @unique
+  imageUrl               String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  // Notification preferences stored as JSON
+  notificationPreferences String?  // JSON string of NotificationPreferencesData
+  
   // Relationships
   campaigns         Campaign[]
   votes             Vote[]
