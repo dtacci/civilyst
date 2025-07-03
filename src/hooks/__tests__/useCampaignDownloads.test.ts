@@ -31,13 +31,7 @@ describe('useCampaignDownloads', () => {
     jest.spyOn(document.body, 'appendChild').mockImplementation(jest.fn());
     jest.spyOn(document.body, 'removeChild').mockImplementation(jest.fn());
 
-    // Mock window location
-    Object.defineProperty(window, 'location', {
-      value: {
-        origin: 'http://localhost:3000',
-      },
-      writable: true,
-    });
+    // Use the existing window.location mock from jest.setup.js
   });
 
   const mockCampaignData = {

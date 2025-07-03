@@ -80,3 +80,25 @@ console.warn = (...args) => {
   }
   originalConsoleWarn(...args);
 };
+
+// Ensure DOM document has a body element
+if (!document.body) {
+  document.body = document.createElement('body');
+  document.documentElement.appendChild(document.body);
+}
+
+// Mock window.location conditionally
+try {
+  delete window.location;
+  Object.defineProperty(window, 'location', {
+    value: {
+      origin: 'http://localhost:3000',
+      href: 'http://localhost:3000',
+      pathname: '/',
+    },
+    writable: true,
+    configurable: true,
+  });
+} catch (e) {
+  // Location already mocked, skip
+}

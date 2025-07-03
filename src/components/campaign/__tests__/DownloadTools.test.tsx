@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { DownloadTools } from '../DownloadTools';
 
 // Mock fetch globally
@@ -16,23 +16,41 @@ describe('DownloadTools', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    cleanup();
+    
     // Mock URL.createObjectURL and related functions
     global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
     global.URL.revokeObjectURL = jest.fn();
     
-    // Mock document.createElement
-    global.document.createElement = jest.fn().mockImplementation((tagName) => {
+    // Mock document.createElement with simple implementation
+    jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
       if (tagName === 'a') {
         return mockLink as any;
       }
+      // Return a basic element for other tags
       return {
         tagName: tagName.toUpperCase(),
+        setAttribute: jest.fn(),
+        getAttribute: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        style: {},
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn(),
+          contains: jest.fn(),
+        },
       } as any;
     });
     
     // Mock document.body methods
-    global.document.body.appendChild = jest.fn();
-    global.document.body.removeChild = jest.fn();
+    jest.spyOn(document.body, 'appendChild').mockImplementation(jest.fn());
+    jest.spyOn(document.body, 'removeChild').mockImplementation(jest.fn());
+  });
+
+  afterEach(() => {
+    cleanup();
+    jest.restoreAllMocks();
   });
 
   const defaultProps = {
