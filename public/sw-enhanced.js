@@ -21,13 +21,24 @@ const criticalResources = [
 
 // Install event - cache critical resources
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing enhanced service worker');
+  // Service worker logging for debugging
+  if (
+    self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1'
+  ) {
+    console.info('[SW] Installing enhanced service worker');
+  }
 
   event.waitUntil(
     caches
       .open(CRITICAL_RESOURCES_CACHE)
       .then((cache) => {
-        console.log('SW: Caching critical resources');
+        if (
+          self.location.hostname === 'localhost' ||
+          self.location.hostname === '127.0.0.1'
+        ) {
+          console.info('[SW] Caching critical resources');
+        }
         return cache.addAll(criticalResources);
       })
       .then(() => {
@@ -39,7 +50,12 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating enhanced service worker');
+  if (
+    self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1'
+  ) {
+    console.info('[SW] Activating enhanced service worker');
+  }
 
   event.waitUntil(
     Promise.all([
@@ -56,7 +72,12 @@ self.addEventListener('activate', (event) => {
               cacheName !== API_CACHE &&
               cacheName !== IMAGES_CACHE
             ) {
-              console.log('SW: Deleting old cache:', cacheName);
+              if (
+                self.location.hostname === 'localhost' ||
+                self.location.hostname === '127.0.0.1'
+              ) {
+                console.info('[SW] Deleting old cache:', cacheName);
+              }
               return caches.delete(cacheName);
             }
           })
@@ -90,7 +111,12 @@ self.addEventListener('fetch', (event) => {
 
 // Background sync event
 self.addEventListener('sync', (event) => {
-  console.log('SW: Background sync triggered:', event.tag);
+  if (
+    self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1'
+  ) {
+    console.info('[SW] Background sync triggered:', event.tag);
+  }
 
   if (event.tag === BACKGROUND_SYNC_TAG) {
     event.waitUntil(handleBackgroundSync());
@@ -111,7 +137,12 @@ self.addEventListener('message', (event) => {
         event.waitUntil(cacheUrls(event.data.urls));
         break;
       default:
-        console.log('SW: Unknown message type:', event.data.type);
+        if (
+          self.location.hostname === 'localhost' ||
+          self.location.hostname === '127.0.0.1'
+        ) {
+          console.warn('[SW] Unknown message type:', event.data.type);
+        }
     }
   }
 });
@@ -129,7 +160,13 @@ async function handleApiRequest(request) {
 
     return networkResponse;
   } catch (error) {
-    console.log('SW: Network failed for API request, trying cache', error);
+    // Only log network failures in development
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.warn('[SW] Network failed for API request, trying cache', error);
+    }
 
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -162,7 +199,13 @@ async function handleImageRequest(request) {
     return networkResponse;
   } catch (error) {
     // Return placeholder image for failed image requests
-    console.log('SW: Image request failed', error);
+    // Only log image failures in development
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.warn('[SW] Image request failed', error);
+    }
     return new Response('', { status: 404 });
   }
 }
@@ -183,7 +226,13 @@ async function handleStaticAssets(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.log('SW: Failed to fetch static asset:', request.url, error);
+    // Only log static asset failures in development
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.warn('[SW] Failed to fetch static asset:', request.url, error);
+    }
     return new Response('', { status: 404 });
   }
 }
@@ -201,7 +250,13 @@ async function handlePageRequest(request) {
 
     return networkResponse;
   } catch (error) {
-    console.log('SW: Network failed for page request, trying cache', error);
+    // Only log page request failures in development
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.warn('[SW] Network failed for page request, trying cache', error);
+    }
 
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -216,7 +271,12 @@ async function handlePageRequest(request) {
 
 // Background sync handler
 async function handleBackgroundSync() {
-  console.log('SW: Processing background sync');
+  if (
+    self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1'
+  ) {
+    console.info('[SW] Processing background sync');
+  }
 
   try {
     // Get sync queue from IndexedDB
@@ -225,7 +285,12 @@ async function handleBackgroundSync() {
     const store = transaction.objectStore('syncQueue');
     const syncItems = await getAll(store);
 
-    console.log('SW: Found', syncItems.length, 'items to sync');
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.info('[SW] Found', syncItems.length, 'items to sync');
+    }
 
     // Process each sync item
     for (const item of syncItems) {
@@ -237,7 +302,12 @@ async function handleBackgroundSync() {
         const deleteStore = deleteTransaction.objectStore('syncQueue');
         await deleteStore.delete(item.id);
 
-        console.log('SW: Successfully synced item:', item.id);
+        if (
+          self.location.hostname === 'localhost' ||
+          self.location.hostname === '127.0.0.1'
+        ) {
+          console.info('[SW] Successfully synced item:', item.id);
+        }
       } catch (error) {
         console.error('SW: Failed to sync item:', item.id, error);
 
@@ -249,7 +319,15 @@ async function handleBackgroundSync() {
           const deleteTransaction = db.transaction(['syncQueue'], 'readwrite');
           const deleteStore = deleteTransaction.objectStore('syncQueue');
           await deleteStore.delete(item.id);
-          console.log('SW: Removed failed item after max retries:', item.id);
+          if (
+            self.location.hostname === 'localhost' ||
+            self.location.hostname === '127.0.0.1'
+          ) {
+            console.warn(
+              '[SW] Removed failed item after max retries:',
+              item.id
+            );
+          }
         } else {
           // Update retry count
           const updateTransaction = db.transaction(['syncQueue'], 'readwrite');

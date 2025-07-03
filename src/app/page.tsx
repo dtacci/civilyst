@@ -18,7 +18,7 @@ import {
   Camera,
   Heart,
   Shield,
-  Globe
+  Globe,
 } from 'lucide-react';
 
 export default function Home() {
@@ -31,7 +31,10 @@ export default function Home() {
     if (isSignedIn) {
       router.push('/campaigns/create?voice=true');
     } else {
-      console.log('Voice capture - requires login');
+      // Development logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Home] Voice capture - requires login');
+      }
     }
   };
 
@@ -39,7 +42,10 @@ export default function Home() {
     if (isSignedIn) {
       router.push('/campaigns/create?photo=true');
     } else {
-      console.log('Photo capture - requires login');
+      // Development logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Home] Photo capture - requires login');
+      }
     }
   };
 
@@ -47,7 +53,10 @@ export default function Home() {
     if (isSignedIn) {
       router.push('/campaigns/create?location=true');
     } else {
-      console.log('Location capture - requires login');
+      // Development logging only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Home] Location capture - requires login');
+      }
     }
   };
 
@@ -64,7 +73,10 @@ export default function Home() {
   };
 
   const handleFeedback = () => {
-    console.log('Feedback - Future: User feedback system');
+    // Development logging only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Home] Feedback - Future: User feedback system');
+    }
   };
 
   const handleVoiceSearch = (query: string) => {
@@ -81,10 +93,14 @@ export default function Home() {
       <MobileNav
         onVoiceSearch={handleVoiceSearch}
         onSearch={handleSearch}
-        user={isSignedIn ? {
-          name: "User", // TODO: Replace with actual user data
-          email: "user@example.com"
-        } : undefined}
+        user={
+          isSignedIn
+            ? {
+                name: 'User', // TODO: Replace with actual user data
+                email: 'user@example.com',
+              }
+            : undefined
+        }
       />
 
       {/* Hero Section - Mobile-First */}
@@ -100,12 +116,16 @@ export default function Home() {
                 </div>
                 <h1 className="text-[--font-size-4xl] md:text-[--font-size-5xl] font-bold text-[--color-text-primary] mb-4 leading-[--line-height-tight]">
                   Transform Your Community with
-                  <span className="text-[--color-primary]"> Voice-Powered </span>
+                  <span className="text-[--color-primary]">
+                    {' '}
+                    Voice-Powered{' '}
+                  </span>
                   Civic Action
                 </h1>
                 <p className="text-[--font-size-xl] text-[--color-text-secondary] max-w-2xl mx-auto leading-[--line-height-relaxed]">
-                  The first mobile-native platform for civic engagement. Create campaigns with your voice,
-                  discover local issues through AI, and drive real change in your community.
+                  The first mobile-native platform for civic engagement. Create
+                  campaigns with your voice, discover local issues through AI,
+                  and drive real change in your community.
                 </p>
               </div>
 
@@ -114,15 +134,21 @@ export default function Home() {
                 {isSignedIn ? (
                   <>
                     <Button asChild size="lg" className="w-full sm:w-auto">
-                      <Link href="/campaigns" className="flex items-center gap-2">
+                      <Link
+                        href="/campaigns"
+                        className="flex items-center gap-2"
+                      >
                         <MapPin className="h-5 w-5" />
                         Explore Campaigns
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-                      <Link href="/dashboard">
-                        Dashboard
-                      </Link>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                    >
+                      <Link href="/dashboard">Dashboard</Link>
                     </Button>
                   </>
                 ) : (
@@ -134,7 +160,11 @@ export default function Home() {
                       </Button>
                     </SignUpButton>
                     <SignInButton mode="modal">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full sm:w-auto"
+                      >
                         Sign In
                       </Button>
                     </SignInButton>
@@ -145,11 +175,15 @@ export default function Home() {
               {/* System Status - Mobile Optimized */}
               <Card className="mb-16">
                 <CardContent className="p-6">
-                  <h2 className="text-[--font-size-lg] font-semibold mb-4 text-[--color-text-primary]">System Status</h2>
+                  <h2 className="text-[--font-size-lg] font-semibold mb-4 text-[--color-text-primary]">
+                    System Status
+                  </h2>
                   {healthCheck.isLoading && (
                     <div className="flex items-center justify-center py-4">
                       <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--color-primary] border-t-transparent mr-3"></div>
-                      <span className="text-[--color-text-secondary]">Checking system health...</span>
+                      <span className="text-[--color-text-secondary]">
+                        Checking system health...
+                      </span>
                     </div>
                   )}
                   {healthCheck.error && (
@@ -167,8 +201,16 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[--font-size-sm] text-[--color-text-tertiary]">
-                        <div>Last checked: {new Date(healthCheck.data.timestamp).toLocaleTimeString()}</div>
-                        <div>Uptime: {Math.floor(healthCheck.data.uptime / 60)} minutes</div>
+                        <div>
+                          Last checked:{' '}
+                          {new Date(
+                            healthCheck.data.timestamp
+                          ).toLocaleTimeString()}
+                        </div>
+                        <div>
+                          Uptime: {Math.floor(healthCheck.data.uptime / 60)}{' '}
+                          minutes
+                        </div>
                       </div>
                     </div>
                   )}
@@ -188,7 +230,8 @@ export default function Home() {
                     Voice-Powered Creation
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Create campaigns in seconds using natural voice commands. Perfect for accessibility and on-the-go engagement.
+                    Create campaigns in seconds using natural voice commands.
+                    Perfect for accessibility and on-the-go engagement.
                   </p>
                 </CardContent>
               </Card>
@@ -203,7 +246,8 @@ export default function Home() {
                     AI Vision & Content
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Take a photo and let AI suggest campaign content, optimize visuals, and enhance accessibility.
+                    Take a photo and let AI suggest campaign content, optimize
+                    visuals, and enhance accessibility.
                   </p>
                 </CardContent>
               </Card>
@@ -218,7 +262,8 @@ export default function Home() {
                     Smart Location Discovery
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Discover campaigns near you, get location-based notifications, and engage with your immediate community.
+                    Discover campaigns near you, get location-based
+                    notifications, and engage with your immediate community.
                   </p>
                 </CardContent>
               </Card>
@@ -233,7 +278,8 @@ export default function Home() {
                     Gesture-Based Voting
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Swipe to vote, touch to engage. Intuitive mobile interactions make civic participation effortless.
+                    Swipe to vote, touch to engage. Intuitive mobile
+                    interactions make civic participation effortless.
                   </p>
                 </CardContent>
               </Card>
@@ -248,7 +294,8 @@ export default function Home() {
                     Real-Time Community
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Live updates, instant notifications, and real-time collaboration with your community.
+                    Live updates, instant notifications, and real-time
+                    collaboration with your community.
                   </p>
                 </CardContent>
               </Card>
@@ -263,7 +310,8 @@ export default function Home() {
                     Native App Experience
                   </h3>
                   <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                    Install on any device for native app performance with offline support and push notifications.
+                    Install on any device for native app performance with
+                    offline support and push notifications.
                   </p>
                 </CardContent>
               </Card>
@@ -281,11 +329,16 @@ export default function Home() {
                     Ready to Transform Your Community?
                   </h2>
                   <p className="text-[--font-size-lg] mb-6 opacity-90">
-                    Join thousands of citizens already making a difference through mobile-first civic engagement.
+                    Join thousands of citizens already making a difference
+                    through mobile-first civic engagement.
                   </p>
                   {!isSignedIn && (
                     <SignUpButton mode="modal">
-                      <Button size="lg" variant="secondary" className="text-[--color-primary]">
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        className="text-[--color-primary]"
+                      >
                         <Mic className="h-5 w-5 mr-2" />
                         Get Started Today
                       </Button>

@@ -119,7 +119,7 @@ export const commentsRouter = createTRPCRouter({
         //   nextCursor,
         // };
       } catch (error) {
-        console.error('Get comments error:', error);
+        console.error('[Comments] Get comments error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch comments',
@@ -154,7 +154,10 @@ export const commentsRouter = createTRPCRouter({
           },
         };
 
-        console.log('Mock comment created:', mockComment);
+        // Log mock comment creation in development only
+        if (process.env.NODE_ENV === 'development') {
+          console.info('[Comments] Mock comment created:', mockComment);
+        }
         return mockComment;
 
         // Real implementation (uncomment when database is connected):
@@ -191,7 +194,7 @@ export const commentsRouter = createTRPCRouter({
 
         // return comment;
       } catch (error) {
-        console.error('Create comment error:', error);
+        console.error('[Comments] Create comment error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to create comment',
@@ -217,7 +220,10 @@ export const commentsRouter = createTRPCRouter({
           updatedAt: new Date(),
         };
 
-        console.log('Mock comment updated:', mockUpdatedComment);
+        // Log mock comment update in development only
+        if (process.env.NODE_ENV === 'development') {
+          console.info('[Comments] Mock comment updated:', mockUpdatedComment);
+        }
         return mockUpdatedComment;
 
         // Real implementation:
@@ -258,7 +264,7 @@ export const commentsRouter = createTRPCRouter({
 
         // return updatedComment;
       } catch (error) {
-        console.error('Update comment error:', error);
+        console.error('[Comments] Update comment error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update comment',
@@ -277,7 +283,10 @@ export const commentsRouter = createTRPCRouter({
         //   throw new TRPCError({ code: 'UNAUTHORIZED' });
         // }
 
-        console.log('Mock comment deleted:', input.id);
+        // Log mock comment deletion in development only
+        if (process.env.NODE_ENV === 'development') {
+          console.info('[Comments] Mock comment deleted:', input.id);
+        }
         return { success: true };
 
         // Real implementation:
@@ -307,7 +316,7 @@ export const commentsRouter = createTRPCRouter({
 
         // return { success: true };
       } catch (error) {
-        console.error('Delete comment error:', error);
+        console.error('[Comments] Delete comment error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to delete comment',
@@ -329,7 +338,7 @@ export const commentsRouter = createTRPCRouter({
         // });
         // return { count };
       } catch (error) {
-        console.error('Get comment count error:', error);
+        console.error('[Comments] Get comment count error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to get comment count',

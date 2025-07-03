@@ -136,8 +136,8 @@ export function Providers({ children }: { children: ReactNode }) {
       const logInterval = setInterval(() => {
         const stats = cacheManager.getCacheStats();
         const perfMetrics = performanceMonitor.getMetrics();
-        console.log('[Cache Stats]', stats);
-        console.log('[Performance Metrics]', perfMetrics);
+        console.info('[Cache Stats]', stats);
+        console.info('[Performance Metrics]', perfMetrics);
       }, 60000); // Log every minute
 
       return () => {
@@ -155,7 +155,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <PageErrorBoundary
       showReportDialog={true}
       onError={(error, errorInfo) => {
-        console.error('Application-level error:', error, errorInfo);
+        console.error('[App] Application-level error:', error, errorInfo);
       }}
     >
       <api.Provider client={trpcClient} queryClient={queryClient}>

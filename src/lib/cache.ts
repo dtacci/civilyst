@@ -100,9 +100,11 @@ export function getRedisClient(): Redis | null {
   // In development, gracefully handle missing Redis
   if (process.env.NODE_ENV === 'development') {
     if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-      console.log(
-        'Redis not configured for development - using in-memory fallback'
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.info(
+          '[Cache] Redis not configured for development - using in-memory fallback'
+        );
+      }
       return null;
     }
   }
@@ -114,9 +116,11 @@ export function getRedisClient(): Redis | null {
         token: env.UPSTASH_REDIS_REST_TOKEN,
       });
     } catch (error) {
-      console.error('Failed to initialize Redis client:', error);
+      console.error('[Cache] Failed to initialize Redis client:', error);
       if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: continuing without Redis');
+        if (process.env.NODE_ENV === 'development') {
+          console.info('[Cache] Development mode: continuing without Redis');
+        }
         return null;
       }
       throw new Error('Redis client initialization failed');
@@ -137,7 +141,7 @@ export async function isRedisAvailable(): Promise<boolean> {
     await redis.ping();
     return true;
   } catch (error) {
-    console.error('Redis is not available:', error);
+    console.error('[Cache] Redis is not available:', error);
     return false;
   }
 }
@@ -289,7 +293,7 @@ export async function getCache<T>(key: string): Promise<CacheResult<T>> {
     hit = data !== null;
   } catch (e) {
     error = e instanceof Error ? e : new Error(String(e));
-    console.error(`Cache get error for key ${key}:`, error);
+    console.error(`[Cache] Cache get error for key ${key}:`, error);
   }
 
   const latencyMs = performance.now() - startTime;
@@ -321,7 +325,7 @@ export async function setCache<T>(
     await redis.set(key, data, { ex: ttlSeconds });
     return true;
   } catch (error) {
-    console.error(`Cache set error for key ${key}:`, error);
+    console.error(`[Cache] Cache set error for key ${key}:`, error);
     return false;
   }
 }
@@ -342,7 +346,7 @@ export async function existsInCache(key: string): Promise<boolean> {
     }
     return (await redis.exists(key)) > 0;
   } catch (error) {
-    console.error(`Cache exists error for key ${key}:`, error);
+    console.error(`[Cache] Cache exists error for key ${key}:`, error);
     return false;
   }
 }
@@ -364,7 +368,7 @@ export async function deleteFromCache(key: string): Promise<boolean> {
     await redis.del(key);
     return true;
   } catch (error) {
-    console.error(`Cache delete error for key ${key}:`, error);
+    console.error(`[Cache] Cache delete error for key ${key}:`, error);
     return false;
   }
 }
@@ -387,7 +391,7 @@ export async function deleteMultiFromCache(keys: string[]): Promise<number> {
     }
     return await redis.del(...keys);
   } catch (error) {
-    console.error(`Cache multi-delete error:`, error);
+    console.error(`[Cache] Cache multi-delete error:`, error);
     return 0;
   }
 }
@@ -429,7 +433,10 @@ export async function deleteByPattern(pattern: string): Promise<number> {
 
     return deletedCount;
   } catch (error) {
-    console.error(`Cache pattern delete error for pattern ${pattern}:`, error);
+    console.error(
+      `[Cache] Cache pattern delete error for pattern ${pattern}:`,
+      error
+    );
     return 0;
   }
 }
@@ -462,7 +469,7 @@ export async function getMultiFromCache<T>(
 
     return resultMap;
   } catch (error) {
-    console.error(`Cache multi-get error:`, error);
+    console.error(`[Cache] Cache multi-get error:`, error);
     return new Map(keys.map((key) => [key, null]));
   }
 }
@@ -495,7 +502,7 @@ export async function setMultiInCache<T>(
     await pipeline.exec();
     return true;
   } catch (error) {
-    console.error(`Cache multi-set error:`, error);
+    console.error(`[Cache] Cache multi-set error:`, error);
     return false;
   }
 }
@@ -547,7 +554,7 @@ export async function warmCache<T>(
     const data = await fetchData();
     return await setCache(key, data, ttlSeconds);
   } catch (error) {
-    console.error(`Cache warming error for key ${key}:`, error);
+    console.error(`[Cache] Cache warming error for key ${key}:`, error);
     return false;
   }
 }
@@ -583,7 +590,7 @@ export async function getCacheWithFallback<T>(
     };
   } catch (error) {
     const e = error instanceof Error ? error : new Error(String(error));
-    console.error(`Data fetch error for key ${key}:`, e);
+    console.error(`[Cache] Data fetch error for key ${key}:`, e);
 
     return {
       data: null,
@@ -611,7 +618,7 @@ export async function clearAllCache(): Promise<boolean> {
     await redis.flushall();
     return true;
   } catch (error) {
-    console.error('Clear all cache error:', error);
+    console.error('[Cache] Clear all cache error:', error);
     return false;
   }
 }
@@ -648,7 +655,7 @@ export async function setRefreshingCache<T>(
     await redis.set(key, entry, { ex: ttlSeconds });
     return true;
   } catch (error) {
-    console.error(`Refreshing cache set error for key ${key}:`, error);
+    console.error(`[Cache] Refreshing cache set error for key ${key}:`, error);
     return false;
   }
 }
@@ -711,7 +718,7 @@ export async function getRefreshingCache<T>(
             );
           } catch (refreshError) {
             console.error(
-              `Background refresh error for key ${key}:`,
+              `[Cache] Background refresh error for key ${key}:`,
               refreshError
             );
           }
@@ -720,7 +727,7 @@ export async function getRefreshingCache<T>(
     }
   } catch (e) {
     error = e instanceof Error ? e : new Error(String(e));
-    console.error(`Refreshing cache get error for key ${key}:`, error);
+    console.error(`[Cache] Refreshing cache get error for key ${key}:`, error);
   }
 
   const latencyMs = performance.now() - startTime;

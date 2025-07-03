@@ -77,7 +77,7 @@ export async function geocodeWithMapbox(
       country,
     };
   } catch (error) {
-    console.error('Mapbox geocoding error:', error);
+    console.error('[Geocoding] Mapbox geocoding error:', error);
     return null;
   }
 }
@@ -128,7 +128,7 @@ export async function geocodeWithNominatim(
       country,
     };
   } catch (error) {
-    console.error('Nominatim geocoding error:', error);
+    console.error('[Geocoding] Nominatim geocoding error:', error);
     return null;
   }
 }
@@ -142,7 +142,10 @@ export async function geocodeAddress(
   // Try cache first
   const cached = await cacheGet<GeocodeResult>(cacheKey);
   if (cached) {
-    console.log('Geocoding cache hit for:', query);
+    // Log cache hit in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Geocoding] Cache hit for:', query);
+    }
     return cached;
   }
 
@@ -151,14 +154,20 @@ export async function geocodeAddress(
 
   // Fallback to OpenStreetMap Nominatim if Mapbox fails
   if (!result) {
-    console.log('Mapbox failed, trying Nominatim fallback');
+    // Log fallback in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Geocoding] Mapbox failed, trying Nominatim fallback');
+    }
     result = await geocodeWithNominatim(query);
   }
 
   // Cache the result if successful
   if (result) {
     await cacheSet(cacheKey, result, CacheTTL.GEOCODE);
-    console.log('Geocoding result cached for:', query);
+    // Log caching in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Geocoding] Result cached for:', query);
+    }
   }
 
   return result;
@@ -174,7 +183,10 @@ export async function reverseGeocode(
   // Try cache first
   const cached = await cacheGet<ReverseGeocodeResult>(cacheKey);
   if (cached) {
-    console.log('Reverse geocoding cache hit');
+    // Log cache hit in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Geocoding] Reverse geocoding cache hit');
+    }
     return cached;
   }
 
@@ -222,11 +234,14 @@ export async function reverseGeocode(
 
     // Cache the result
     await cacheSet(cacheKey, result, CacheTTL.REVERSE_GEOCODE);
-    console.log('Reverse geocoding result cached');
+    // Log caching in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Geocoding] Reverse geocoding result cached');
+    }
 
     return result;
   } catch (error) {
-    console.error('Reverse geocoding error:', error);
+    console.error('[Geocoding] Reverse geocoding error:', error);
     return null;
   }
 }

@@ -52,6 +52,24 @@ const eslintConfig = [
       "*.mjs",
       "*.cjs"
     ]
+  },
+  {
+    rules: {
+      // TypeScript specific rules
+      "@typescript-eslint/no-unused-vars": ["error", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      // React specific rules
+      "react-hooks/exhaustive-deps": "warn",
+      "react/display-name": "off",
+      // General JavaScript rules
+      "prefer-const": "error",
+      "no-unused-vars": "off", // Use TypeScript version instead
+      "no-console": ["warn", { "allow": ["warn", "error"] }]
+    }
   }
 ];
 

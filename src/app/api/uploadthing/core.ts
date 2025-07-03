@@ -26,8 +26,11 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
-      console.log('Upload complete for userId:', metadata.userId);
-      console.log('File URL:', file.url);
+      // Log upload completion in development
+      if (process.env.NODE_ENV === 'development') {
+        console.info('Upload complete for userId:', metadata.userId);
+        console.info('File URL:', file.url);
+      }
 
       // You can use the metadata and file data to save to your database
       // For example:

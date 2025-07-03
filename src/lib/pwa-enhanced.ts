@@ -64,7 +64,10 @@ class PWAEnhancedManager {
       // Set up periodic background sync
       this.setupPeriodicSync();
 
-      console.log('PWA Enhanced Manager initialized successfully');
+      // Log PWA initialization in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[PWA] Enhanced Manager initialized successfully');
+      }
     } catch (error) {
       console.error('Failed to initialize PWA Enhanced Manager:', error);
     }
@@ -286,19 +289,28 @@ class PWAEnhancedManager {
    */
   private async syncCampaignCreate(data: unknown): Promise<void> {
     // Implementation would use your tRPC client
-    console.log('Syncing campaign create:', data);
+    // Log sync operations in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[PWA] Syncing campaign create:', data);
+    }
   }
 
   private async syncCampaignUpdate(data: unknown): Promise<void> {
-    console.log('Syncing campaign update:', data);
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[PWA] Syncing campaign update:', data);
+    }
   }
 
   private async syncVote(data: unknown): Promise<void> {
-    console.log('Syncing vote:', data);
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[PWA] Syncing vote:', data);
+    }
   }
 
   private async syncComment(data: unknown): Promise<void> {
-    console.log('Syncing comment:', data);
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[PWA] Syncing comment:', data);
+    }
   }
 
   /**

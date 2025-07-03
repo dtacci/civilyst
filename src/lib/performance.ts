@@ -162,9 +162,12 @@ export function getCustomMetric(name: string): CustomMetric | undefined {
 function initializeDatabaseQueryMonitoring() {
   // Database monitoring disabled – Prisma client not available in this build.
   if (!options.enabled || !options.monitorDatabaseQueries) return;
-  console.info(
-    '[performance] Database query monitoring is disabled (no Prisma client present).'
-  );
+  // Log database monitoring status in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] Database query monitoring is disabled (no Prisma client present).'
+    );
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -207,7 +210,7 @@ async function reportCachePerformance() {
       unit: 'ms',
     });
   } catch (error) {
-    console.error('Failed to report cache performance:', error);
+    console.error('[Performance] Failed to report cache performance:', error);
     Sentry.captureException(error, { tags: { feature: 'cache_monitoring' } });
   }
 }
@@ -238,9 +241,12 @@ async function reportCachePerformance() {
  */
 function initializeApiResponseMonitoring() {
   if (!options.enabled || !options.monitorApiResponses) return;
-  console.log(
-    'API response time monitoring relies on Sentry Next.js SDK configuration.'
-  );
+  // Log API monitoring status in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] API response time monitoring relies on Sentry Next.js SDK configuration.'
+    );
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -280,7 +286,10 @@ function initializeUserInteractionMonitoring() {
       });
     }
   });
-  console.log('User interaction monitoring initialized.');
+  // Log initialization in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info('[Performance] User interaction monitoring initialized.');
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -296,9 +305,12 @@ function initializePerformanceBudgetMonitoring() {
   // This is more of a build-time concern.
   // For runtime, you might report on initial load times (covered by Web Vitals)
   // or resource loading failures.
-  console.log(
-    'Performance budget monitoring is primarily a build-time concern.'
-  );
+  // Log budget monitoring status in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] Performance budget monitoring is primarily a build-time concern.'
+    );
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -345,11 +357,17 @@ function initializeMemoryMonitoring() {
       unit: 'bytes',
       tags: { type: 'used' },
     });
-    console.log('Client-side memory monitoring initialized.');
+    // Log memory monitoring in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[Performance] Client-side memory monitoring initialized.');
+    }
   } else {
-    console.warn(
-      'Client-side memory monitoring (performance.memory) not supported in this browser.'
-    );
+    // Log browser compatibility in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[Performance] Client-side memory monitoring (performance.memory) not supported in this browser.'
+      );
+    }
   }
 }
 
@@ -365,18 +383,23 @@ export function initializePerformanceMonitoring(
   opts?: Partial<PerformanceMonitoringOptions>
 ) {
   if (isInitialized) {
-    console.warn('Performance monitoring already initialized.');
+    console.warn('[Performance] Performance monitoring already initialized.');
     return;
   }
 
   options = { ...options, ...opts };
 
   if (!options.enabled) {
-    console.log('Performance monitoring is disabled.');
+    console.info('[Performance] Performance monitoring is disabled.');
     return;
   }
 
-  console.log('Initializing comprehensive performance monitoring...');
+  // Log initialization in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] Initializing comprehensive performance monitoring...'
+    );
+  }
 
   // Initialize all sub-components
   registerWebVitals();
@@ -396,7 +419,12 @@ export function initializePerformanceMonitoring(
   }
 
   isInitialized = true;
-  console.log('Performance monitoring initialized successfully.');
+  // Log successful initialization in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] Performance monitoring initialized successfully.'
+    );
+  }
 }
 
 /**
@@ -404,7 +432,7 @@ export function initializePerformanceMonitoring(
  */
 export function stopPerformanceMonitoring() {
   if (!isInitialized) {
-    console.warn('Performance monitoring not initialized.');
+    console.warn('[Performance] Performance monitoring not initialized.');
     return;
   }
 
@@ -415,7 +443,10 @@ export function stopPerformanceMonitoring() {
 
   customMetrics.clear();
   isInitialized = false;
-  console.log('Performance monitoring stopped.');
+  // Log stopping in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info('[Performance] Performance monitoring stopped.');
+  }
 }
 
 /**
@@ -423,7 +454,10 @@ export function stopPerformanceMonitoring() {
  */
 function initializeCustomMetricsReporting() {
   if (!options.enabled || !options.sendCustomMetricsToSentry) return;
-  console.log('Custom metrics reporting initialized.');
+  // Log custom metrics initialization in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info('[Performance] Custom metrics reporting initialized.');
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -451,7 +485,13 @@ export function collectPerformanceDashboardData() {
     // Add other aggregated metrics here
   };
 
-  console.log('Collected performance dashboard data:', dashboardData);
+  // Log dashboard data collection in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(
+      '[Performance] Collected performance dashboard data:',
+      dashboardData
+    );
+  }
   // In a real scenario, you might send this to an analytics endpoint:
   // sendToAnalyticsService('/api/performance-data', dashboardData);
 }
@@ -574,7 +614,7 @@ export function checkPerformanceAlerts(
 
     // Other checks could be added here based on collected metrics
   } catch (error) {
-    console.error('Error checking performance alerts:', error);
+    console.error('[Performance] Error checking performance alerts:', error);
     Sentry.captureException(error, { tags: { feature: 'performance_alerts' } });
   }
 }
@@ -599,7 +639,7 @@ function triggerPerformanceAlert(
   });
 
   // Log to console for development visibility
-  console.warn(`Performance Alert: ${message}`, data);
+  console.warn(`[Performance] Performance Alert: ${message}`, data);
 
   // In a real application, you might also:
   // 1. Send to a dedicated alerting service

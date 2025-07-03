@@ -133,7 +133,6 @@ export class RealtimeSubscriptionManager {
    */
   subscribeToCampaignUpdates(
     campaignId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onUpdate: (payload: RealtimeEvent<CampaignRealtimePayload>) => void
   ) {
     if (!this.client) return null;
@@ -163,7 +162,6 @@ export class RealtimeSubscriptionManager {
    */
   subscribeToCampaignComments(
     campaignId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onComment: (payload: RealtimeEvent<CommentRealtimePayload>) => void
   ) {
     if (!this.client) return null;
@@ -186,7 +184,6 @@ export class RealtimeSubscriptionManager {
    */
   subscribeToCampaignVotes(
     campaignId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onVote: (payload: RealtimeEvent<VoteRealtimePayload>) => void
   ) {
     if (!this.client) return null;
@@ -208,7 +205,6 @@ export class RealtimeSubscriptionManager {
    * Subscribe to all active campaigns (for dashboard/list views)
    */
   subscribeToActiveCampaigns(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onCampaignUpdate: (payload: RealtimeEvent<CampaignRealtimePayload>) => void
   ) {
     if (!this.client) return null;

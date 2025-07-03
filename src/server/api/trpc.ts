@@ -65,7 +65,10 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
   const result = await next();
   const durationMs = Date.now() - start;
 
-  console.log(`${type} ${path} - ${durationMs}ms`);
+  // Log in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info(`[tRPC] ${type} ${path} - ${durationMs}ms`);
+  }
 
   return result;
 });

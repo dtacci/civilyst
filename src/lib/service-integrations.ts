@@ -131,29 +131,32 @@ export function getServiceIntegrationStatus(): ServiceIntegrationStatus {
 export function logServiceStatus(): void {
   const status = getServiceIntegrationStatus();
 
-  console.log('\n🔌 Service Integration Status:');
-  console.log(
-    `   Configured: ${status.summary.configured}/${status.summary.total}`
-  );
-
-  if (status.summary.required > 0) {
-    console.log(
-      `   Required: ${status.summary.requiredConfigured}/${status.summary.required} ✅`
+  // Log service integration status in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.info('\n🔌 Service Integration Status:');
+    console.info(
+      `   Configured: ${status.summary.configured}/${status.summary.total}`
     );
-  }
 
-  console.log('\n📋 Service Details:');
-  status.services.forEach((service) => {
-    const icon = service.configured ? '✅' : '⚠️';
-    const reqText = service.required ? ' (REQUIRED)' : '';
-    console.log(`   ${icon} ${service.name}${reqText}`);
-
-    if (!service.configured && service.fallback) {
-      console.log(`      → Fallback: ${service.fallback}`);
+    if (status.summary.required > 0) {
+      console.info(
+        `   Required: ${status.summary.requiredConfigured}/${status.summary.required} ✅`
+      );
     }
-  });
 
-  console.log('\n');
+    console.info('\n📋 Service Details:');
+    status.services.forEach((service) => {
+      const icon = service.configured ? '✅' : '⚠️';
+      const reqText = service.required ? ' (REQUIRED)' : '';
+      console.info(`   ${icon} ${service.name}${reqText}`);
+
+      if (!service.configured && service.fallback) {
+        console.info(`      → Fallback: ${service.fallback}`);
+      }
+    });
+
+    console.info('\n');
+  }
 }
 
 /**
@@ -259,11 +262,14 @@ export function initializeServiceMonitoring(): void {
 
     const instructions = getSetupInstructions();
     if (instructions.length > 0) {
-      console.log('🛠️  Setup Instructions:');
-      instructions.forEach((instruction) => {
-        console.log(`   ${instruction}`);
-      });
-      console.log('\n');
+      // Log setup instructions in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('🛠️  Setup Instructions:');
+        instructions.forEach((instruction) => {
+          console.info(`   ${instruction}`);
+        });
+        console.info('\n');
+      }
     }
   }
 }

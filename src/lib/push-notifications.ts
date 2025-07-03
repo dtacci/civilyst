@@ -61,7 +61,10 @@ class PushNotificationService {
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
 
-      console.log('Push notification service initialized');
+      // Log push notification initialization in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Push] Notification service initialized');
+      }
       return true;
     } catch (error) {
       console.error('Failed to initialize push notification service:', error);
@@ -227,7 +230,10 @@ class PushNotificationService {
         );
       }
 
-      console.log('Subscription sent to server successfully');
+      // Log subscription success in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Push] Subscription sent to server successfully');
+      }
     } catch (error) {
       console.error('Failed to send subscription to server:', error);
       throw error;
@@ -257,7 +263,10 @@ class PushNotificationService {
         );
       }
 
-      console.log('Subscription removed from server successfully');
+      // Log subscription removal in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Push] Subscription removed from server successfully');
+      }
     } catch (error) {
       console.error('Failed to remove subscription from server:', error);
     }

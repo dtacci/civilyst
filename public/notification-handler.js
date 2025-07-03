@@ -34,7 +34,13 @@ const notificationActions = {
           url: data.url,
         });
       } catch (err) {
-        console.log('Error sharing:', err);
+        // Log sharing errors in development only
+        if (
+          self.location.hostname === 'localhost' ||
+          self.location.hostname === '127.0.0.1'
+        ) {
+          console.error('[Notification] Error sharing:', err);
+        }
       }
     } else {
       // Fallback to opening the campaign
@@ -50,7 +56,13 @@ const notificationActions = {
 
   dismiss: async (data) => {
     // Just close the notification - analytics will track this
-    console.log('Notification dismissed:', data);
+    // Log notification dismissal in development only
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.info('[Notification] Notification dismissed:', data);
+    }
   },
 };
 
@@ -189,12 +201,18 @@ function getVibrationPattern(type) {
 async function trackNotificationEvent(eventType, payload) {
   try {
     // In a real implementation, this would send analytics to your backend
-    console.log('Notification event:', {
-      type: eventType,
-      notificationType: payload.data?.type,
-      campaignId: payload.data?.campaignId,
-      timestamp: Date.now(),
-    });
+    // Log notification events in development only
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.info('[Notification] Notification event:', {
+        type: eventType,
+        notificationType: payload.data?.type,
+        campaignId: payload.data?.campaignId,
+        timestamp: Date.now(),
+      });
+    }
 
     // You could also store events in IndexedDB for offline tracking
     // and sync them when the user comes back online
@@ -214,7 +232,13 @@ async function syncNotificationAnalytics() {
   try {
     // Sync any pending notification analytics to the server
     // This would retrieve data from IndexedDB and send to API
-    console.log('Syncing notification analytics...');
+    // Log analytics sync in development only
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.info('[Notification] Syncing notification analytics...');
+    }
   } catch (error) {
     console.error('Error syncing notification analytics:', error);
   }
@@ -249,16 +273,31 @@ async function shouldShowLocationBasedNotification(notificationData) {
     const maxRadius = notificationData.locationRadius || 10;
     return distance <= maxRadius;
   } catch (error) {
-    console.log('Error checking location for notification:', error);
+    // Log location errors in development only
+    if (
+      self.location.hostname === 'localhost' ||
+      self.location.hostname === '127.0.0.1'
+    ) {
+      console.error(
+        '[Notification] Error checking location for notification:',
+        error
+      );
+    }
     return true; // Show by default if location check fails
   }
 }
 
 // Keep function available for potential future use
-console.log(
-  'Location filtering available:',
-  typeof shouldShowLocationBasedNotification
-);
+// Log location filtering availability in development only
+if (
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1'
+) {
+  console.info(
+    '[Notification] Location filtering available:',
+    typeof shouldShowLocationBasedNotification
+  );
+}
 
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371; // Earth's radius in kilometers
