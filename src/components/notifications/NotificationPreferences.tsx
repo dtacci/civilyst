@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@headlessui/react';
-import { 
-  BellIcon, 
-  MapPinIcon, 
-  ClockIcon, 
+import {
+  BellIcon,
+  MapPinIcon,
+  ClockIcon,
   UserGroupIcon,
   ExclamationTriangleIcon,
   ChatBubbleLeftIcon,
-  HandThumbUpIcon
+  HandThumbUpIcon,
 } from '@heroicons/react/24/outline';
 
 interface NotificationPreference {
@@ -46,9 +46,9 @@ interface NotificationPreferencesProps {
   className?: string;
 }
 
-export function NotificationPreferences({ 
-  userId, 
-  className = '' 
+export function NotificationPreferences({
+  userId,
+  className = '',
 }: NotificationPreferencesProps) {
   const [preferences, setPreferences] = useState<NotificationPreference[]>([
     {
@@ -127,8 +127,10 @@ export function NotificationPreferences({
       setError(null);
 
       // Load user preferences from API
-      const response = await fetch(`/api/users/${userId}/notification-preferences`);
-      
+      const response = await fetch(
+        `/api/users/${userId}/notification-preferences`
+      );
+
       if (response.ok) {
         const data = await response.json();
         if (data.preferences) {
@@ -158,17 +160,20 @@ export function NotificationPreferences({
       setSaving(true);
       setError(null);
 
-      const response = await fetch(`/api/users/${userId}/notification-preferences`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          preferences,
-          locationSettings,
-          timingSettings,
-        }),
-      });
+      const response = await fetch(
+        `/api/users/${userId}/notification-preferences`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            preferences,
+            locationSettings,
+            timingSettings,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to save preferences');
@@ -185,53 +190,59 @@ export function NotificationPreferences({
   };
 
   const togglePreference = (id: string) => {
-    setPreferences(prev => 
-      prev.map(pref => 
+    setPreferences((prev) =>
+      prev.map((pref) =>
         pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
       )
     );
   };
 
   const updateLocationRadius = (radius: number) => {
-    setLocationSettings(prev => ({ ...prev, radius }));
+    setLocationSettings((prev) => ({ ...prev, radius }));
   };
 
   const toggleLocationEnabled = () => {
-    setLocationSettings(prev => ({ ...prev, enabled: !prev.enabled }));
+    setLocationSettings((prev) => ({ ...prev, enabled: !prev.enabled }));
   };
 
   const updateQuietHours = (start: number, end: number) => {
-    setTimingSettings(prev => ({
+    setTimingSettings((prev) => ({
       ...prev,
       quietHours: { ...prev.quietHours, start, end },
     }));
   };
 
   const toggleQuietHours = () => {
-    setTimingSettings(prev => ({
+    setTimingSettings((prev) => ({
       ...prev,
       quietHours: { ...prev.quietHours, enabled: !prev.quietHours.enabled },
     }));
   };
 
   const toggleOptimalTiming = () => {
-    setTimingSettings(prev => ({ ...prev, optimalTiming: !prev.optimalTiming }));
+    setTimingSettings((prev) => ({
+      ...prev,
+      optimalTiming: !prev.optimalTiming,
+    }));
   };
 
-  const groupedPreferences = preferences.reduce((acc, pref) => {
-    if (!acc[pref.category]) {
-      acc[pref.category] = [];
-    }
-    acc[pref.category].push(pref);
-    return acc;
-  }, {} as Record<string, NotificationPreference[]>);
+  const groupedPreferences = preferences.reduce(
+    (acc, pref) => {
+      if (!acc[pref.category]) {
+        acc[pref.category] = [];
+      }
+      acc[pref.category].push(pref);
+      return acc;
+    },
+    {} as Record<string, NotificationPreference[]>
+  );
 
   if (loading) {
     return (
       <div className={`animate-pulse space-y-4 ${className}`}>
         <div className="h-8 bg-gray-200 rounded w-1/4"></div>
         <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-16 bg-gray-200 rounded"></div>
           ))}
         </div>
@@ -247,7 +258,8 @@ export function NotificationPreferences({
           Notification Preferences
         </h2>
         <p className="text-sm text-gray-600">
-          Customize how and when you receive notifications about civic activities
+          Customize how and when you receive notifications about civic
+          activities
         </p>
       </div>
 
@@ -261,7 +273,9 @@ export function NotificationPreferences({
       {/* Success Message */}
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-green-700">Preferences saved successfully!</p>
+          <p className="text-sm text-green-700">
+            Preferences saved successfully!
+          </p>
         </div>
       )}
 
@@ -271,8 +285,12 @@ export function NotificationPreferences({
           <div className="flex items-center space-x-3">
             <MapPinIcon className="w-6 h-6 text-blue-600" />
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Location-Based Notifications</h3>
-              <p className="text-sm text-gray-500">Get alerts for nearby campaign activity</p>
+              <h3 className="text-lg font-medium text-gray-900">
+                Location-Based Notifications
+              </h3>
+              <p className="text-sm text-gray-500">
+                Get alerts for nearby campaign activity
+              </p>
             </div>
           </div>
           <Switch
@@ -310,10 +328,11 @@ export function NotificationPreferences({
                 <span>50 km</span>
               </div>
             </div>
-            
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-700">
-                📍 You'll receive notifications for campaigns and activities within {locationSettings.radius} km of your location
+                📍 You&apos;ll receive notifications for campaigns and
+                activities within {locationSettings.radius} km of your location
               </p>
             </div>
           </div>
@@ -325,8 +344,12 @@ export function NotificationPreferences({
         <div className="flex items-center space-x-3 mb-4">
           <ClockIcon className="w-6 h-6 text-purple-600" />
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Intelligent Timing</h3>
-            <p className="text-sm text-gray-500">Control when notifications are delivered</p>
+            <h3 className="text-lg font-medium text-gray-900">
+              Intelligent Timing
+            </h3>
+            <p className="text-sm text-gray-500">
+              Control when notifications are delivered
+            </p>
           </div>
         </div>
 
@@ -334,8 +357,12 @@ export function NotificationPreferences({
           {/* Optimal Timing */}
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-sm font-medium text-gray-900">Smart Timing</h4>
-              <p className="text-sm text-gray-500">Deliver notifications when you're most likely to engage</p>
+              <h4 className="text-sm font-medium text-gray-900">
+                Smart Timing
+              </h4>
+              <p className="text-sm text-gray-500">
+                Deliver notifications when you&apos;re most likely to engage
+              </p>
             </div>
             <Switch
               checked={timingSettings.optimalTiming}
@@ -346,7 +373,9 @@ export function NotificationPreferences({
             >
               <span
                 className={`${
-                  timingSettings.optimalTiming ? 'translate-x-6' : 'translate-x-1'
+                  timingSettings.optimalTiming
+                    ? 'translate-x-6'
+                    : 'translate-x-1'
                 } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
               />
             </Switch>
@@ -356,19 +385,27 @@ export function NotificationPreferences({
           <div className="border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h4 className="text-sm font-medium text-gray-900">Quiet Hours</h4>
-                <p className="text-sm text-gray-500">No notifications during these hours</p>
+                <h4 className="text-sm font-medium text-gray-900">
+                  Quiet Hours
+                </h4>
+                <p className="text-sm text-gray-500">
+                  No notifications during these hours
+                </p>
               </div>
               <Switch
                 checked={timingSettings.quietHours.enabled}
                 onChange={toggleQuietHours}
                 className={`${
-                  timingSettings.quietHours.enabled ? 'bg-purple-600' : 'bg-gray-200'
+                  timingSettings.quietHours.enabled
+                    ? 'bg-purple-600'
+                    : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
               >
                 <span
                   className={`${
-                    timingSettings.quietHours.enabled ? 'translate-x-6' : 'translate-x-1'
+                    timingSettings.quietHours.enabled
+                      ? 'translate-x-6'
+                      : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
@@ -377,10 +414,17 @@ export function NotificationPreferences({
             {timingSettings.quietHours.enabled && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Start Time
+                  </label>
                   <select
                     value={timingSettings.quietHours.start}
-                    onChange={(e) => updateQuietHours(Number(e.target.value), timingSettings.quietHours.end)}
+                    onChange={(e) =>
+                      updateQuietHours(
+                        Number(e.target.value),
+                        timingSettings.quietHours.end
+                      )
+                    }
                     className="w-full text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     {Array.from({ length: 24 }, (_, i) => (
@@ -391,10 +435,17 @@ export function NotificationPreferences({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
                   <select
                     value={timingSettings.quietHours.end}
-                    onChange={(e) => updateQuietHours(timingSettings.quietHours.start, Number(e.target.value))}
+                    onChange={(e) =>
+                      updateQuietHours(
+                        timingSettings.quietHours.start,
+                        Number(e.target.value)
+                      )
+                    }
                     className="w-full text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     {Array.from({ length: 24 }, (_, i) => (
@@ -413,7 +464,10 @@ export function NotificationPreferences({
       {/* Notification Types */}
       <div className="space-y-6">
         {Object.entries(groupedPreferences).map(([category, prefs]) => (
-          <div key={category} className="bg-white border border-gray-200 rounded-lg p-6">
+          <div
+            key={category}
+            className="bg-white border border-gray-200 rounded-lg p-6"
+          >
             <h3 className="text-lg font-medium text-gray-900 mb-4 capitalize">
               {category} Notifications
             </h3>
@@ -421,12 +475,19 @@ export function NotificationPreferences({
               {prefs.map((pref) => {
                 const IconComponent = pref.icon;
                 return (
-                  <div key={pref.id} className="flex items-center justify-between">
+                  <div
+                    key={pref.id}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center space-x-3">
                       <IconComponent className="w-5 h-5 text-gray-400" />
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{pref.name}</h4>
-                        <p className="text-sm text-gray-500">{pref.description}</p>
+                        <h4 className="text-sm font-medium text-gray-900">
+                          {pref.name}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          {pref.description}
+                        </p>
                       </div>
                     </div>
                     <Switch

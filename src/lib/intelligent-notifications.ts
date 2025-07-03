@@ -1,6 +1,6 @@
 /**
  * Intelligent Push Notification System
- * 
+ *
  * Advanced notification system with ML-powered timing, location-based alerts,
  * and personalized delivery preferences for civic engagement.
  */
@@ -8,7 +8,7 @@
 import { db } from '~/lib/db';
 
 // Notification types with intelligent delivery rules
-export type NotificationType = 
+export type NotificationType =
   | 'campaign_created'
   | 'campaign_updated'
   | 'campaign_nearby'
@@ -97,7 +97,8 @@ class IntelligentNotificationService {
 
   public static getInstance(): IntelligentNotificationService {
     if (!IntelligentNotificationService.instance) {
-      IntelligentNotificationService.instance = new IntelligentNotificationService();
+      IntelligentNotificationService.instance =
+        new IntelligentNotificationService();
     }
     return IntelligentNotificationService.instance;
   }
@@ -110,14 +111,17 @@ class IntelligentNotificationService {
     targetUserIds?: string[]
   ): Promise<void> {
     try {
-      const users = targetUserIds || await this.getRelevantUsers(payload);
-      
+      const users = targetUserIds || (await this.getRelevantUsers());
+
       for (const userId of users) {
-        const shouldDeliver = await this.shouldDeliverNotification(userId, payload);
-        
+        const shouldDeliver = await this.shouldDeliverNotification(
+          userId,
+          payload
+        );
+
         if (shouldDeliver) {
-          const optimizedPayload = await this.optimizeNotificationForUser(userId, payload);
-          await this.deliverNotification(userId, optimizedPayload);
+          await this.optimizeNotificationForUser(userId, payload);
+          await this.deliverNotification(userId);
         }
       }
     } catch (error) {
@@ -192,8 +196,11 @@ class IntelligentNotificationService {
       }
 
       // Calculate optimal hour based on user activity
-      const optimalHour = this.findOptimalHour(pattern.hourlyActivity, currentHour);
-      
+      const optimalHour = this.findOptimalHour(
+        pattern.hourlyActivity,
+        currentHour
+      );
+
       // If optimal hour is now or within 2 hours, send now
       if (Math.abs(optimalHour - currentHour) <= 2) {
         return now;
@@ -202,7 +209,7 @@ class IntelligentNotificationService {
       // Schedule for optimal time
       const scheduledTime = new Date(now);
       scheduledTime.setHours(optimalHour, 0, 0, 0);
-      
+
       // If optimal time is in the past, schedule for tomorrow
       if (scheduledTime < now) {
         scheduledTime.setDate(scheduledTime.getDate() + 1);
@@ -225,14 +232,14 @@ class IntelligentNotificationService {
   ): Promise<boolean> {
     try {
       // Get user's location preferences
-      const userPreferences = await this.getUserLocationPreferences(userId);
-      
+      const userPreferences = await this.getUserLocationPreferences();
+
       if (!userPreferences.enabled) {
         return false;
       }
 
       // Check if user is within the notification radius
-      const userLocation = await this.getUserLocation(userId);
+      const userLocation = await this.getUserLocation();
       if (!userLocation) {
         return false;
       }
@@ -246,7 +253,10 @@ class IntelligentNotificationService {
 
       return distance <= Math.min(radius, userPreferences.maxRadius);
     } catch (error) {
-      console.error('Failed to check location notification eligibility:', error);
+      console.error(
+        'Failed to check location notification eligibility:',
+        error
+      );
       return false;
     }
   }
@@ -281,7 +291,7 @@ class IntelligentNotificationService {
           campaignLocation,
           radius
         );
-        
+
         if (shouldReceive) {
           eligibleUsers.push(user.id);
         }
@@ -378,7 +388,10 @@ class IntelligentNotificationService {
         },
       };
 
-      await this.sendIntelligentNotification(notificationPayload, eligibleUsers);
+      await this.sendIntelligentNotification(
+        notificationPayload,
+        eligibleUsers
+      );
     } catch (error) {
       console.error('Failed to send location-based notification:', error);
     }
@@ -411,8 +424,10 @@ class IntelligentNotificationService {
 
       // Get engaged users (voters and commenters)
       const engagedUsers = new Set<string>();
-      campaign.votes.forEach(vote => engagedUsers.add(vote.userId));
-      campaign.comments.forEach(comment => engagedUsers.add(comment.authorId));
+      campaign.votes.forEach((vote) => engagedUsers.add(vote.userId));
+      campaign.comments.forEach((comment) =>
+        engagedUsers.add(comment.authorId)
+      );
       engagedUsers.add(campaign.creatorId);
 
       const targetUsers = Array.from(engagedUsers);
@@ -467,7 +482,9 @@ class IntelligentNotificationService {
 
   // Private helper methods
 
-  private calculateEngagementPattern(userActivity: Record<string, unknown>): UserEngagementPattern {
+  private calculateEngagementPattern(
+    userActivity: Record<string, unknown>
+  ): UserEngagementPattern {
     const hourlyActivity = new Array(24).fill(0);
     const weeklyActivity = new Array(7).fill(0);
 
@@ -479,11 +496,13 @@ class IntelligentNotificationService {
     });
 
     // Analyze comment patterns
-    (userActivity.comments as Array<{ createdAt: string }>).forEach((comment) => {
-      const date = new Date(comment.createdAt);
-      hourlyActivity[date.getHours()]++;
-      weeklyActivity[date.getDay()]++;
-    });
+    (userActivity.comments as Array<{ createdAt: string }>).forEach(
+      (comment) => {
+        const date = new Date(comment.createdAt);
+        hourlyActivity[date.getHours()]++;
+        weeklyActivity[date.getDay()]++;
+      }
+    );
 
     return {
       userId: userActivity.id as string,
@@ -526,7 +545,10 @@ class IntelligentNotificationService {
     };
   }
 
-  private isQuietHour(hour: number, quietHours: { start: number; end: number }): boolean {
+  private isQuietHour(
+    hour: number,
+    quietHours: { start: number; end: number }
+  ): boolean {
     if (quietHours.start < quietHours.end) {
       return hour >= quietHours.start && hour < quietHours.end;
     } else {
@@ -538,15 +560,18 @@ class IntelligentNotificationService {
     const now = new Date();
     const nextActive = new Date(now);
     nextActive.setHours(quietHours.end, 0, 0, 0);
-    
+
     if (nextActive <= now) {
       nextActive.setDate(nextActive.getDate() + 1);
     }
-    
+
     return nextActive;
   }
 
-  private findOptimalHour(hourlyActivity: number[], currentHour: number): number {
+  private findOptimalHour(
+    hourlyActivity: number[],
+    currentHour: number
+  ): number {
     let maxActivity = 0;
     let optimalHour = currentHour;
 
@@ -560,7 +585,7 @@ class IntelligentNotificationService {
     return optimalHour;
   }
 
-  private async getUserLocationPreferences(_userId: string): Promise<{
+  private async getUserLocationPreferences(): Promise<{
     enabled: boolean;
     maxRadius: number;
   }> {
@@ -571,20 +596,31 @@ class IntelligentNotificationService {
     };
   }
 
-  private async getUserLocation(_userId: string): Promise<{ lat: number; lng: number } | null> {
+  private async getUserLocation(): Promise<{
+    lat: number;
+    lng: number;
+  } | null> {
     // This would typically come from user's last known location or preferences
     // For now, return null to indicate no location data
     return null;
   }
 
-  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
     const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
 
@@ -614,7 +650,10 @@ class IntelligentNotificationService {
     }
 
     // Check location preferences
-    if (payload.delivery.locationBased && payload.delivery.personalization.locationFilter) {
+    if (
+      payload.delivery.locationBased &&
+      payload.delivery.personalization.locationFilter
+    ) {
       const shouldReceive = await this.shouldReceiveLocationNotification(
         userId,
         {
@@ -636,17 +675,14 @@ class IntelligentNotificationService {
     payload: IntelligentNotificationPayload
   ): Promise<IntelligentNotificationPayload> {
     // Personalize notification content based on user preferences
-    const pattern = await this.analyzeUserEngagement(userId);
-    
+    await this.analyzeUserEngagement(userId);
+
     // For now, return the payload as-is
-    // In a real implementation, this would customize the content
+    // In a real implementation, this would customize the content based on user patterns
     return payload;
   }
 
-  private async deliverNotification(
-    userId: string,
-    payload: IntelligentNotificationPayload
-  ): Promise<void> {
+  private async deliverNotification(userId: string): Promise<void> {
     // Get user's push subscriptions
     const subscriptions = await db.pushSubscription.findMany({
       where: {
@@ -658,23 +694,25 @@ class IntelligentNotificationService {
     // Send to each subscription
     for (const subscription of subscriptions) {
       try {
-        await this.sendPushNotification(subscription, payload);
+        await this.sendPushNotification(subscription);
       } catch (error) {
-        console.error(`Failed to send push notification to ${subscription.endpoint}:`, error);
+        console.error(
+          `Failed to send push notification to ${subscription.endpoint}:`,
+          error
+        );
       }
     }
   }
 
   private async sendPushNotification(
-    subscription: Record<string, unknown>,
-    _payload: IntelligentNotificationPayload
+    subscription: Record<string, unknown>
   ): Promise<void> {
     // This would integrate with a push notification service like Firebase, OneSignal, etc.
     // For now, we'll use the existing local notification system
     console.log(`Sending push notification to ${subscription.endpoint}:`);
   }
 
-  private async getRelevantUsers(payload: IntelligentNotificationPayload): Promise<string[]> {
+  private async getRelevantUsers(): Promise<string[]> {
     // Get users who should receive this notification based on type
     const users = await db.user.findMany({
       where: {
@@ -689,11 +727,12 @@ class IntelligentNotificationService {
       },
     });
 
-    return users.map(user => user.id);
+    return users.map((user) => user.id);
   }
 }
 
 // Export singleton instance
-export const intelligentNotificationService = IntelligentNotificationService.getInstance();
+export const intelligentNotificationService =
+  IntelligentNotificationService.getInstance();
 
 // Types are already exported above with their definitions
