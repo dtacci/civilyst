@@ -348,6 +348,20 @@ button:active,
   animation: scale-in 0.2s ease-out forwards;
 }
 
+/* ===== ENHANCED VOTING ANIMATIONS ===== */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1s ease-in-out infinite;
+}
+
 /* ===== THEME INTEGRATION ===== */
 @theme inline {
   --color-background: var(--color-background);
