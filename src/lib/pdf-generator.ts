@@ -1,334 +1,413 @@
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import { generateCampaignQRCodeBuffer } from './qr-code';
+import jsPDF from 'jspdf';
+import { z } from 'zod';
+import { format } from 'date-fns';
 
-export interface PDFGenerationOptions {
-  format?: 'a4' | 'letter' | 'legal';
-  orientation?: 'portrait' | 'landscape';
-  margins?: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  includeQRCode?: boolean;
-  includeMetadata?: boolean;
-  customTitle?: string;
-  customFooter?: string;
-}
+// PDF generation options schema
+const PDFOptionsSchema = z.object({
+  format: z.enum(['a4', 'letter', 'legal']).optional().default('a4'),
+  orientation: z.enum(['portrait', 'landscape']).optional().default('portrait'),
+  unit: z.enum(['mm', 'cm', 'in', 'px']).optional().default('mm'),
+  compress: z.boolean().optional().default(true),
+  fontSize: z.number().min(8).max(72).optional().default(11),
+  lineHeight: z.number().min(1).max(3).optional().default(1.4),
+  margin: z.object({
+    top: z.number().min(0).max(50).optional().default(20),
+    right: z.number().min(0).max(50).optional().default(20),
+    bottom: z.number().min(0).max(50).optional().default(20),
+    left: z.number().min(0).max(50).optional().default(20),
+  }).optional().default({}),
+});
 
-export interface CampaignPDFData {
-  campaignId: string;
-  title: string;
-  description: string;
-  organizationName: string;
-  location?: string;
-  startDate?: Date;
-  endDate?: Date;
-  participationUrl: string;
-  qrCodeData?: {
-    campaignId: string;
-    campaignTitle: string;
-    baseUrl: string;
-  };
-  additionalInfo?: string[];
-  contactInfo?: {
-    email?: string;
-    phone?: string;
-    website?: string;
-  };
-}
+type PDFOptions = z.infer<typeof PDFOptionsSchema>;
 
-/**
- * Generate campaign information PDF document
- */
-export async function generateCampaignPDF(
-  data: CampaignPDFData,
-  options: PDFGenerationOptions = {}
-): Promise<Blob> {
-  const pdf = new jsPDF({
-    orientation: options.orientation || 'portrait',
-    unit: 'mm',
-    format: options.format || 'a4',
-  });
+// Campaign data schema for PDF reports
+const CampaignReportDataSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']),
+  createdAt: z.string().or(z.date()),
+  updatedAt: z.string().or(z.date()),
+  location: z.object({
+    address: z.string(),
+    city: z.string(),
+    state: z.string(),
+    zipCode: z.string(),
+    coordinates: z.object({
+      lat: z.number(),
+      lng: z.number(),
+    }).optional(),
+  }).optional(),
+  votes: z.object({
+    total: z.number(),
+    support: z.number(),
+    oppose: z.number(),
+    supportPercentage: z.number(),
+    opposePercentage: z.number(),
+  }).optional(),
+  engagement: z.object({
+    views: z.number(),
+    shares: z.number(),
+    comments: z.number(),
+    participants: z.number(),
+  }).optional(),
+  timeline: z.array(z.object({
+    date: z.string().or(z.date()),
+    event: z.string(),
+    description: z.string(),
+  })).optional(),
+  documents: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+    type: z.string(),
+    size: z.number().optional(),
+  })).optional(),
+});
 
-  const margins = options.margins || {
-    top: 20,
-    right: 20,
-    bottom: 20,
-    left: 20,
-  };
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const contentWidth = pageWidth - margins.left - margins.right;
-
-  let yPosition = margins.top;
-
-  // Title
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  const title = options.customTitle || `Campaign: ${data.title}`;
-  const titleLines = pdf.splitTextToSize(title, contentWidth);
-  pdf.text(titleLines, margins.left, yPosition);
-  yPosition += titleLines.length * 10 + 10;
-
-  // Organization
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Organized by: ${data.organizationName}`, margins.left, yPosition);
-  yPosition += 15;
-
-  // Location (if provided)
-  if (data.location) {
-    pdf.setFontSize(12);
-    pdf.text(`Location: ${data.location}`, margins.left, yPosition);
-    yPosition += 10;
-  }
-
-  // Dates (if provided)
-  if (data.startDate || data.endDate) {
-    pdf.setFontSize(12);
-    let dateText = 'Duration: ';
-    if (data.startDate && data.endDate) {
-      dateText += `${data.startDate.toLocaleDateString()} - ${data.endDate.toLocaleDateString()}`;
-    } else if (data.startDate) {
-      dateText += `Starting ${data.startDate.toLocaleDateString()}`;
-    } else if (data.endDate) {
-      dateText += `Until ${data.endDate.toLocaleDateString()}`;
-    }
-    pdf.text(dateText, margins.left, yPosition);
-    yPosition += 15;
-  }
-
-  // Description
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Description:', margins.left, yPosition);
-  yPosition += 8;
-
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'normal');
-  const descriptionLines = pdf.splitTextToSize(data.description, contentWidth);
-  pdf.text(descriptionLines, margins.left, yPosition);
-  yPosition += descriptionLines.length * 6 + 15;
-
-  // Additional Information
-  if (data.additionalInfo && data.additionalInfo.length > 0) {
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Additional Information:', margins.left, yPosition);
-    yPosition += 8;
-
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    for (const info of data.additionalInfo) {
-      const infoLines = pdf.splitTextToSize(`• ${info}`, contentWidth - 5);
-      pdf.text(infoLines, margins.left + 5, yPosition);
-      yPosition += infoLines.length * 6 + 3;
-    }
-    yPosition += 10;
-  }
-
-  // QR Code
-  if (options.includeQRCode && data.qrCodeData) {
-    try {
-      const qrBuffer = await generateCampaignQRCodeBuffer(data.qrCodeData, {
-        width: 200,
-      });
-      const qrDataUrl = `data:image/png;base64,${qrBuffer.toString('base64')}`;
-
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Scan to Participate:', margins.left, yPosition);
-      yPosition += 15;
-
-      const qrSize = 40; // 40mm
-      pdf.addImage(qrDataUrl, 'PNG', margins.left, yPosition, qrSize, qrSize);
-      yPosition += qrSize + 10;
-    } catch (error) {
-      console.error('Failed to add QR code to PDF:', error);
-    }
-  }
-
-  // Participation URL
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Participation Link:', margins.left, yPosition);
-  yPosition += 6;
-
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  const urlLines = pdf.splitTextToSize(data.participationUrl, contentWidth);
-  pdf.text(urlLines, margins.left, yPosition);
-  yPosition += urlLines.length * 5 + 15;
-
-  // Contact Information
-  if (data.contactInfo) {
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Contact Information:', margins.left, yPosition);
-    yPosition += 8;
-
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-
-    if (data.contactInfo.email) {
-      pdf.text(`Email: ${data.contactInfo.email}`, margins.left, yPosition);
-      yPosition += 6;
-    }
-
-    if (data.contactInfo.phone) {
-      pdf.text(`Phone: ${data.contactInfo.phone}`, margins.left, yPosition);
-      yPosition += 6;
-    }
-
-    if (data.contactInfo.website) {
-      pdf.text(`Website: ${data.contactInfo.website}`, margins.left, yPosition);
-      yPosition += 6;
-    }
-    yPosition += 10;
-  }
-
-  // Footer
-  if (options.customFooter || options.includeMetadata) {
-    const footerY = pageHeight - margins.bottom - 10;
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-
-    if (options.customFooter) {
-      pdf.text(options.customFooter, margins.left, footerY);
-    }
-
-    if (options.includeMetadata) {
-      const metadata = `Generated on ${new Date().toLocaleDateString()} • Campaign ID: ${data.campaignId}`;
-      const metadataWidth = pdf.getTextWidth(metadata);
-      pdf.text(metadata, pageWidth - margins.right - metadataWidth, footerY);
-    }
-  }
-
-  return new Blob([pdf.output('blob')], { type: 'application/pdf' });
-}
+type CampaignReportData = z.infer<typeof CampaignReportDataSchema>;
 
 /**
- * Generate PDF from HTML element
+ * Generate campaign summary PDF report
+ * @param data Campaign data
+ * @param options PDF generation options
+ * @returns Promise resolving to PDF buffer
  */
-export async function generatePDFFromElement(
-  element: HTMLElement,
-  filename: string,
-  options: PDFGenerationOptions = {}
-): Promise<Blob> {
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-  });
-
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF({
-    orientation: options.orientation || 'portrait',
-    unit: 'mm',
-    format: options.format || 'a4',
-  });
-
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margins = options.margins || {
-    top: 10,
-    right: 10,
-    bottom: 10,
-    left: 10,
-  };
-
-  const imgWidth = pageWidth - margins.left - margins.right;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  let heightLeft = imgHeight;
-  let position = margins.top;
-
-  pdf.addImage(imgData, 'PNG', margins.left, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight - margins.top - margins.bottom;
-
-  while (heightLeft >= 0) {
-    position = heightLeft - imgHeight + margins.top;
-    pdf.addPage();
-    pdf.addImage(imgData, 'PNG', margins.left, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight - margins.top - margins.bottom;
-  }
-
-  return new Blob([pdf.output('blob')], { type: 'application/pdf' });
-}
-
-/**
- * Download PDF blob as file
- */
-export function downloadPDF(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Validate PDF generation data
- */
-export function validateCampaignPDFData(data: CampaignPDFData): string[] {
-  const errors: string[] = [];
-
-  if (!data.campaignId || typeof data.campaignId !== 'string') {
-    errors.push('Campaign ID is required');
-  }
-
-  if (!data.title || typeof data.title !== 'string') {
-    errors.push('Campaign title is required');
-  }
-
-  if (!data.description || typeof data.description !== 'string') {
-    errors.push('Campaign description is required');
-  }
-
-  if (!data.organizationName || typeof data.organizationName !== 'string') {
-    errors.push('Organization name is required');
-  }
-
-  if (!data.participationUrl || typeof data.participationUrl !== 'string') {
-    errors.push('Participation URL is required');
-  }
-
+export async function generateCampaignReport(
+  data: CampaignReportData,
+  options: Partial<PDFOptions> = {}
+): Promise<Buffer> {
   try {
-    new URL(data.participationUrl);
-  } catch {
-    errors.push('Participation URL must be valid');
-  }
+    // Validate input data
+    const validatedData = CampaignReportDataSchema.parse(data);
+    const validatedOptions = PDFOptionsSchema.parse(options);
 
-  return errors;
+    // Create new PDF document
+    const doc = new jsPDF({
+      format: validatedOptions.format,
+      orientation: validatedOptions.orientation,
+      unit: validatedOptions.unit,
+      compress: validatedOptions.compress,
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = validatedOptions.margin;
+    const contentWidth = pageWidth - margin.left - margin.right;
+    let yPosition = margin.top;
+
+    // Helper function to add text with automatic line breaks
+    const addText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = validatedOptions.fontSize) => {
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, x, y);
+      return y + (lines.length * fontSize * validatedOptions.lineHeight);
+    };
+
+    // Helper function to check if we need a new page
+    const checkPageBreak = (requiredHeight: number) => {
+      if (yPosition + requiredHeight > pageHeight - margin.bottom) {
+        doc.addPage();
+        yPosition = margin.top;
+      }
+    };
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Campaign Report', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
+
+    // Campaign Title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    yPosition = addText(validatedData.title, margin.left, yPosition, contentWidth, 16);
+    yPosition += 10;
+
+    // Basic Information Section
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Campaign Information', margin.left, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    
+    // Campaign ID
+    yPosition = addText(`Campaign ID: ${validatedData.id}`, margin.left, yPosition, contentWidth);
+    yPosition += 5;
+
+    // Status
+    yPosition = addText(`Status: ${validatedData.status}`, margin.left, yPosition, contentWidth);
+    yPosition += 5;
+
+    // Dates
+    const createdDate = typeof validatedData.createdAt === 'string' 
+      ? new Date(validatedData.createdAt) 
+      : validatedData.createdAt;
+    const updatedDate = typeof validatedData.updatedAt === 'string' 
+      ? new Date(validatedData.updatedAt) 
+      : validatedData.updatedAt;
+
+    yPosition = addText(`Created: ${format(createdDate, 'PPP')}`, margin.left, yPosition, contentWidth);
+    yPosition += 5;
+    yPosition = addText(`Last Updated: ${format(updatedDate, 'PPP')}`, margin.left, yPosition, contentWidth);
+    yPosition += 10;
+
+    // Location Section
+    if (validatedData.location) {
+      checkPageBreak(30);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Location', margin.left, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      const location = validatedData.location;
+      yPosition = addText(`Address: ${location.address}`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`City: ${location.city}, ${location.state} ${location.zipCode}`, margin.left, yPosition, contentWidth);
+      
+      if (location.coordinates) {
+        yPosition += 5;
+        yPosition = addText(`Coordinates: ${location.coordinates.lat.toFixed(6)}, ${location.coordinates.lng.toFixed(6)}`, margin.left, yPosition, contentWidth);
+      }
+      yPosition += 10;
+    }
+
+    // Description Section
+    checkPageBreak(50);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', margin.left, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    yPosition = addText(validatedData.description, margin.left, yPosition, contentWidth);
+    yPosition += 10;
+
+    // Voting Results Section
+    if (validatedData.votes) {
+      checkPageBreak(60);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Voting Results', margin.left, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      const votes = validatedData.votes;
+      
+      yPosition = addText(`Total Votes: ${votes.total}`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`Support: ${votes.support} (${votes.supportPercentage.toFixed(1)}%)`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`Oppose: ${votes.oppose} (${votes.opposePercentage.toFixed(1)}%)`, margin.left, yPosition, contentWidth);
+      yPosition += 10;
+
+      // Simple visual representation
+      const barWidth = contentWidth - 40;
+      const barHeight = 8;
+      const supportWidth = (votes.supportPercentage / 100) * barWidth;
+      const opposeWidth = (votes.opposePercentage / 100) * barWidth;
+
+      // Support bar (green)
+      doc.setFillColor(34, 197, 94); // Green
+      doc.rect(margin.left, yPosition, supportWidth, barHeight, 'F');
+      
+      // Oppose bar (red)
+      doc.setFillColor(239, 68, 68); // Red
+      doc.rect(margin.left + supportWidth, yPosition, opposeWidth, barHeight, 'F');
+      
+      // Border
+      doc.setDrawColor(0, 0, 0);
+      doc.rect(margin.left, yPosition, barWidth, barHeight, 'S');
+      
+      yPosition += barHeight + 10;
+    }
+
+    // Engagement Statistics Section
+    if (validatedData.engagement) {
+      checkPageBreak(40);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Engagement Statistics', margin.left, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      const engagement = validatedData.engagement;
+      
+      yPosition = addText(`Views: ${engagement.views}`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`Shares: ${engagement.shares}`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`Comments: ${engagement.comments}`, margin.left, yPosition, contentWidth);
+      yPosition += 5;
+      yPosition = addText(`Participants: ${engagement.participants}`, margin.left, yPosition, contentWidth);
+      yPosition += 10;
+    }
+
+    // Timeline Section
+    if (validatedData.timeline && validatedData.timeline.length > 0) {
+      checkPageBreak(50);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Timeline', margin.left, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      
+      validatedData.timeline.forEach((event) => {
+        checkPageBreak(20);
+        const eventDate = typeof event.date === 'string' ? new Date(event.date) : event.date;
+        yPosition = addText(`${format(eventDate, 'PPP')}: ${event.event}`, margin.left, yPosition, contentWidth);
+        yPosition += 3;
+        yPosition = addText(`   ${event.description}`, margin.left, yPosition, contentWidth);
+        yPosition += 5;
+      });
+      yPosition += 5;
+    }
+
+    // Documents Section
+    if (validatedData.documents && validatedData.documents.length > 0) {
+      checkPageBreak(30);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Related Documents', margin.left, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      
+      validatedData.documents.forEach((document) => {
+        checkPageBreak(15);
+        yPosition = addText(`• ${document.name} (${document.type})`, margin.left, yPosition, contentWidth);
+        yPosition += 3;
+        yPosition = addText(`  ${document.url}`, margin.left, yPosition, contentWidth);
+        yPosition += 5;
+      });
+    }
+
+    // Footer
+    const pageCount = doc.internal.pages.length - 1;
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      doc.text(`Generated on ${format(new Date(), 'PPP')}`, pageWidth - margin.right, pageHeight - 10, { align: 'right' });
+      doc.text('Civilyst - Civic Engagement Platform', margin.left, pageHeight - 10);
+    }
+
+    // Return PDF as buffer
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+    return pdfBuffer;
+  } catch (error) {
+    console.error('PDF generation failed:', error);
+    throw new Error(`Failed to generate PDF report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
- * Get file size estimate for PDF generation
+ * Generate voting summary PDF for a campaign
+ * @param campaignData Campaign data with voting results
+ * @param options PDF generation options
+ * @returns Promise resolving to PDF buffer
  */
-export function estimatePDFSize(
-  data: CampaignPDFData,
-  options: PDFGenerationOptions = {}
-): number {
-  let estimatedSize = 50; // Base PDF size in KB
+export async function generateVotingSummaryPDF(
+  campaignData: Pick<CampaignReportData, 'id' | 'title' | 'votes' | 'engagement'>,
+  options: Partial<PDFOptions> = {}
+): Promise<Buffer> {
+  const summaryData: CampaignReportData = {
+    ...campaignData,
+    description: 'Voting summary report',
+    status: 'ACTIVE',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
-  // Text content
-  const textLength = data.title.length + data.description.length;
-  estimatedSize += Math.ceil(textLength / 100) * 2;
-
-  // QR Code
-  if (options.includeQRCode) {
-    estimatedSize += 15; // QR code image
-  }
-
-  // Additional info
-  if (data.additionalInfo) {
-    estimatedSize += data.additionalInfo.join('').length / 200;
-  }
-
-  return Math.ceil(estimatedSize);
+  return generateCampaignReport(summaryData, options);
 }
+
+/**
+ * Generate QR code embedded PDF for campaign sharing
+ * @param campaignData Campaign data
+ * @param qrCodeDataUrl QR code as data URL
+ * @param options PDF generation options
+ * @returns Promise resolving to PDF buffer
+ */
+export async function generateCampaignQRPDF(
+  campaignData: Pick<CampaignReportData, 'id' | 'title' | 'description'>,
+  qrCodeDataUrl: string,
+  options: Partial<PDFOptions> = {}
+): Promise<Buffer> {
+  try {
+    const validatedOptions = PDFOptionsSchema.parse(options);
+
+    const doc = new jsPDF({
+      format: validatedOptions.format,
+      orientation: validatedOptions.orientation,
+      unit: validatedOptions.unit,
+      compress: validatedOptions.compress,
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = validatedOptions.margin;
+    let yPosition = margin.top;
+
+    // Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Campaign QR Code', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 20;
+
+    // Campaign Title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    const lines = doc.splitTextToSize(campaignData.title, pageWidth - margin.left - margin.right);
+    doc.text(lines, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += lines.length * 8 + 10;
+
+    // QR Code
+    const qrSize = 80;
+    const qrX = (pageWidth - qrSize) / 2;
+    doc.addImage(qrCodeDataUrl, 'PNG', qrX, yPosition, qrSize, qrSize);
+    yPosition += qrSize + 15;
+
+    // Instructions
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Scan this QR code to view the campaign', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 10;
+
+    // Campaign ID
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Campaign ID: ${campaignData.id}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
+
+    // Description
+    if (campaignData.description) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      const descLines = doc.splitTextToSize(campaignData.description, pageWidth - margin.left - margin.right);
+      doc.text(descLines, margin.left, yPosition);
+    }
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on ${format(new Date(), 'PPP')}`, pageWidth / 2, pageWidth - 10, { align: 'center' });
+
+    return Buffer.from(doc.output('arraybuffer'));
+  } catch (error) {
+    console.error('QR PDF generation failed:', error);
+    throw new Error(`Failed to generate QR PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Export types for use in other modules
+export type { PDFOptions, CampaignReportData };

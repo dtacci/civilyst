@@ -318,6 +318,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
         <CardContent className="p-0">
           <div
             ref={gestureRef}
+            data-testid="gesture-area"
             className={cn(
               'relative min-h-[140px] touch-pan-y transition-all duration-300',
               'bg-gradient-to-r from-blue-50 via-slate-50 to-emerald-50',
@@ -567,7 +568,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
         {isVoting && (
           <div className="mb-6 p-4 bg-[--color-primary]/10 border border-[--color-primary]/20 rounded-[--border-radius-lg]">
             <div className="flex items-center justify-center text-[--color-primary]">
-              <Loader2 className="animate-spin h-5 w-5 mr-3" />
+              <Loader2 className="animate-spin h-5 w-5 mr-3" data-testid="loading-spinner" />
               <span className="font-medium">Submitting your vote...</span>
             </div>
           </div>
