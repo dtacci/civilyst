@@ -1,27 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { 
-  generateCampaignShareQR, 
-  generateUrlQR, 
+import {
+  generateCampaignShareQR,
+  generateUrlQR,
   generateQRBuffer,
-  type QRCodeOptions 
+  type QRCodeOptions,
 } from '~/lib/qr-generator';
 
 // Request body schema
 const QRGenerationRequestSchema = z.object({
   title: z.string().min(1).max(200),
   format: z.enum(['dataurl', 'buffer', 'svg']).optional().default('dataurl'),
-  options: z.object({
-    width: z.number().min(100).max(2048).optional(),
-    margin: z.number().min(0).max(20).optional(),
-    color: z.object({
-      dark: z.string().optional(),
-      light: z.string().optional(),
-    }).optional(),
-    errorCorrectionLevel: z.enum(['L', 'M', 'Q', 'H']).optional(),
-    type: z.enum(['image/png', 'image/jpeg', 'image/webp']).optional(),
-    quality: z.number().min(0.1).max(1).optional(),
-  }).optional().default({}),
+  options: z
+    .object({
+      width: z.number().min(100).max(2048).optional(),
+      margin: z.number().min(0).max(20).optional(),
+      color: z
+        .object({
+          dark: z.string().optional(),
+          light: z.string().optional(),
+        })
+        .optional(),
+      errorCorrectionLevel: z.enum(['L', 'M', 'Q', 'H']).optional(),
+      type: z.enum(['image/png', 'image/jpeg', 'image/webp']).optional(),
+      quality: z.number().min(0.1).max(1).optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 // Query parameters schema
@@ -40,7 +45,7 @@ export async function POST(
 ) {
   try {
     const { campaignId } = await params;
-    
+
     if (!campaignId) {
       return NextResponse.json(
         { error: 'Campaign ID is required' },
@@ -59,27 +64,64 @@ export async function POST(
     // Generate QR code based on requested format
     switch (format) {
       case 'dataurl':
-        qrData = await generateCampaignShareQR(campaignId, title, options);
+        // Clean options to match expected type by removing undefined color properties
+        const cleanedOptions = {
+          ...options,
+          color: options.color
+            ? {
+                dark: options.color.dark ?? '#000000',
+                light: options.color.light ?? '#FFFFFF',
+              }
+            : undefined,
+        };
+        qrData = await generateCampaignShareQR(
+          campaignId,
+          title,
+          cleanedOptions
+        );
         contentType = 'application/json';
         break;
-        
+
       case 'buffer':
         // For buffer format, we need to get the campaign URL and generate buffer
         const { createCampaignShareUrl } = await import('~/lib/qr-generator');
         const shareUrl = createCampaignShareUrl(campaignId, 'qr_api');
-        qrData = await generateQRBuffer(shareUrl, options);
+        // Clean options to match expected type by removing undefined color properties
+        const cleanedOptionsBuffer = {
+          ...options,
+          color: options.color
+            ? {
+                dark: options.color.dark ?? '#000000',
+                light: options.color.light ?? '#FFFFFF',
+              }
+            : undefined,
+        };
+        qrData = await generateQRBuffer(shareUrl, cleanedOptionsBuffer);
         contentType = 'image/png';
-        responseHeaders['Content-Disposition'] = `attachment; filename="campaign-${campaignId}-qr.png"`;
+        responseHeaders['Content-Disposition'] =
+          `attachment; filename="campaign-${campaignId}-qr.png"`;
         break;
-        
+
       case 'svg':
-        const { generateQRSVG, createCampaignShareUrl: createUrl } = await import('~/lib/qr-generator');
+        const { generateQRSVG, createCampaignShareUrl: createUrl } =
+          await import('~/lib/qr-generator');
         const url = createUrl(campaignId, 'qr_api');
-        qrData = await generateQRSVG(url, options);
+        // Clean options to match expected type by removing undefined color properties
+        const cleanedOptionsSVG = {
+          ...options,
+          color: options.color
+            ? {
+                dark: options.color.dark ?? '#000000',
+                light: options.color.light ?? '#FFFFFF',
+              }
+            : undefined,
+        };
+        qrData = await generateQRSVG(url, cleanedOptionsSVG);
         contentType = 'image/svg+xml';
-        responseHeaders['Content-Disposition'] = `attachment; filename="campaign-${campaignId}-qr.svg"`;
+        responseHeaders['Content-Disposition'] =
+          `attachment; filename="campaign-${campaignId}-qr.svg"`;
         break;
-        
+
       default:
         return NextResponse.json(
           { error: 'Invalid format specified' },
@@ -110,24 +152,23 @@ export async function POST(
         ...responseHeaders,
       },
     });
-
   } catch (error) {
     console.error('QR code generation API error:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid request data',
-          details: error.errors 
+          details: error.errors,
         },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate QR code',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -144,7 +185,7 @@ export async function GET(
 ) {
   try {
     const { campaignId } = await params;
-    
+
     if (!campaignId) {
       return NextResponse.json(
         { error: 'Campaign ID is required' },
@@ -175,7 +216,7 @@ export async function GET(
       // Return as downloadable PNG file
       const qrBuffer = await generateQRBuffer(shareUrl, defaultOptions);
       const downloadFilename = filename || `campaign-${campaignId}-qr.png`;
-      
+
       return new NextResponse(qrBuffer, {
         status: 200,
         headers: {
@@ -187,7 +228,7 @@ export async function GET(
     } else {
       // Return as data URL in JSON response
       const qrDataUrl = await generateUrlQR(shareUrl, defaultOptions);
-      
+
       return NextResponse.json({
         success: true,
         data: {
@@ -199,14 +240,13 @@ export async function GET(
         },
       });
     }
-
   } catch (error) {
     console.error('QR code GET API error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate QR code',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

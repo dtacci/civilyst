@@ -2,10 +2,20 @@ import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
+  // Build optimizations
+  typescript: {
+    ignoreBuildErrors: false, // Ensure TypeScript errors are caught
+  },
+  eslint: {
+    ignoreDuringBuilds: false, // Ensure ESLint errors are caught
+    dirs: ['src'], // Only lint src directory (excludes test files in app directory)
+  },
+
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+
   // Webpack configuration (fallback from Turbopack)
   webpack: (config) => {
     config.module.rules.push({
@@ -14,6 +24,7 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+
   experimental: {
     // Reduce bundle size in development
     optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],

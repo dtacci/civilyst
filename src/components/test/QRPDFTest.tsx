@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { DownloadTools } from '~/components/campaign/DownloadTools';
@@ -12,7 +13,8 @@ export function QRPDFTest() {
   const testCampaignData = {
     id: testCampaignId,
     title: 'Test Campaign for QR & PDF Generation',
-    description: 'This is a test campaign to verify QR code and PDF generation functionality works correctly.',
+    description:
+      'This is a test campaign to verify QR code and PDF generation functionality works correctly.',
     status: 'ACTIVE' as const,
     location: {
       address: '123 Test Street',
@@ -81,11 +83,22 @@ export function QRPDFTest() {
 
           {/* Campaign Info */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-medium text-gray-900 mb-2">Test Campaign Details</h3>
-            <p><strong>ID:</strong> {testCampaignData.id}</p>
-            <p><strong>Title:</strong> {testCampaignData.title}</p>
-            <p><strong>URL:</strong> {getCampaignUrl()}</p>
-            <p><strong>Votes:</strong> {testCampaignData.votes.total} total ({testCampaignData.votes.supportPercentage}% support)</p>
+            <h3 className="font-medium text-gray-900 mb-2">
+              Test Campaign Details
+            </h3>
+            <p>
+              <strong>ID:</strong> {testCampaignData.id}
+            </p>
+            <p>
+              <strong>Title:</strong> {testCampaignData.title}
+            </p>
+            <p>
+              <strong>URL:</strong> {getCampaignUrl()}
+            </p>
+            <p>
+              <strong>Votes:</strong> {testCampaignData.votes.total} total (
+              {testCampaignData.votes.supportPercentage}% support)
+            </p>
           </div>
 
           {/* Quick Action Buttons */}
@@ -111,7 +124,9 @@ export function QRPDFTest() {
               disabled={!!isGenerating.pdf}
               variant="outline"
             >
-              {isGenerating.pdf === 'full_report' ? 'Generating...' : 'Download Full Report'}
+              {isGenerating.pdf === 'full_report'
+                ? 'Generating...'
+                : 'Download Full Report'}
             </Button>
 
             <Button
@@ -119,7 +134,9 @@ export function QRPDFTest() {
               disabled={!!isGenerating.pdf}
               variant="outline"
             >
-              {isGenerating.pdf === 'voting_summary' ? 'Generating...' : 'Download Voting Summary'}
+              {isGenerating.pdf === 'voting_summary'
+                ? 'Generating...'
+                : 'Download Voting Summary'}
             </Button>
 
             <Button
@@ -127,13 +144,12 @@ export function QRPDFTest() {
               disabled={!!isGenerating.pdf}
               variant="outline"
             >
-              {isGenerating.pdf === 'qr_share' ? 'Generating...' : 'Download QR Share PDF'}
+              {isGenerating.pdf === 'qr_share'
+                ? 'Generating...'
+                : 'Download QR Share PDF'}
             </Button>
 
-            <Button
-              onClick={handleCopyUrl}
-              variant="outline"
-            >
+            <Button onClick={handleCopyUrl} variant="outline">
               {copied ? 'Copied!' : 'Copy URL'}
             </Button>
           </div>
@@ -141,11 +157,15 @@ export function QRPDFTest() {
           {/* QR Code Display */}
           {qrCodeDataUrl && (
             <div className="text-center">
-              <h3 className="font-medium text-gray-900 mb-4">Generated QR Code</h3>
+              <h3 className="font-medium text-gray-900 mb-4">
+                Generated QR Code
+              </h3>
               <div className="inline-block p-4 bg-white border rounded-lg shadow-sm">
-                <img
+                <Image
                   src={qrCodeDataUrl}
                   alt="Campaign QR Code"
+                  width={256}
+                  height={256}
                   className="w-64 h-64"
                 />
               </div>
@@ -157,16 +177,15 @@ export function QRPDFTest() {
 
           {/* Download Tools Component Test */}
           <div className="border-t pt-6">
-            <h3 className="font-medium text-gray-900 mb-4">Download Tools Component</h3>
+            <h3 className="font-medium text-gray-900 mb-4">
+              Download Tools Component
+            </h3>
             <DownloadTools
               campaignId={testCampaignId}
               variant="buttons"
               className="mb-4"
             />
-            <DownloadTools
-              campaignId={testCampaignId}
-              variant="menu"
-            />
+            <DownloadTools campaignId={testCampaignId} variant="menu" />
           </div>
         </CardContent>
       </Card>

@@ -8,15 +8,21 @@ import { NextRequest } from 'next/server';
 // Mock Next.js server environment
 Object.defineProperty(global, 'Request', {
   value: class MockRequest {
-    constructor(public url: string, public init?: RequestInit) {}
+    constructor(
+      public url: string,
+      public init?: RequestInit
+    ) {}
   },
   writable: true,
 });
 
 Object.defineProperty(global, 'Response', {
   value: class MockResponse {
-    constructor(public body?: any, public init?: ResponseInit) {}
-    
+    constructor(
+      public body?: any,
+      public init?: ResponseInit
+    ) {}
+
     static json(data: any, init?: ResponseInit) {
       return new MockResponse(JSON.stringify(data), {
         ...init,
@@ -32,15 +38,21 @@ Object.defineProperty(global, 'Response', {
 
 // Mock the utility libraries
 jest.mock('~/lib/qr-generator', () => ({
-  generateCampaignShareQR: jest.fn().mockResolvedValue('data:image/png;base64,mockQR'),
+  generateCampaignShareQR: jest
+    .fn()
+    .mockResolvedValue('data:image/png;base64,mockQR'),
   generateUrlQR: jest.fn().mockResolvedValue('data:image/png;base64,mockQR'),
   generateQRBuffer: jest.fn().mockResolvedValue(Buffer.from('mock-buffer')),
-  createCampaignShareUrl: jest.fn().mockReturnValue('http://localhost:3000/campaigns/test'),
+  createCampaignShareUrl: jest
+    .fn()
+    .mockReturnValue('http://localhost:3000/campaigns/test'),
 }));
 
 jest.mock('~/lib/pdf-generator', () => ({
   generateCampaignReport: jest.fn().mockResolvedValue(Buffer.from('mock-pdf')),
-  generateVotingSummaryPDF: jest.fn().mockResolvedValue(Buffer.from('mock-pdf')),
+  generateVotingSummaryPDF: jest
+    .fn()
+    .mockResolvedValue(Buffer.from('mock-pdf')),
   generateCampaignQRPDF: jest.fn().mockResolvedValue(Buffer.from('mock-pdf')),
 }));
 
@@ -70,7 +82,7 @@ describe('API Route Schemas and Validation', () => {
         { title: 'Test', format: 'dataurl', options: { width: 50 } }, // Width too small
       ];
 
-      invalidRequests.forEach(request => {
+      invalidRequests.forEach((request) => {
         // These would fail validation in the actual route
         if (request.title === '') {
           expect(request.title.length).toBe(0);
@@ -103,10 +115,14 @@ describe('API Route Schemas and Validation', () => {
         },
       };
 
-      expect(['full_report', 'voting_summary', 'qr_share']).toContain(validRequest.type);
+      expect(['full_report', 'voting_summary', 'qr_share']).toContain(
+        validRequest.type
+      );
       expect(validRequest.data.id).toBeTruthy();
       expect(validRequest.data.title).toBeTruthy();
-      expect(['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']).toContain(validRequest.data.status);
+      expect(['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']).toContain(
+        validRequest.data.status
+      );
     });
 
     it('should identify invalid PDF request data', () => {
@@ -125,9 +141,11 @@ describe('API Route Schemas and Validation', () => {
         },
       ];
 
-      invalidRequests.forEach(request => {
+      invalidRequests.forEach((request) => {
         if (request.type === 'invalid_type') {
-          expect(['full_report', 'voting_summary', 'qr_share']).not.toContain(request.type);
+          expect(['full_report', 'voting_summary', 'qr_share']).not.toContain(
+            request.type
+          );
         }
         if (request.data.id === '') {
           expect(request.data.id.length).toBe(0);
@@ -207,20 +225,15 @@ describe('API Route Schemas and Validation', () => {
         'short',
       ];
 
-      const invalidCampaignIds = [
-        '',
-        null,
-        undefined,
-        '   ',
-      ];
+      const invalidCampaignIds = ['', null, undefined, '   '];
 
-      validCampaignIds.forEach(id => {
+      validCampaignIds.forEach((id) => {
         expect(id).toBeTruthy();
         expect(typeof id).toBe('string');
         expect(id.trim().length).toBeGreaterThan(0);
       });
 
-      invalidCampaignIds.forEach(id => {
+      invalidCampaignIds.forEach((id) => {
         if (id === '') {
           expect(id.length).toBe(0);
         } else if (id === '   ') {
@@ -234,7 +247,9 @@ describe('API Route Schemas and Validation', () => {
 
   describe('Query Parameter Parsing', () => {
     it('should parse QR query parameters correctly', () => {
-      const mockUrl = new URL('http://localhost:3000/api/campaigns/test/qr?download=true&filename=custom.png');
+      const mockUrl = new URL(
+        'http://localhost:3000/api/campaigns/test/qr?download=true&filename=custom.png'
+      );
       const searchParams = mockUrl.searchParams;
 
       const parsedParams = {
@@ -247,7 +262,9 @@ describe('API Route Schemas and Validation', () => {
     });
 
     it('should parse PDF query parameters correctly', () => {
-      const mockUrl = new URL('http://localhost:3000/api/campaigns/test/pdf?type=voting_summary&download=true');
+      const mockUrl = new URL(
+        'http://localhost:3000/api/campaigns/test/pdf?type=voting_summary&download=true'
+      );
       const searchParams = mockUrl.searchParams;
 
       const parsedParams = {

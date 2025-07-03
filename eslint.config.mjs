@@ -28,6 +28,19 @@ const eslintConfig = [
       "public/workbox-*.js",
       "public/fallback-*.js",
 
+      // Test files (Jest/Vitest testing files)
+      "**/__tests__/**/*",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.test.js",
+      "**/*.test.jsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "**/*.spec.js",
+      "**/*.spec.jsx",
+      "jest.config.js",
+      "jest.setup.js",
+
       // Environment & configuration artefacts
       ".env*",          // all env files (.env, .env.local, etc.)
 

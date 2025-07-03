@@ -1,8 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
 import {
   QrCodeIcon,
   DocumentArrowDownIcon,
@@ -58,7 +65,7 @@ export function CampaignShareTools({
   const handleGenerateQR = async () => {
     try {
       setIsGeneratingQR(true);
-      
+
       const response = await fetch(`/api/campaigns/${campaignId}/qr`, {
         method: 'POST',
         headers: {
@@ -92,8 +99,10 @@ export function CampaignShareTools({
   // Download QR code
   const handleDownloadQR = async () => {
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}/qr?download=true&filename=campaign-${campaignId}-qr.png`);
-      
+      const response = await fetch(
+        `/api/campaigns/${campaignId}/qr?download=true&filename=campaign-${campaignId}-qr.png`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to download QR code');
       }
@@ -113,7 +122,9 @@ export function CampaignShareTools({
   };
 
   // Generate and download PDF report
-  const handleDownloadPDF = async (type: 'full_report' | 'voting_summary' | 'qr_share') => {
+  const handleDownloadPDF = async (
+    type: 'full_report' | 'voting_summary' | 'qr_share'
+  ) => {
     try {
       setIsGeneratingPDF(true);
 
@@ -204,12 +215,12 @@ export function CampaignShareTools({
           Generate QR codes, download reports, and share this campaign
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* QR Code Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-900">QR Code</h3>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleGenerateQR}
@@ -221,7 +232,7 @@ export function CampaignShareTools({
               <QrCodeIcon className="h-4 w-4 mr-2" />
               {isGeneratingQR ? 'Generating...' : 'Generate QR Code'}
             </Button>
-            
+
             <Button
               onClick={handleDownloadQR}
               variant="outline"
@@ -236,9 +247,11 @@ export function CampaignShareTools({
           {/* Display generated QR code */}
           {qrCodeDataUrl && (
             <div className="flex justify-center p-4 bg-gray-50 rounded-lg">
-              <img
+              <Image
                 src={qrCodeDataUrl}
                 alt="Campaign QR Code"
+                width={192}
+                height={192}
                 className="w-48 h-48"
               />
             </div>
@@ -248,7 +261,7 @@ export function CampaignShareTools({
         {/* PDF Reports Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-900">PDF Reports</h3>
-          
+
           <div className="grid gap-3">
             <Button
               onClick={() => handleDownloadPDF('full_report')}
@@ -260,7 +273,7 @@ export function CampaignShareTools({
               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
               {isGeneratingPDF ? 'Generating...' : 'Download Full Report'}
             </Button>
-            
+
             {campaignData?.votes && (
               <Button
                 onClick={() => handleDownloadPDF('voting_summary')}
@@ -273,7 +286,7 @@ export function CampaignShareTools({
                 {isGeneratingPDF ? 'Generating...' : 'Download Voting Summary'}
               </Button>
             )}
-            
+
             <Button
               onClick={() => handleDownloadPDF('qr_share')}
               disabled={isGeneratingPDF}
@@ -290,7 +303,7 @@ export function CampaignShareTools({
         {/* Sharing Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-900">Share Link</h3>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleCopyUrl}
@@ -305,7 +318,7 @@ export function CampaignShareTools({
               )}
               {copied ? 'Copied!' : 'Copy Link'}
             </Button>
-            
+
             <Button
               onClick={handleNativeShare}
               variant="outline"
@@ -320,10 +333,16 @@ export function CampaignShareTools({
 
         {/* Campaign Info */}
         <div className="text-xs text-gray-500 space-y-1">
-          <p><strong>Campaign ID:</strong> {campaignId}</p>
-          <p><strong>Title:</strong> {campaignTitle}</p>
+          <p>
+            <strong>Campaign ID:</strong> {campaignId}
+          </p>
+          <p>
+            <strong>Title:</strong> {campaignTitle}
+          </p>
           {campaignData?.status && (
-            <p><strong>Status:</strong> {campaignData.status}</p>
+            <p>
+              <strong>Status:</strong> {campaignData.status}
+            </p>
           )}
         </div>
       </CardContent>

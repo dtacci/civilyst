@@ -62,7 +62,6 @@ export async function generateCampaignQR(
       color: validatedOptions.color,
       errorCorrectionLevel: validatedOptions.errorCorrectionLevel,
       type: validatedOptions.type,
-      quality: validatedOptions.quality,
       // Mobile-friendly settings
       rendererOpts: {
         quality: validatedOptions.quality,
@@ -99,7 +98,6 @@ export async function generateUrlQR(
       color: validatedOptions.color,
       errorCorrectionLevel: validatedOptions.errorCorrectionLevel,
       type: validatedOptions.type,
-      quality: validatedOptions.quality,
     });
 
     return qrCodeDataUrl;
