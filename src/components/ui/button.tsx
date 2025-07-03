@@ -79,7 +79,7 @@ const buttonVariants = cva(
         ],
         lg: [
           'h-12 px-6 py-3',
-          'text-[--font-size-lg]', 
+          'text-[--font-size-lg]',
           'rounded-[--border-radius-lg]',
           'font-semibold',
         ],
@@ -132,30 +132,45 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { 
-      className, 
-      variant, 
-      size, 
-      fullWidth, 
-      loading, 
-      leftIcon, 
-      rightIcon, 
-      asChild = false, 
-      children, 
+    {
+      className,
+      variant,
+      size,
+      fullWidth,
+      loading,
+      leftIcon,
+      rightIcon,
+      asChild = false,
+      children,
       disabled,
       loadingText,
-      ...props 
+      ...props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : 'button';
-    
     // Disable button when loading
     const isDisabled = disabled || loading;
 
+    // When using asChild, we need to ensure only one child element for Slot
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(
+            buttonVariants({ variant, size, fullWidth, loading, className })
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, fullWidth, loading, className }))}
+      <button
+        className={cn(
+          buttonVariants({ variant, size, fullWidth, loading, className })
+        )}
         ref={ref}
         disabled={isDisabled}
         aria-disabled={isDisabled}
@@ -167,15 +182,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {!loading && leftIcon && (
           <span className="flex-shrink-0">{leftIcon}</span>
         )}
-        
+
         <span className="flex-1 truncate">
           {loading && loadingText ? loadingText : children}
         </span>
-        
+
         {!loading && rightIcon && (
           <span className="flex-shrink-0">{rightIcon}</span>
         )}
-      </Comp>
+      </button>
     );
   }
 );
