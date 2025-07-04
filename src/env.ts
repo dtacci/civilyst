@@ -62,6 +62,10 @@ const serverSchema = z.object({
     .regex(/^sk-/, 'Invalid OpenAI API key format')
     .optional(),
 
+  // CAPTCHA - hCaptcha
+  NEXT_PUBLIC_HCAPTCHA_SITE_KEY: z.string().optional(),
+  HCAPTCHA_SECRET_KEY: z.string().optional(),
+
   // Monitoring & Error Tracking - Sentry
   SENTRY_DSN: z.string().url('Invalid Sentry DSN').optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url('Invalid Sentry DSN').optional(),
@@ -103,6 +107,7 @@ const clientSchema = z
     NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
     NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: z.string().optional(),
+    NEXT_PUBLIC_HCAPTCHA_SITE_KEY: z.string().optional(),
 
     NEXT_PUBLIC_APP_URL: z
       .string()
@@ -184,4 +189,6 @@ export const isServiceConfigured = {
   supabase: () =>
     !!(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   sentry: () => !!(env.SENTRY_DSN || env.NEXT_PUBLIC_SENTRY_DSN),
+  hcaptcha: () =>
+    !!(env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY && env.HCAPTCHA_SECRET_KEY),
 };

@@ -18,6 +18,7 @@ import {
 } from '~/lib/location/ipGeolocation';
 import { calculateLocationTrustBonus } from '~/lib/location/communityBoundaries';
 import { reverseGeocode } from '~/lib/geocoding';
+import { verifyCaptchaToken, getClientIP } from '~/lib/security/captcha';
 
 export const wondersRouter = createTRPCRouter({
   // Get active wonder for homepage
@@ -365,9 +366,28 @@ export const wondersRouter = createTRPCRouter({
         timeContext: z
           .nativeEnum(WonderTimeContext)
           .default(WonderTimeContext.ANYTIME),
+        captchaToken: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // CAPTCHA verification for anonymous users
+      if (input.captchaToken) {
+        const clientIP = getClientIP(
+          new Headers(ctx.req?.headers as Record<string, string>)
+        );
+        const captchaResult = await verifyCaptchaToken(
+          input.captchaToken,
+          clientIP
+        );
+
+        if (!captchaResult.isValid) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `CAPTCHA verification failed: ${captchaResult.error || 'Invalid token'}`,
+          });
+        }
+      }
+
       // Enhanced location verification process
       let locationMetadata: Record<string, unknown> = {};
       let locationTrustBonus = 0;
