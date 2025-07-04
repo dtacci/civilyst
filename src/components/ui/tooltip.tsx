@@ -97,37 +97,59 @@ export function TooltipTrigger({
 }: TooltipTriggerProps) {
   const { onOpenChange } = React.useContext(TooltipContext);
 
-  if (asChild && React.isValidElement(children)) {
-    const child = React.Children.only(children) as React.ReactElement<
-      React.HTMLAttributes<HTMLElement>
-    >;
+  if (asChild) {
+    // Handle the case where children might be multiple elements or fragments
+    const childrenArray = React.Children.toArray(children);
 
-    const {
-      onMouseEnter: originalMouseEnter,
-      onMouseLeave: originalMouseLeave,
-      onFocus: originalFocus,
-      onBlur: originalBlur,
-    } = child.props || {};
+    if (childrenArray.length === 0) {
+      console.warn('TooltipTrigger: No children provided with asChild=true');
+      return null;
+    }
 
-    return React.cloneElement(child, {
-      ...child.props,
-      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-        onOpenChange(true);
-        originalMouseEnter?.(e);
-      },
-      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-        onOpenChange(false);
-        originalMouseLeave?.(e);
-      },
-      onFocus: (e: React.FocusEvent<HTMLElement>) => {
-        onOpenChange(true);
-        originalFocus?.(e);
-      },
-      onBlur: (e: React.FocusEvent<HTMLElement>) => {
-        onOpenChange(false);
-        originalBlur?.(e);
-      },
-    });
+    if (childrenArray.length > 1) {
+      console.warn(
+        'TooltipTrigger: Multiple children provided with asChild=true, using first child only'
+      );
+    }
+
+    const firstChild = childrenArray[0];
+
+    if (!React.isValidElement(firstChild)) {
+      console.warn(
+        'TooltipTrigger: First child is not a valid React element, falling back to span wrapper'
+      );
+    } else {
+      const child = firstChild as React.ReactElement<
+        React.HTMLAttributes<HTMLElement>
+      >;
+
+      const {
+        onMouseEnter: originalMouseEnter,
+        onMouseLeave: originalMouseLeave,
+        onFocus: originalFocus,
+        onBlur: originalBlur,
+      } = child.props || {};
+
+      return React.cloneElement(child, {
+        ...child.props,
+        onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+          onOpenChange(true);
+          originalMouseEnter?.(e);
+        },
+        onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+          onOpenChange(false);
+          originalMouseLeave?.(e);
+        },
+        onFocus: (e: React.FocusEvent<HTMLElement>) => {
+          onOpenChange(true);
+          originalFocus?.(e);
+        },
+        onBlur: (e: React.FocusEvent<HTMLElement>) => {
+          onOpenChange(false);
+          originalBlur?.(e);
+        },
+      });
+    }
   }
 
   return (
