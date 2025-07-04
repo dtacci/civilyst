@@ -69,8 +69,9 @@ export const PasswordResetEmail = ({
           </Text>
 
           <Text style={warning}>
-            If you didn't request a password reset, please ignore this email or
-            contact support if you have concerns about your account security.
+            If you didn&apos;t request a password reset, please ignore this
+            email or contact support if you have concerns about your account
+            security.
           </Text>
 
           {(ipAddress || userAgent) && (

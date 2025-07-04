@@ -6,7 +6,6 @@ import {
   Heading,
   Html,
   Img,
-  Link,
   Preview,
   Section,
   Text,
@@ -62,8 +61,8 @@ export const VerificationEmail = ({
           <Text style={code}>{verificationUrl}</Text>
 
           <Text style={text}>
-            This link will expire in 24 hours. If you didn't create an account
-            with Civilyst, you can safely ignore this email.
+            This link will expire in 24 hours. If you didn&apos;t create an
+            account with Civilyst, you can safely ignore this email.
           </Text>
 
           <Text style={footer}>Civilyst - Your Voice in Civic Engagement</Text>
