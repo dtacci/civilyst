@@ -7,10 +7,8 @@ import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { cn } from '~/lib/utils';
 import { api } from '~/lib/trpc';
-import {
-  VerificationRequestList,
-  VerificationRequestStatus,
-} from './VerificationRequest';
+import { VerificationRequestList } from './VerificationRequest';
+import { VerificationRequestStatus } from '~/generated/prisma';
 import {
   Award,
   Clock,

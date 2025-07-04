@@ -319,25 +319,25 @@ export class AIServiceClient {
       const content = data.choices[0].message.content;
 
       // Parse the structured response
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = content.split('\n').filter((line: string) => line.trim());
       const shortSummary =
         lines
-          .find((line) => line.startsWith('SHORT:'))
+          .find((line: string) => line.startsWith('SHORT:'))
           ?.replace('SHORT:', '')
           .trim() || '';
       const fullSummary =
         lines
-          .find((line) => line.startsWith('FULL:'))
+          .find((line: string) => line.startsWith('FULL:'))
           ?.replace('FULL:', '')
           .trim() || '';
-      const keyPointsStart = lines.findIndex((line) =>
+      const keyPointsStart = lines.findIndex((line: string) =>
         line.startsWith('KEY POINTS:')
       );
       const keyPoints =
         keyPointsStart >= 0
           ? lines
               .slice(keyPointsStart + 1)
-              .map((point) => point.replace(/^[-*]\s*/, '').trim())
+              .map((point: string) => point.replace(/^[-*]\s*/, '').trim())
           : [];
 
       return { shortSummary, fullSummary, keyPoints };
@@ -503,9 +503,9 @@ export class AIServiceClient {
     language: string;
     confidence: number;
   }> {
-    return this.makeRequest(AIServiceType.GOOGLE, async () => {
+    return this.makeRequest(AIServiceType.GOOGLE_TRANSLATE, async () => {
       const response = await fetch(
-        `https://translation.googleapis.com/language/translate/v2/detect?key=${this.configs.get(AIServiceType.GOOGLE)!.apiKey}`,
+        `https://translation.googleapis.com/language/translate/v2/detect?key=${this.configs.get(AIServiceType.GOOGLE_TRANSLATE)!.apiKey}`,
         {
           method: 'POST',
           headers: {
@@ -620,11 +620,11 @@ SUGGESTIONS:
     mediaUrl: string,
     mediaType: 'image' | 'video'
   ): Promise<string> {
-    return this.makeRequest(AIServiceType.GOOGLE, async () => {
+    return this.makeRequest(AIServiceType.GOOGLE_VISION, async () => {
       if (mediaType === 'image') {
         // Use Google Cloud Vision API for image analysis
         const response = await fetch(
-          `https://vision.googleapis.com/v1/images:annotate?key=${this.configs.get(AIServiceType.GOOGLE)!.apiKey}`,
+          `https://vision.googleapis.com/v1/images:annotate?key=${this.configs.get(AIServiceType.GOOGLE_VISION)!.apiKey}`,
           {
             method: 'POST',
             headers: {

@@ -602,7 +602,7 @@ export function VerificationRequestList({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {requests.map((request) => (
+      {requests.map((request: VerificationRequest) => (
         <VerificationRequestCard
           key={request.id}
           request={request}

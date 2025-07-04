@@ -113,11 +113,13 @@ async function getWebGLFingerprint(): Promise<string> {
     canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) return 'not-available';
 
-  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  // Type assertion to WebGLRenderingContext
+  const webGLContext = gl as WebGLRenderingContext;
+  const debugInfo = webGLContext.getExtension('WEBGL_debug_renderer_info');
   if (!debugInfo) return 'debug-not-available';
 
-  const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-  const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+  const vendor = webGLContext.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+  const renderer = webGLContext.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
 
   return `${vendor}~${renderer}`;
 }
@@ -126,13 +128,13 @@ async function getWebGLFingerprint(): Promise<string> {
  * Generate audio fingerprint
  */
 async function getAudioFingerprint(): Promise<string> {
-  const AudioContext =
+  const AudioContextConstructor =
     window.AudioContext ||
-    (window as unknown as { webkitAudioContext: typeof AudioContext })
+    (window as unknown as { webkitAudioContext: typeof window.AudioContext })
       .webkitAudioContext;
-  if (!AudioContext) return 'not-available';
+  if (!AudioContextConstructor) return 'not-available';
 
-  const context = new AudioContext();
+  const context = new AudioContextConstructor();
   const oscillator = context.createOscillator();
   const analyser = context.createAnalyser();
   const gainNode = context.createGain();
