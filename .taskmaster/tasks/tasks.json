@@ -9,7 +9,7 @@
         "testStrategy": "1. Unit tests for pledge and escrow models with validation\n2. API endpoint tests with mock escrow service\n3. Integration tests for the complete pledge flow\n4. UI component tests for form validation and display\n5. Security testing for payment processing\n6. Performance testing with simulated high-volume pledges\n7. User acceptance testing with sample projects and pledges",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -17,7 +17,7 @@
             "description": "Set up the database schema for the investment infrastructure, including Pledge and EscrowTransaction models with proper relationships and indexes.",
             "dependencies": [],
             "details": "Create the Prisma schema definitions for Pledge and EscrowTransaction models as specified. Add appropriate indexes for query performance on userId, projectId, and status fields. Implement validation rules for amount ranges ($100-$5000). Generate and run migrations to update the database schema. Create type definitions and validation schemas using Zod for type safety across the application.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write unit tests for model validation rules. Create test fixtures for different pledge scenarios. Verify database constraints with integration tests against a test database."
           },
           {
@@ -26,7 +26,7 @@
             "description": "Implement the pledge-related tRPC router endpoints for creating, retrieving, and managing pledges.",
             "dependencies": [1],
             "details": "Create the pledge router with the specified endpoints: pledge.create, pledge.getByUser, pledge.getByProject, pledge.updateStatus, and pledge.refund. Implement proper authentication and authorization checks for each endpoint. Add input validation using Zod schemas. Handle error cases gracefully with appropriate error messages. Ensure proper transaction handling for database operations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write unit tests for each endpoint with various input scenarios. Test authentication and authorization logic. Verify error handling for edge cases like insufficient funds or invalid pledge amounts."
           },
           {
@@ -35,7 +35,7 @@
             "description": "Integrate with a third-party escrow service to handle secure fund management and implement the escrow tRPC router endpoints.",
             "dependencies": [1],
             "details": "Research and select an appropriate third-party escrow service API. Create an abstraction layer for the escrow service to handle API communication. Implement the escrow router endpoints: escrow.initiate, escrow.release, escrow.refund, and escrow.getStatus. Create webhook handlers for escrow service callbacks. Implement error handling and retry mechanisms for failed API calls. Set up proper logging for all escrow-related operations for audit purposes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create mock implementations of the escrow service for testing. Test the escrow router endpoints with various scenarios. Verify webhook handling with simulated callbacks. Test error handling and recovery mechanisms."
           },
           {
@@ -44,7 +44,7 @@
             "description": "Develop the frontend components needed for the investment system, including forms, progress tracking, and history displays.",
             "dependencies": [2, 3],
             "details": "Implement the PledgeForm component with validation for pledge amounts ($100-$5000). Create the FundingProgress component with visual representation of funding status. Develop the MilestoneTracker component to display project milestones and fund release status. Build the PledgeHistory component to show users' pledge history. Implement real-time updates using WebSockets or polling where appropriate. Ensure responsive design for all components across device sizes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write component tests using React Testing Library. Create Storybook stories for each component to visualize different states. Test form validation logic. Verify accessibility compliance with automated tools."
           },
           {
@@ -53,7 +53,7 @@
             "description": "Develop the system for milestone-based fund releases with verification processes and transparent tracking.",
             "dependencies": [2, 3, 4],
             "details": "Create a milestone verification workflow that allows project creators to submit milestone completion evidence. Implement an admin interface for reviewing and approving milestone completions. Develop the fund release mechanism that triggers escrow releases upon milestone approval. Create notification systems for all parties when milestones are submitted, verified, or rejected. Implement the real-time funding progress tracking system with WebSocket updates. Add detailed transaction history and audit logs for transparency.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create end-to-end tests for the complete milestone verification and fund release workflow. Test the notification system with various scenarios. Verify real-time updates work correctly across multiple clients. Test edge cases like partial milestone completion or disputed milestones."
           }
         ]
@@ -285,7 +285,7 @@
     ],
     "metadata": {
       "created": "2025-07-04T16:44:15.867Z",
-      "updated": "2025-07-04T16:53:49.044Z",
+      "updated": "2025-07-04T16:59:56.758Z",
       "description": "Tasks for master context"
     }
   }
