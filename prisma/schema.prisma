@@ -21,6 +21,12 @@ model User {
   bio                    String?
   location               String?
   
+  // Trust system additions
+  trustScore             Float    @default(0)
+  trustLevel             TrustLevel @default(BASIC)
+  isVerified             Boolean  @default(false)
+  verifiedAt             DateTime?
+  
   // Privacy settings
   isPublic               Boolean  @default(true)
   showStats              Boolean  @default(true)
@@ -42,6 +48,7 @@ model User {
   pushSubscriptions PushSubscription[]
   wonders           Wonder[]           // Wonders created by user
   wonderResponses   WonderResponse[]   // Wonder responses by user
+  trustSignals      TrustSignal[]      // Trust signals for user
 
   // Performance indexes for user queries
   @@index([createdAt])
@@ -49,6 +56,8 @@ model User {
   @@index([firstName, lastName])
   @@index([location])
   @@index([isPublic])
+  @@index([trustScore])
+  @@index([trustLevel])
   @@map("users")
 }
 
@@ -222,6 +231,7 @@ model Wonder {
   responses        WonderResponse[]
   patterns         WonderPattern[]
   campaign         Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  anonymousWonders AnonymousWonder[] // Anonymous wonders converted to this wonder
   
   // Performance indexes
   @@index([status, createdAt])
@@ -375,4 +385,75 @@ enum PatternStatus {
   STRONG
   ACTIONABLE
   CONVERTED
+}
+
+// Anonymous participation models
+model AnonymousWonder {
+  id              String   @id @default(cuid())
+  deviceId        String   // Hashed device fingerprint
+  content         String
+  voiceUrl        String?  // Optional voice recording URL
+  location        Json?    // GeoJSON point (optional for privacy)
+  category        WonderCategory @default(GENERAL)
+  timeContext     WonderTimeContext @default(ANYTIME)
+  createdAt       DateTime @default(now())
+  claimedBy       String?  // User ID if claimed
+  claimedAt       DateTime?
+  
+  // Trust signals for anonymous users
+  trustScore      Float    @default(0)
+  isVerified      Boolean  @default(false)
+  
+  // Conversion tracking
+  convertedToWonderId String?
+  convertedToWonder   Wonder? @relation(fields: [convertedToWonderId], references: [id])
+  
+  @@index([deviceId])
+  @@index([createdAt])
+  @@index([location])
+  @@index([claimedBy])
+}
+
+model TrustSignal {
+  id              String   @id @default(cuid())
+  userId          String?  // Null for anonymous users
+  deviceId        String?  // For anonymous tracking
+  signalType      TrustSignalType
+  signalValue     Float    // Normalized 0-1
+  metadata        Json?    // Additional context
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime? // Some signals may expire
+  
+  // Relations
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([deviceId])
+  @@index([signalType])
+  @@index([createdAt])
+}
+
+// Trust system enums
+enum TrustSignalType {
+  LOCATION_VERIFIED      // GPS matches stated location
+  RETURN_VISIT          // User returned to platform
+  CONTENT_QUALITY       // High-quality wonder/response
+  COMMUNITY_VALIDATION  // Upvotes, positive responses
+  PROFILE_COMPLETION    // Filled profile fields
+  EMAIL_VERIFIED        // Verified email address
+  PHONE_VERIFIED        // Verified phone number
+  ADDRESS_VERIFIED      // Verified physical address
+  SOCIAL_CONNECTED      // Connected social media
+  WONDER_CONVERTED      // Wonder became campaign
+  CAMPAIGN_SUCCESS      // Created successful campaign
+  MODERATION_FLAG       // Negative signal from moderation
+}
+
+
+// Trust level enum
+enum TrustLevel {
+  BASIC      // 0-25%: View and vote
+  VERIFIED   // 26-50%: Create campaigns, analytics
+  TRUSTED    // 51-75%: Moderation, priority support
+  LEADER     // 76-100%: Investment, B2B access
 }

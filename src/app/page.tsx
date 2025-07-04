@@ -1,12 +1,15 @@
 'use client';
 
 import { api } from '~/lib/trpc';
-import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
+import { SignUpButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { MobileNav } from '~/components/features/navigation/mobile-nav';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
+import { AnonymousWonderButton } from '~/components/anonymous/AnonymousWonderButton';
+import { TrustSignalDisplay } from '~/components/trust/TrustSignalDisplay';
+import { AnonymousWonderFeed } from '~/components/anonymous/AnonymousWonderFeed';
 import { useRouter } from 'next/navigation';
 import {
   Zap,
@@ -153,21 +156,13 @@ export default function Home() {
                   </>
                 ) : (
                   <>
+                    <AnonymousWonderButton variant="hero" />
                     <SignUpButton mode="modal">
-                      <Button size="lg" className="w-full sm:w-auto">
+                      <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                         <Mic className="h-5 w-5 mr-2" />
-                        Start Creating
+                        Sign Up for More
                       </Button>
                     </SignUpButton>
-                    <SignInButton mode="modal">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="w-full sm:w-auto"
-                      >
-                        Sign In
-                      </Button>
-                    </SignInButton>
                   </>
                 )}
               </div>
@@ -346,6 +341,12 @@ export default function Home() {
                   )}
                 </CardContent>
               </Card>
+            </section>
+
+            {/* Trust Building Section */}
+            <section>
+              <TrustSignalDisplay />
+              <AnonymousWonderFeed />
             </section>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   WonderCategory,
   WonderTimeContext,
   WonderStatus,
+  TrustSignalType,
 } from '~/generated/prisma';
 
 export const wondersRouter = createTRPCRouter({
@@ -343,5 +344,199 @@ export const wondersRouter = createTRPCRouter({
       });
 
       return patterns;
+    }),
+
+  // Create anonymous wonder without authentication
+  createAnonymous: publicProcedure
+    .input(
+      z.object({
+        deviceId: z.string().min(32).max(64),
+        content: z.string().min(10).max(500),
+        voiceUrl: z.string().url().optional(),
+        location: z
+          .object({
+            type: z.literal('Point'),
+            coordinates: z.tuple([z.number(), z.number()]),
+          })
+          .optional(),
+        category: z.nativeEnum(WonderCategory).default(WonderCategory.GENERAL),
+        timeContext: z.nativeEnum(WonderTimeContext).default(WonderTimeContext.ANYTIME),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Create anonymous wonder
+      const anonymousWonder = await db.anonymousWonder.create({
+        data: {
+          deviceId: input.deviceId,
+          content: input.content,
+          voiceUrl: input.voiceUrl,
+          location: input.location,
+          category: input.category,
+          timeContext: input.timeContext,
+          trustScore: 0, // Initial trust score
+          isVerified: false,
+        },
+      });
+
+      // Track initial trust signal for creation
+      await db.trustSignal.create({
+        data: {
+          deviceId: input.deviceId,
+          signalType: TrustSignalType.CONTENT_QUALITY,
+          signalValue: 0.1, // Base value for creating content
+          metadata: {
+            wonderId: anonymousWonder.id,
+            action: 'created_anonymous_wonder',
+          },
+        },
+      });
+
+      // Track location verification if provided
+      if (input.location) {
+        await db.trustSignal.create({
+          data: {
+            deviceId: input.deviceId,
+            signalType: TrustSignalType.LOCATION_VERIFIED,
+            signalValue: 0.2, // Value for providing location
+            metadata: {
+              wonderId: anonymousWonder.id,
+              coordinates: input.location.coordinates,
+            },
+          },
+        });
+      }
+
+      return anonymousWonder;
+    }),
+
+  // Get anonymous wonders for a device
+  getAnonymousWonders: publicProcedure
+    .input(
+      z.object({
+        deviceId: z.string().min(32).max(64),
+      })
+    )
+    .query(async ({ input }) => {
+      const wonders = await db.anonymousWonder.findMany({
+        where: {
+          deviceId: input.deviceId,
+          claimedBy: null, // Only unclaimed wonders
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      // Calculate total trust score for this device
+      const trustSignals = await db.trustSignal.findMany({
+        where: {
+          deviceId: input.deviceId,
+        },
+        select: {
+          signalValue: true,
+        },
+      });
+
+      const totalTrustScore = trustSignals.reduce(
+        (sum, signal) => sum + signal.signalValue,
+        0
+      );
+
+      return {
+        wonders,
+        trustScore: Math.min(totalTrustScore, 1), // Cap at 1.0
+      };
+    }),
+
+  // Claim anonymous wonders when user signs up
+  claimAnonymousWonders: loggedProcedure
+    .input(
+      z.object({
+        deviceId: z.string().min(32).max(64),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+
+      // Find all unclaimed wonders for this device
+      const anonymousWonders = await db.anonymousWonder.findMany({
+        where: {
+          deviceId: input.deviceId,
+          claimedBy: null,
+        },
+      });
+
+      if (anonymousWonders.length === 0) {
+        return { claimed: 0 };
+      }
+
+      // Ensure we have an internal user record
+      const internalUser = await db.user.upsert({
+        where: { id: ctx.userId },
+        update: {},
+        create: {
+          id: ctx.userId,
+          email: `${ctx.userId}@temp.local`,
+        },
+        select: { id: true },
+      });
+
+      // Convert anonymous wonders to real wonders
+      const createdWonders = await Promise.all(
+        anonymousWonders.map(async (anonWonder) => {
+          const wonder = await db.wonder.create({
+            data: {
+              question: anonWonder.content,
+              category: anonWonder.category,
+              timeContext: anonWonder.timeContext,
+              authorId: internalUser.id,
+              status: WonderStatus.ACTIVE,
+            },
+          });
+
+          // Update anonymous wonder with claim info
+          await db.anonymousWonder.update({
+            where: { id: anonWonder.id },
+            data: {
+              claimedBy: internalUser.id,
+              claimedAt: new Date(),
+              convertedToWonderId: wonder.id,
+            },
+          });
+
+          return wonder;
+        })
+      );
+
+      // Transfer trust signals to user
+      await db.trustSignal.updateMany({
+        where: {
+          deviceId: input.deviceId,
+          userId: null,
+        },
+        data: {
+          userId: internalUser.id,
+        },
+      });
+
+      // Create profile completion trust signal
+      await db.trustSignal.create({
+        data: {
+          userId: internalUser.id,
+          signalType: TrustSignalType.PROFILE_COMPLETION,
+          signalValue: 0.3,
+          metadata: {
+            action: 'claimed_anonymous_wonders',
+            count: createdWonders.length,
+          },
+        },
+      });
+
+      return {
+        claimed: createdWonders.length,
+        wonders: createdWonders,
+      };
     }),
 }); 
