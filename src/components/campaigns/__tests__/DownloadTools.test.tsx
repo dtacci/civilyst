@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@testing-library/react';
 import { DownloadTools } from '../DownloadTools';
 
 // Mock fetch globally
@@ -17,11 +23,11 @@ describe('DownloadTools', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cleanup();
-    
+
     // Mock URL.createObjectURL and related functions
     global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
     global.URL.revokeObjectURL = jest.fn();
-    
+
     // Mock document.createElement with simple implementation
     jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
       if (tagName === 'a') {
@@ -42,7 +48,7 @@ describe('DownloadTools', () => {
         },
       } as any;
     });
-    
+
     // Mock document.body methods
     jest.spyOn(document.body, 'appendChild').mockImplementation(jest.fn());
     jest.spyOn(document.body, 'removeChild').mockImplementation(jest.fn());
@@ -61,8 +67,12 @@ describe('DownloadTools', () => {
     it('should render QR code and PDF download buttons', () => {
       render(<DownloadTools {...defaultProps} variant="buttons" />);
 
-      expect(screen.getByRole('button', { name: /qr code/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /pdf report/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /qr code/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /pdf report/i })
+      ).toBeInTheDocument();
     });
 
     it('should download QR code when QR button is clicked', async () => {
@@ -121,7 +131,9 @@ describe('DownloadTools', () => {
       const qrButton = screen.getByRole('button', { name: /qr code/i });
       fireEvent.click(qrButton);
 
-      expect(screen.getByRole('button', { name: /downloading/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /downloading/i })
+      ).toBeInTheDocument();
 
       // Resolve the download
       resolveDownload({
@@ -130,12 +142,16 @@ describe('DownloadTools', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /qr code/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /qr code/i })
+        ).toBeInTheDocument();
       });
     });
 
     it('should handle download errors gracefully', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error('Download failed'));
 
       render(<DownloadTools {...defaultProps} variant="buttons" />);
@@ -144,11 +160,16 @@ describe('DownloadTools', () => {
       fireEvent.click(qrButton);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('QR download error:', expect.any(Error));
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'QR download error:',
+          expect.any(Error)
+        );
       });
 
       // Button should return to normal state
-      expect(screen.getByRole('button', { name: /qr code/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /qr code/i })
+      ).toBeInTheDocument();
 
       consoleSpy.mockRestore();
     });
@@ -159,7 +180,9 @@ describe('DownloadTools', () => {
         status: 500,
       } as Response);
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(<DownloadTools {...defaultProps} variant="buttons" />);
 
@@ -167,7 +190,10 @@ describe('DownloadTools', () => {
       fireEvent.click(qrButton);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('QR download error:', expect.any(Error));
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'QR download error:',
+          expect.any(Error)
+        );
       });
 
       consoleSpy.mockRestore();
@@ -178,16 +204,22 @@ describe('DownloadTools', () => {
     it('should render menu items with proper structure', () => {
       render(<DownloadTools {...defaultProps} variant="menu" />);
 
-      expect(screen.getByRole('button', { name: /download qr code/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /download report/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /download qr share pdf/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /download qr code/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /download report/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /download qr share pdf/i })
+      ).toBeInTheDocument();
     });
 
     it('should have ghost variant styling for menu items', () => {
       render(<DownloadTools {...defaultProps} variant="menu" />);
 
       const menuItems = screen.getAllByRole('button');
-      menuItems.forEach(item => {
+      menuItems.forEach((item) => {
         expect(item).toHaveClass('justify-start');
       });
     });
@@ -201,7 +233,9 @@ describe('DownloadTools', () => {
 
       render(<DownloadTools {...defaultProps} variant="menu" />);
 
-      const qrShareButton = screen.getByRole('button', { name: /download qr share pdf/i });
+      const qrShareButton = screen.getByRole('button', {
+        name: /download qr share pdf/i,
+      });
       fireEvent.click(qrShareButton);
 
       await waitFor(() => {
@@ -215,18 +249,18 @@ describe('DownloadTools', () => {
   describe('size prop', () => {
     it('should apply small size', () => {
       render(<DownloadTools {...defaultProps} size="sm" />);
-      
+
       const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button).toBeInTheDocument();
       });
     });
 
     it('should apply large size', () => {
       render(<DownloadTools {...defaultProps} size="lg" />);
-      
+
       const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button).toBeInTheDocument();
       });
     });
@@ -270,7 +304,9 @@ describe('DownloadTools', () => {
       fireEvent.click(qrButton);
 
       // QR button should be disabled during its download
-      expect(screen.getByRole('button', { name: /downloading/i })).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /downloading/i })
+      ).toBeDisabled();
       // PDF button should remain enabled
       expect(pdfButton).not.toBeDisabled();
 
@@ -280,7 +316,9 @@ describe('DownloadTools', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /qr code/i })).not.toBeDisabled();
+        expect(
+          screen.getByRole('button', { name: /qr code/i })
+        ).not.toBeDisabled();
       });
     });
   });
@@ -292,7 +330,9 @@ describe('DownloadTools', () => {
         blob: () => Promise.reject(new Error('Blob creation failed')),
       } as any);
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(<DownloadTools {...defaultProps} variant="buttons" />);
 
@@ -300,7 +340,10 @@ describe('DownloadTools', () => {
       fireEvent.click(qrButton);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('QR download error:', expect.any(Error));
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'QR download error:',
+          expect.any(Error)
+        );
       });
 
       consoleSpy.mockRestore();

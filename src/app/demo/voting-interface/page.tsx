@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { VotingInterface } from '~/components/ui/voting-interface';
+import { VotingInterface } from '~/components/features/voting/voting-interface';
 import { SwipeVotingCard } from '~/components/campaigns/SwipeVotingCard';
 import { CampaignCardData } from '~/components/campaigns/CampaignCard';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';

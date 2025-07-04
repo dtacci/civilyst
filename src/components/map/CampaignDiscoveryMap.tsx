@@ -7,7 +7,7 @@ import { CampaignCard } from '~/components/campaigns/CampaignCard';
 import { CampaignStatus } from '~/generated/prisma';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { VoiceInput } from '~/components/ui/voice-input';
+import { VoiceInput } from '~/components/features/voice/voice-input';
 import {
   Map,
   List,
@@ -18,7 +18,7 @@ import {
   Crosshair,
   ChevronDown,
   X,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 
@@ -44,7 +44,9 @@ export function CampaignDiscoveryMap({
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<CampaignStatus | 'ALL'>('ALL');
+  const [selectedStatus, setSelectedStatus] = useState<CampaignStatus | 'ALL'>(
+    'ALL'
+  );
   const [selectedRadius, setSelectedRadius] = useState<number>(10);
   const [showFilters, setShowFilters] = useState(false);
   const [showVoiceSearch, setShowVoiceSearch] = useState(false);
@@ -149,10 +151,11 @@ export function CampaignDiscoveryMap({
                 Discover Campaigns
               </h1>
               <p className="text-[--color-text-secondary] text-[--font-size-sm]">
-                {campaignsToDisplay.length} campaigns {userLocation ? 'near you' : 'available'}
+                {campaignsToDisplay.length} campaigns{' '}
+                {userLocation ? 'near you' : 'available'}
               </p>
             </div>
-            
+
             {/* Location Button */}
             <Button
               onClick={getCurrentLocation}
@@ -181,11 +184,11 @@ export function CampaignDiscoveryMap({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search campaigns..."
                   className={cn(
-                    "w-full pl-10 pr-10 py-3 rounded-[--border-radius-lg]",
-                    "border border-[--color-border] bg-[--color-surface]",
-                    "text-[--color-text-primary] placeholder:text-[--color-text-tertiary]",
-                    "focus:ring-2 focus:ring-[--color-border-focus] focus:border-transparent",
-                    "transition-all duration-[--duration-normal]"
+                    'w-full pl-10 pr-10 py-3 rounded-[--border-radius-lg]',
+                    'border border-[--color-border] bg-[--color-surface]',
+                    'text-[--color-text-primary] placeholder:text-[--color-text-tertiary]',
+                    'focus:ring-2 focus:ring-[--color-border-focus] focus:border-transparent',
+                    'transition-all duration-[--duration-normal]'
                   )}
                 />
                 {searchQuery && (
@@ -197,21 +200,21 @@ export function CampaignDiscoveryMap({
                   </button>
                 )}
               </div>
-              
+
               {/* Voice Search Button */}
               <Button
                 onClick={() => setShowVoiceSearch(!showVoiceSearch)}
-                variant={showVoiceSearch ? "default" : "outline"}
+                variant={showVoiceSearch ? 'default' : 'outline'}
                 size="icon"
                 className="flex-shrink-0"
               >
                 <Mic className="h-4 w-4" />
               </Button>
-              
+
               {/* Filters Button */}
               <Button
                 onClick={() => setShowFilters(!showFilters)}
-                variant={showFilters ? "default" : "outline"}
+                variant={showFilters ? 'default' : 'outline'}
                 size="icon"
                 className="flex-shrink-0"
               >
@@ -252,10 +255,11 @@ export function CampaignDiscoveryMap({
                       value={selectedCity}
                       onChange={(e) => setSelectedCity(e.target.value)}
                       className={cn(
-                        "w-full appearance-none px-3 py-2 pr-8 rounded-[--border-radius-md]",
-                        "border border-[--color-border] bg-[--color-surface]",
-                        "text-[--color-text-primary] focus:ring-2 focus:ring-[--color-border-focus]"
-                      )}>
+                        'w-full appearance-none px-3 py-2 pr-8 rounded-[--border-radius-md]',
+                        'border border-[--color-border] bg-[--color-surface]',
+                        'text-[--color-text-primary] focus:ring-2 focus:ring-[--color-border-focus]'
+                      )}
+                    >
                       <option value="">All Cities</option>
                       <option value="San Francisco">San Francisco</option>
                       <option value="Los Angeles">Los Angeles</option>
@@ -274,11 +278,21 @@ export function CampaignDiscoveryMap({
                     Status
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {(['ALL', 'ACTIVE', 'DRAFT', 'COMPLETED', 'CANCELLED'] as const).map((status) => (
+                    {(
+                      [
+                        'ALL',
+                        'ACTIVE',
+                        'DRAFT',
+                        'COMPLETED',
+                        'CANCELLED',
+                      ] as const
+                    ).map((status) => (
                       <Button
                         key={status}
                         onClick={() => setSelectedStatus(status)}
-                        variant={selectedStatus === status ? "default" : "outline"}
+                        variant={
+                          selectedStatus === status ? 'default' : 'outline'
+                        }
                         size="sm"
                         className="text-[--font-size-xs]"
                       >
@@ -301,7 +315,9 @@ export function CampaignDiscoveryMap({
                         max={50}
                         step={1}
                         value={selectedRadius}
-                        onChange={(e) => setSelectedRadius(Number(e.target.value))}
+                        onChange={(e) =>
+                          setSelectedRadius(Number(e.target.value))
+                        }
                         className="w-full h-2 bg-[--color-surface] rounded-[--border-radius-full] appearance-none cursor-pointer slider"
                       />
                     </div>
@@ -318,7 +334,7 @@ export function CampaignDiscoveryMap({
         <div className="flex gap-2">
           <Button
             onClick={() => setViewMode('map')}
-            variant={viewMode === 'map' ? "default" : "outline"}
+            variant={viewMode === 'map' ? 'default' : 'outline'}
             size="sm"
             className="flex-1"
           >
@@ -327,7 +343,7 @@ export function CampaignDiscoveryMap({
           </Button>
           <Button
             onClick={() => setViewMode('list')}
-            variant={viewMode === 'list' ? "default" : "outline"}
+            variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
             className="flex-1"
           >
@@ -343,7 +359,9 @@ export function CampaignDiscoveryMap({
           <Card className="p-8">
             <div className="flex flex-col items-center justify-center text-center">
               <Loader2 className="h-8 w-8 animate-spin text-[--color-primary] mb-4" />
-              <p className="text-[--color-text-secondary]">Discovering campaigns...</p>
+              <p className="text-[--color-text-secondary]">
+                Discovering campaigns...
+              </p>
             </div>
           </Card>
         ) : campaignsToDisplay.length === 0 ? (
@@ -354,7 +372,8 @@ export function CampaignDiscoveryMap({
                 No campaigns found
               </h3>
               <p className="text-[--color-text-secondary] mb-4">
-                Try adjusting your search filters or be the first to create a campaign in this area!
+                Try adjusting your search filters or be the first to create a
+                campaign in this area!
               </p>
               <Button onClick={handleClearSearch} variant="outline">
                 Clear Filters
@@ -374,7 +393,7 @@ export function CampaignDiscoveryMap({
                     onLocationSelect={handleMapClick}
                     markers={mapMarkers}
                   />
-                  
+
                   {/* Mobile Map Controls Overlay */}
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
                     <div className="bg-[--color-surface-elevated] backdrop-blur-md rounded-[--border-radius-lg] p-3 pointer-events-auto">
@@ -382,13 +401,20 @@ export function CampaignDiscoveryMap({
                         {campaignsToDisplay.length} campaigns
                       </p>
                       <p className="text-[--font-size-sm] font-medium text-[--color-text-primary]">
-                        {userLocation ? `Within ${selectedRadius}km` : 'All locations'}
+                        {userLocation
+                          ? `Within ${selectedRadius}km`
+                          : 'All locations'}
                       </p>
                     </div>
-                    
+
                     {userLocation && (
                       <Button
-                        onClick={() => setMapCenter({ latitude: userLocation.latitude, longitude: userLocation.longitude })}
+                        onClick={() =>
+                          setMapCenter({
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                          })
+                        }
                         size="icon"
                         className="pointer-events-auto shadow-[--shadow-elevated]"
                       >
@@ -403,9 +429,9 @@ export function CampaignDiscoveryMap({
             {viewMode === 'list' && (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {campaignsToDisplay.map((campaign) => (
-                  <CampaignCard 
-                    key={campaign.id} 
-                    campaign={campaign} 
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
                     compact={true}
                     showLocation={!userLocation} // Hide location if we already know user's location
                   />
