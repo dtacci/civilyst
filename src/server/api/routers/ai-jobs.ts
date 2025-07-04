@@ -19,9 +19,9 @@ export const aiJobsRouter = createTRPCRouter({
         where: {
           status: 'ACTIVE',
           OR: [
-            { summary: null },
+            { campaignSummary: null },
             {
-              summary: {
+              campaignSummary: {
                 lastGenerated: {
                   lt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Older than 24 hours
                 },
@@ -132,7 +132,14 @@ export const aiJobsRouter = createTRPCRouter({
       const recentComments = await db.comment.findMany({
         where: {
           createdAt: { gte: cutoffDate },
-          sentimentAnalysis: null,
+          NOT: {
+            id: {
+              in: (await db.sentimentAnalysis.findMany({
+                where: { contentType: 'comment' },
+                select: { contentId: true },
+              })).map(sa => sa.contentId),
+            },
+          },
         },
         take: input.limit,
         select: {
@@ -238,7 +245,14 @@ export const aiJobsRouter = createTRPCRouter({
       if (input.contentType === 'campaign' || input.contentType === 'all') {
         const campaigns = await db.campaign.findMany({
           where: {
-            moderation: null,
+            NOT: {
+              id: {
+                in: (await db.contentModeration.findMany({
+                  where: { contentType: 'campaign' },
+                  select: { contentId: true },
+                })).map(cm => cm.contentId),
+              },
+            },
           },
           take: input.limit,
           select: {
@@ -262,7 +276,14 @@ export const aiJobsRouter = createTRPCRouter({
         if (remainingLimit > 0) {
           const comments = await db.comment.findMany({
             where: {
-              moderation: null,
+              NOT: {
+                id: {
+                  in: (await db.contentModeration.findMany({
+                    where: { contentType: 'comment' },
+                    select: { contentId: true },
+                  })).map(cm => cm.contentId),
+                },
+              },
             },
             take: remainingLimit,
             select: {
