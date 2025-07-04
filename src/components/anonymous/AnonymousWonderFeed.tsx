@@ -80,43 +80,48 @@ export function AnonymousWonderFeed() {
         </div>
 
         <div className="space-y-3">
-          {anonymousData.wonders.map((wonder) => (
-            <div
-              key={wonder.id}
-              className="p-4 rounded-[--border-radius-md] bg-[--color-surface] border border-[--color-border]"
-            >
-              <p className="text-[--color-text-primary] mb-3">
-                {wonder.content}
-              </p>
+          {anonymousData.wonders.map((wonder) => {
+            // Extract city from metadata if available
+            const locationCity = (wonder.metadata as { locationCity?: string })?.locationCity;
+            
+            return (
+              <div
+                key={wonder.id}
+                className="p-4 rounded-[--border-radius-md] bg-[--color-surface] border border-[--color-border]"
+              >
+                <p className="text-[--color-text-primary] mb-3">
+                  {wonder.content}
+                </p>
 
-              <div className="flex flex-wrap gap-4 text-[--font-size-sm] text-[--color-text-secondary]">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {formatDistanceToNow(new Date(wonder.createdAt), {
-                    addSuffix: true,
-                  })}
+                <div className="flex flex-wrap gap-4 text-[--font-size-sm] text-[--color-text-secondary]">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {formatDistanceToNow(new Date(wonder.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </div>
+
+                  {wonder.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {locationCity || 'Location shared'}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1">
+                    <Tag className="h-4 w-4" />
+                    {wonder.category.toLowerCase()}
+                  </div>
                 </div>
 
-                {wonder.location && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    Location shared
+                {wonder.claimedBy && (
+                  <div className="mt-3 text-[--font-size-sm] text-[--color-accent]">
+                    ✓ Claimed
                   </div>
                 )}
-
-                <div className="flex items-center gap-1">
-                  <Tag className="h-4 w-4" />
-                  {wonder.category.toLowerCase()}
-                </div>
               </div>
-
-              {wonder.claimedBy && (
-                <div className="mt-3 text-[--font-size-sm] text-[--color-accent]">
-                  ✓ Claimed
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {!isSignedIn && (
