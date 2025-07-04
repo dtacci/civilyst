@@ -96,7 +96,7 @@ export const CampaignUpdateEmail = ({
           </Section>
 
           <Text style={footer}>
-            You're receiving this because you're following this campaign.
+            You&apos;re receiving this because you&apos;re following this campaign.
             <Link href={unsubscribeUrl} style={link}>
               {' '}
               Unsubscribe
@@ -156,7 +156,7 @@ const campaignBox = {
   padding: '20px',
 };
 
-const campaignTitle = {
+const campaignTitleStyle = {
   color: '#111827',
   fontSize: '18px',
   fontWeight: '600',

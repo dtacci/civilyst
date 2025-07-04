@@ -1,11 +1,11 @@
 import { createMockContext } from '~/server/api/test-utils';
 import { emailRouter } from '../email';
-import { EmailService } from '@/lib/email/service';
+import { EmailService } from '~/lib/email/service';
 import { db } from '~/server/db';
 import { TRPCError } from '@trpc/server';
 
 // Mock dependencies
-jest.mock('@/lib/email/service');
+jest.mock('~/lib/email/service');
 jest.mock('~/server/db', () => ({
   db: {
     userPreferences: {
