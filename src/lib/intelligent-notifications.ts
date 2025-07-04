@@ -709,7 +709,7 @@ class IntelligentNotificationService {
   ): Promise<void> {
     // This would integrate with a push notification service like Firebase, OneSignal, etc.
     // For now, we'll use the existing local notification system
-    console.log(`Sending push notification to ${subscription.endpoint}:`);
+    console.warn(`Sending push notification to ${subscription.endpoint}:`);
   }
 
   private async getRelevantUsers(): Promise<string[]> {

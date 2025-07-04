@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { api } from '~/trpc/react';
+import { api } from '~/lib/trpc';
 import {
   Card,
   CardContent,

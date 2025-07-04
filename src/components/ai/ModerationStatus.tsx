@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { api } from '~/trpc/react';
+import { api } from '~/lib/trpc';
 import { Badge } from '~/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import {

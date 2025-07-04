@@ -17,8 +17,11 @@ import {
   ModerationQueue,
   ContentSuggestions,
   ModerationStatus,
+  CampaignSummary,
+  SentimentAnalysis,
+  SentimentTrends,
 } from '~/components/ai';
-import { Brain, Shield, Users } from 'lucide-react';
+import { Brain, Shield, Users, FileText, BarChart3 } from 'lucide-react';
 
 export default function AIDemo() {
   const [campaignId] = useState('demo-campaign-1');
@@ -53,7 +56,7 @@ export default function AIDemo() {
         </div>
 
         <Tabs defaultValue="suggestions" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
             <TabsTrigger
               value="suggestions"
               className="flex items-center gap-2"
@@ -64,6 +67,14 @@ export default function AIDemo() {
             <TabsTrigger value="moderation" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Content Moderation
+            </TabsTrigger>
+            <TabsTrigger value="summary" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Summarization
+            </TabsTrigger>
+            <TabsTrigger value="sentiment" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Sentiment Analysis
             </TabsTrigger>
             <TabsTrigger value="admin" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -176,6 +187,124 @@ export default function AIDemo() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="summary" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaign Content</CardTitle>
+                  <CardDescription>
+                    Sample campaign for AI summarization
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-2">{title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {description}
+                    </p>
+                  </div>
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-2">
+                      Sample Comments
+                    </h4>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        &quot;This is a fantastic idea! I would love to help
+                        organize volunteers.&quot;
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        &quot;We should include native plants to support local
+                        wildlife.&quot;
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        &quot;I have experience in landscape design and would be
+                        happy to contribute.&quot;
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <CampaignSummary
+                campaignId={campaignId}
+                campaignTitle={title}
+                includeComments={true}
+                includeVotes={true}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sentiment" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content for Analysis</CardTitle>
+                    <CardDescription>
+                      Analyze sentiment in different types of content
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="p-4 border rounded-lg">
+                        <h3 className="font-medium mb-2">Positive Comment</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          &quot;This project is amazing! I&apos;m so excited to
+                          participate and help make our community better. Great
+                          initiative!&quot;
+                        </p>
+                        <SentimentAnalysis
+                          contentId="positive-comment-1"
+                          contentType="comment"
+                          content="This project is amazing! I'm so excited to participate and help make our community better. Great initiative!"
+                          autoAnalyze={true}
+                        />
+                      </div>
+
+                      <div className="p-4 border rounded-lg">
+                        <h3 className="font-medium mb-2">Mixed Sentiment</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          &quot;I like the idea but I&apos;m concerned about the
+                          maintenance costs. Who will take care of it
+                          long-term?&quot;
+                        </p>
+                        <SentimentAnalysis
+                          contentId="mixed-comment-1"
+                          contentType="comment"
+                          content="I like the idea but I'm concerned about the maintenance costs. Who will take care of it long-term?"
+                          autoAnalyze={true}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-6">
+                <SentimentTrends campaignId={campaignId} />
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Campaign Sentiment</CardTitle>
+                    <CardDescription>
+                      Overall sentiment analysis for the campaign
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SentimentAnalysis
+                      contentId={campaignId}
+                      contentType="campaign"
+                      content={`${title}\n\n${description}`}
+                      autoAnalyze={true}
+                      showEmotions={true}
+                      showKeywords={true}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="admin" className="space-y-6">

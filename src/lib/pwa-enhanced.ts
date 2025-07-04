@@ -66,7 +66,7 @@ class PWAEnhancedManager {
 
       // Log PWA initialization in development only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[PWA] Enhanced Manager initialized successfully');
+        console.warn('[PWA] Enhanced Manager initialized successfully');
       }
     } catch (error) {
       console.error('Failed to initialize PWA Enhanced Manager:', error);
@@ -291,25 +291,25 @@ class PWAEnhancedManager {
     // Implementation would use your tRPC client
     // Log sync operations in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[PWA] Syncing campaign create:', data);
+      console.warn('[PWA] Syncing campaign create:', data);
     }
   }
 
   private async syncCampaignUpdate(data: unknown): Promise<void> {
     if (process.env.NODE_ENV === 'development') {
-      console.info('[PWA] Syncing campaign update:', data);
+      console.warn('[PWA] Syncing campaign update:', data);
     }
   }
 
   private async syncVote(data: unknown): Promise<void> {
     if (process.env.NODE_ENV === 'development') {
-      console.info('[PWA] Syncing vote:', data);
+      console.warn('[PWA] Syncing vote:', data);
     }
   }
 
   private async syncComment(data: unknown): Promise<void> {
     if (process.env.NODE_ENV === 'development') {
-      console.info('[PWA] Syncing comment:', data);
+      console.warn('[PWA] Syncing comment:', data);
     }
   }
 
@@ -325,10 +325,10 @@ class PWAEnhancedManager {
         const registration = await navigator.serviceWorker.ready;
         if (registration.sync) {
           await registration.sync.register('background-sync');
-          console.log('Background sync registered');
+          console.warn('Background sync registered');
         }
       } catch (error) {
-        console.log('Background sync registration failed:', error);
+        console.warn('Background sync registration failed:', error);
       }
     }
   }
@@ -340,7 +340,7 @@ class PWAEnhancedManager {
     if ('storage' in navigator && 'persist' in navigator.storage) {
       try {
         const persistent = await navigator.storage.persist();
-        console.log('Persistent storage:', persistent);
+        console.warn('Persistent storage:', persistent);
       } catch (error) {
         console.error('Failed to request persistent storage:', error);
       }
@@ -417,7 +417,7 @@ class PWAEnhancedManager {
       try {
         const cache = await caches.open('critical-resources-v1');
         await cache.addAll(urls);
-        console.log('Critical resources pre-cached');
+        console.warn('Critical resources pre-cached');
       } catch (error) {
         console.error('Failed to pre-cache critical resources:', error);
       }

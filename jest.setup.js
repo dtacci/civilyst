@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom';
 
+// Mock superjson to avoid ESM issues
+jest.mock('superjson', () => ({
+  default: {
+    serialize: (data) => ({ json: data, meta: {} }),
+    deserialize: (data) => data.json || data,
+  },
+}));
+
 // Mock Next.js environment variables
 process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
 

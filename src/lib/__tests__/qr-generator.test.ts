@@ -22,6 +22,11 @@ describe('QR Generator Utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
+
+    // Set default mock behavior
+    QRCode.toDataURL.mockResolvedValue('data:image/png;base64,mockDefault');
+    QRCode.toBuffer.mockResolvedValue(Buffer.from('mock-buffer'));
+    QRCode.toString.mockResolvedValue('<svg>mock-svg</svg>');
   });
 
   describe('generateCampaignQR', () => {
@@ -68,7 +73,7 @@ describe('QR Generator Utilities', () => {
           margin: 4,
           errorCorrectionLevel: 'M',
           type: 'image/png',
-          quality: 0.92,
+          rendererOpts: { quality: 0.92 },
         })
       );
     });
@@ -92,7 +97,7 @@ describe('QR Generator Utilities', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      QRCode.toDataURL.mockRejectedValue(new Error('QR generation failed'));
+      QRCode.toDataURL.mockRejectedValueOnce(new Error('QR generation failed'));
 
       await expect(generateCampaignQR(mockCampaignData)).rejects.toThrow(
         'Failed to generate QR code: QR generation failed'

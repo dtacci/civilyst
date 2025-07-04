@@ -1,12 +1,22 @@
-import type { inferAsyncReturnType } from '@trpc/server';
-import type { createTRPCContext } from './trpc';
-
-type Context = inferAsyncReturnType<typeof createTRPCContext>;
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { Context } from './trpc';
 
 export function createMockContext(overrides?: Partial<Context>): Context {
+  const mockReq = {
+    headers: {},
+    socket: { remoteAddress: '127.0.0.1' },
+  } as unknown as NextApiRequest;
+
+  const mockRes = {
+    setHeader: jest.fn(),
+  } as unknown as NextApiResponse;
+
   return {
-    db: {} as any,
-    auth: null,
+    req: mockReq,
+    res: mockRes,
+    ip: '127.0.0.1',
+    userId: undefined,
+    isAdmin: false,
     ...overrides,
-  } as Context;
+  };
 }

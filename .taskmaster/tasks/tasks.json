@@ -182,7 +182,7 @@
             "description": "Build the AI-powered suggestion engine and content moderation pipeline to help users create better campaigns and ensure content quality.",
             "dependencies": [1],
             "details": "1. Implement the suggestion engine that analyzes user data (location, interests) to generate relevant content recommendations.\n2. Create API endpoints for fetching and applying content suggestions.\n3. Develop the content moderation pipeline that automatically checks campaign content for quality and safety issues.\n4. Build a moderation queue system for handling flagged content that requires manual review.\n5. Create UI components for displaying suggestions during campaign creation and for administrators to manage moderation.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Test suggestion algorithms with diverse user profiles. Create test cases for moderation with known problematic content. Implement end-to-end tests for the suggestion and moderation workflows."
           },
           {
@@ -191,7 +191,7 @@
             "description": "Create systems for automatically generating campaign summaries and analyzing sentiment in campaign content and comments.",
             "dependencies": [1],
             "details": "1. Develop extractive and abstractive summarization algorithms using OpenAI's API.\n2. Implement scheduled jobs to generate and update summaries for active campaigns.\n3. Create sentiment analysis pipeline using Azure Cognitive Services to analyze campaign comments and updates.\n4. Build visualization components for displaying sentiment trends and emotional analysis.\n5. Implement notification system for alerting campaign owners about significant sentiment changes.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Test summarization with various campaign types and lengths. Validate sentiment analysis with pre-classified positive, negative, and neutral content. Test visualization components with mock sentiment data."
           },
           {
@@ -285,7 +285,7 @@
     ],
     "metadata": {
       "created": "2025-07-04T16:44:15.867Z",
-      "updated": "2025-07-04T17:25:32.844Z",
+      "updated": "2025-07-04T17:36:52.498Z",
       "description": "Tasks for master context"
     }
   }

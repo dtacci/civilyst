@@ -108,7 +108,7 @@ export class RealtimeSubscriptionManager {
     // Monitor connection status through channel events
     // Note: Supabase v2 doesn't expose direct connection handlers
     // We'll track connection through successful channel subscriptions
-    console.log('🔄 Real-time connection manager initialized');
+    console.warn('🔄 Real-time connection manager initialized');
   }
 
   private notifyConnectionListeners(connected: boolean) {
@@ -148,7 +148,7 @@ export class RealtimeSubscriptionManager {
 
     // Mock subscription for development
     setTimeout(() => {
-      console.log(`✅ Mock subscription to campaign ${campaignId} updates`);
+      console.warn(`✅ Mock subscription to campaign ${campaignId} updates`);
       this.isConnected = true;
       this.notifyConnectionListeners(true);
     }, 100);
@@ -173,7 +173,7 @@ export class RealtimeSubscriptionManager {
 
     // Mock subscription for development
     const channel = this.client.channel(`campaign_comments_${campaignId}`);
-    console.log(`✅ Mock subscription to campaign ${campaignId} comments`);
+    console.warn(`✅ Mock subscription to campaign ${campaignId} comments`);
 
     this.subscriptions.set(subscriptionKey, channel);
     return subscriptionKey;
@@ -195,7 +195,7 @@ export class RealtimeSubscriptionManager {
 
     // Mock subscription for development
     const channel = this.client.channel(`campaign_votes_${campaignId}`);
-    console.log(`✅ Mock subscription to campaign ${campaignId} votes`);
+    console.warn(`✅ Mock subscription to campaign ${campaignId} votes`);
 
     this.subscriptions.set(subscriptionKey, channel);
     return subscriptionKey;
@@ -216,7 +216,7 @@ export class RealtimeSubscriptionManager {
 
     // Mock subscription for development
     const channel = this.client.channel('active_campaigns_updates');
-    console.log('✅ Mock subscription to active campaigns updates');
+    console.warn('✅ Mock subscription to active campaigns updates');
 
     this.subscriptions.set(subscriptionKey, channel);
     return subscriptionKey;
@@ -230,7 +230,7 @@ export class RealtimeSubscriptionManager {
     if (channel) {
       this.client?.removeChannel(channel);
       this.subscriptions.delete(subscriptionKey);
-      console.log(`🔄 Unsubscribed from ${subscriptionKey}`);
+      console.warn(`🔄 Unsubscribed from ${subscriptionKey}`);
     }
   }
 
@@ -240,7 +240,7 @@ export class RealtimeSubscriptionManager {
   unsubscribeAll() {
     this.subscriptions.forEach((channel, key) => {
       this.client?.removeChannel(channel);
-      console.log(`🔄 Unsubscribed from ${key}`);
+      console.warn(`🔄 Unsubscribed from ${key}`);
     });
     this.subscriptions.clear();
   }
@@ -262,7 +262,7 @@ export class RealtimeSubscriptionManager {
   reconnect() {
     if (this.client) {
       // For Supabase v2, we'll unsubscribe and resubscribe channels
-      console.log('🔄 Reconnecting real-time subscriptions...');
+      console.warn('🔄 Reconnecting real-time subscriptions...');
       this.unsubscribeAll();
       // Note: Individual components will need to re-subscribe
     }

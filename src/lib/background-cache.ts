@@ -48,7 +48,7 @@ export class BackgroundCacheManager {
     }, 60 * 1000);
     this.intervals.add(staleCheckInterval);
 
-    console.log('[BackgroundCache] Started background cache management');
+    console.warn('[BackgroundCache] Started background cache management');
   }
 
   /**
@@ -64,7 +64,7 @@ export class BackgroundCacheManager {
     });
     this.intervals.clear();
 
-    console.log('[BackgroundCache] Stopped background cache management');
+    console.warn('[BackgroundCache] Stopped background cache management');
   }
 
   /**
@@ -87,7 +87,7 @@ export class BackgroundCacheManager {
     });
 
     if (cleanedCount > 0) {
-      console.log(
+      console.warn(
         `[BackgroundCache] Cleaned up ${cleanedCount} expired cache entries`
       );
     }
@@ -117,7 +117,7 @@ export class BackgroundCacheManager {
     });
 
     if (refreshedCount > 0) {
-      console.log(
+      console.warn(
         `[BackgroundCache] Background refreshed ${refreshedCount} stale queries`
       );
     }
@@ -206,7 +206,7 @@ export class BackgroundCacheManager {
       }
     });
 
-    console.log(
+    console.warn(
       `[BackgroundCache] Force refreshed ${refreshedCount} active queries`
     );
   }
@@ -245,7 +245,7 @@ export class BackgroundCacheManager {
         staleTime: cacheConfig.staleTime.campaigns,
       });
 
-      console.log('[BackgroundCache] Prefetched common data');
+      console.warn('[BackgroundCache] Prefetched common data');
     } catch (error) {
       console.warn('[BackgroundCache] Prefetch failed:', error);
     }

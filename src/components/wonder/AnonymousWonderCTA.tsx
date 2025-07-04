@@ -58,7 +58,7 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
         coordinates: [position.coords.longitude, position.coords.latitude],
       };
     } catch (error) {
-      console.log('Location not available:', error);
+      console.warn('Location not available:', error);
     }
 
     createAnonymousWonder.mutate({

@@ -16,7 +16,7 @@ export function CreateCampaignPage() {
     title: string;
     status: string;
   }) => {
-    console.log('Campaign created successfully:', campaign);
+    console.warn('Campaign created successfully:', campaign);
 
     // Show success message (you could add toast notification here)
     alert(

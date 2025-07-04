@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { api } from '~/trpc/react';
+import { api } from '~/lib/trpc';
 import {
   Card,
   CardContent,
@@ -20,7 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '~/components/ui/alert';
-import { toast } from '~/hooks/use-toast';
+import { useToast } from '~/hooks/use-toast';
 
 interface ContentSuggestionsProps {
   campaignId: string;
@@ -31,6 +31,7 @@ export function ContentSuggestions({
   campaignId,
   onApplySuggestion,
 }: ContentSuggestionsProps) {
+  const { toast } = useToast();
   const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(
     new Set()
   );

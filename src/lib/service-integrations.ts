@@ -133,29 +133,29 @@ export function logServiceStatus(): void {
 
   // Log service integration status in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info('\n🔌 Service Integration Status:');
-    console.info(
+    console.warn('\n🔌 Service Integration Status:');
+    console.warn(
       `   Configured: ${status.summary.configured}/${status.summary.total}`
     );
 
     if (status.summary.required > 0) {
-      console.info(
+      console.warn(
         `   Required: ${status.summary.requiredConfigured}/${status.summary.required} ✅`
       );
     }
 
-    console.info('\n📋 Service Details:');
+    console.warn('\n📋 Service Details:');
     status.services.forEach((service) => {
       const icon = service.configured ? '✅' : '⚠️';
       const reqText = service.required ? ' (REQUIRED)' : '';
-      console.info(`   ${icon} ${service.name}${reqText}`);
+      console.warn(`   ${icon} ${service.name}${reqText}`);
 
       if (!service.configured && service.fallback) {
-        console.info(`      → Fallback: ${service.fallback}`);
+        console.warn(`      → Fallback: ${service.fallback}`);
       }
     });
 
-    console.info('\n');
+    console.warn('\n');
   }
 }
 
@@ -264,11 +264,11 @@ export function initializeServiceMonitoring(): void {
     if (instructions.length > 0) {
       // Log setup instructions in development only
       if (process.env.NODE_ENV === 'development') {
-        console.info('🛠️  Setup Instructions:');
+        console.warn('🛠️  Setup Instructions:');
         instructions.forEach((instruction) => {
-          console.info(`   ${instruction}`);
+          console.warn(`   ${instruction}`);
         });
-        console.info('\n');
+        console.warn('\n');
       }
     }
   }

@@ -143,7 +143,7 @@ export function CommentsSection({
               className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
               onClick={() => {
                 // TODO: Implement load more functionality
-                console.log('Load more comments');
+                console.warn('Load more comments');
               }}
             >
               Load more comments

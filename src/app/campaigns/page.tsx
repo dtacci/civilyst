@@ -13,28 +13,28 @@ export default function CampaignsPage() {
   // Mobile-first action handlers
   const handleVoiceCapture = () => {
     // TODO: Implement voice-to-campaign creation
-    console.log(
+    console.warn(
       'Voice capture initiated - Future: Voice-powered campaign creation'
     );
   };
 
   const handlePhotoCapture = () => {
     // TODO: Implement AI photo-to-campaign generation
-    console.log(
+    console.warn(
       'Photo capture initiated - Future: AI vision for campaign content'
     );
   };
 
   const handleLocationCapture = () => {
     // TODO: Implement location-based campaign creation
-    console.log(
+    console.warn(
       'Location capture initiated - Future: Location-aware campaign creation'
     );
   };
 
   const handleAIAssist = () => {
     // TODO: Implement AI-powered campaign suggestions
-    console.log(
+    console.warn(
       'AI assist initiated - Future: AI-powered campaign optimization'
     );
   };
@@ -45,19 +45,19 @@ export default function CampaignsPage() {
 
   const handleFeedback = () => {
     // TODO: Implement feedback system
-    console.log(
+    console.warn(
       'Feedback initiated - Future: User feedback and improvement suggestions'
     );
   };
 
   const handleVoiceSearch = (query: string) => {
     // TODO: Implement voice search for campaigns
-    console.log('Voice search:', query);
+    console.warn('Voice search:', query);
   };
 
   const handleSearch = (query: string) => {
     // TODO: Implement campaign search
-    console.log('Search:', query);
+    console.warn('Search:', query);
   };
 
   return (

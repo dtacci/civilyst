@@ -139,7 +139,7 @@ export function SocialShare({
         setShareCount((prev) => prev + 1);
       } catch (err) {
         // User cancelled or error occurred
-        console.log('Share cancelled or failed:', err);
+        console.warn('Share cancelled or failed:', err);
       }
     }
   }, [data, enhancedUrl, onShare]);

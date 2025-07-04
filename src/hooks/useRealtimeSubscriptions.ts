@@ -21,7 +21,7 @@ export function useCampaignRealtimeUpdates(campaignId: string | null) {
   const onUpdate = useCallback(
     (payload: RealtimeEvent<CampaignRealtimePayload>) => {
       setLastUpdate(payload);
-      console.log('Campaign update received:', payload);
+      console.warn('Campaign update received:', payload);
     },
     []
   );
@@ -83,7 +83,7 @@ export function useCampaignCommentsRealtime(campaignId: string | null) {
         setCommentCount((prev) => Math.max(0, prev - 1));
       }
 
-      console.log('Comment update received:', payload);
+      console.warn('Comment update received:', payload);
     },
     []
   );
@@ -167,7 +167,7 @@ export function useCampaignVotesRealtime(campaignId: string | null) {
       return newCounts;
     });
 
-    console.log('Vote update received:', payload);
+    console.warn('Vote update received:', payload);
   }, []);
 
   useEffect(() => {
@@ -222,7 +222,7 @@ export function useActiveCampaignsRealtime() {
     (payload: RealtimeEvent<CampaignRealtimePayload>) => {
       setCampaignUpdate(payload);
       setUpdateCount((prev) => prev + 1);
-      console.log('Active campaigns update received:', payload);
+      console.warn('Active campaigns update received:', payload);
     },
     []
   );
