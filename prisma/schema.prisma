@@ -101,6 +101,10 @@ model Campaign {
   fromWonder  Wonder[]        // If originated from a wonder
   fromPattern WonderPattern[] // If originated from a pattern
   project     Project?        // Associated funding project
+  
+  // AI Content Enhancement relationships
+  contentSuggestions ContentSuggestion[]
+  campaignSummary    CampaignSummary?
 
   // Performance-optimized indexes for common queries
   @@index([status, createdAt])
@@ -720,4 +724,105 @@ enum MilestoneStatus {
   VERIFIED
   COMPLETED
   DISPUTED
+}
+
+// ==========================================
+// AI Content Enhancement Models
+// ==========================================
+
+model ContentSuggestion {
+  id              String   @id @default(cuid())
+  campaignId      String
+  suggestionType  String   // location-based, interest-based, trending
+  content         String
+  confidence      Float    // 0-1 score
+  isApplied       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  // Relationships
+  campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  @@index([campaignId])
+  @@index([suggestionType])
+  @@index([confidence])
+  @@index([isApplied])
+  @@map("content_suggestions")
+}
+
+model ContentModeration {
+  id               String   @id @default(cuid())
+  contentId        String
+  contentType      String   // campaign, comment, update
+  safetyScore      Float    // 0-1 score
+  qualityScore     Float    // 0-1 score
+  flaggedIssues    String[] // inappropriate, spam, misleading
+  moderationStatus String   // approved, rejected, manual_review
+  createdAt        DateTime @default(now())
+  
+  @@index([contentId, contentType])
+  @@index([moderationStatus])
+  @@index([safetyScore])
+  @@index([qualityScore])
+  @@map("content_moderation")
+}
+
+model CampaignSummary {
+  id              String   @id @default(cuid())
+  campaignId      String   @unique
+  shortSummary    String   // 1-2 sentence summary
+  fullSummary     String   // paragraph summary
+  keyPoints       String[] // bullet points
+  lastGenerated   DateTime @default(now())
+  
+  // Relationships
+  campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  @@index([campaignId])
+  @@index([lastGenerated])
+  @@map("campaign_summaries")
+}
+
+model SentimentAnalysis {
+  id              String   @id @default(cuid())
+  contentId       String
+  contentType     String   // campaign, comment, update
+  sentiment       Float    // -1 to 1 score
+  emotions        Json     // {joy: 0.8, anger: 0.1, etc}
+  keywords        String[]
+  createdAt       DateTime @default(now())
+  
+  @@index([contentId, contentType])
+  @@index([sentiment])
+  @@index([createdAt])
+  @@map("sentiment_analysis")
+}
+
+model Translation {
+  id              String   @id @default(cuid())
+  contentId       String
+  contentType     String   // campaign, comment, update
+  sourceLanguage  String
+  targetLanguage  String
+  originalText    String
+  translatedText  String
+  createdAt       DateTime @default(now())
+  
+  @@index([contentId, contentType])
+  @@index([sourceLanguage, targetLanguage])
+  @@index([createdAt])
+  @@map("translations")
+}
+
+model AccessibilityEnhancement {
+  id               String   @id @default(cuid())
+  contentId        String
+  contentType      String   // image, video, audio
+  altText          String?
+  audioDescription String?
+  transcription    String?
+  createdAt        DateTime @default(now())
+  
+  @@index([contentId, contentType])
+  @@index([createdAt])
+  @@map("accessibility_enhancements")
 }
