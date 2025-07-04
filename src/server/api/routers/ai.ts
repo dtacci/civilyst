@@ -436,4 +436,114 @@ export const aiRouter = createTRPCRouter({
         latestSentiment: sentiments?.sentiment,
       };
     }),
+
+  // Get moderation queue for admin review
+  getModerationQueue: protectedProcedure
+    .input(
+      z.object({
+        status: z.enum(['manual_review', 'rejected', 'all']).optional(),
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const whereClause =
+        input.status && input.status !== 'all'
+          ? { moderationStatus: input.status }
+          : {};
+
+      const items = await ctx.db.contentModeration.findMany({
+        where: whereClause,
+        take: input.limit,
+        skip: input.offset,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          // We'll need to add a way to get the actual content
+          // This would require conditional joins based on contentType
+        },
+      });
+
+      // For each item, fetch the actual content based on contentType
+      const itemsWithContent = await Promise.all(
+        items.map(async (item) => {
+          let content = null;
+
+          if (item.contentType === 'campaign') {
+            const campaign = await ctx.db.campaign.findUnique({
+              where: { id: item.contentId },
+              select: {
+                title: true,
+                description: true,
+                creator: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            });
+            if (campaign) {
+              content = {
+                title: campaign.title,
+                description: campaign.description,
+                author:
+                  `${campaign.creator.firstName || ''} ${campaign.creator.lastName || ''}`.trim() ||
+                  'Anonymous',
+              };
+            }
+          } else if (item.contentType === 'comment') {
+            const comment = await ctx.db.comment.findUnique({
+              where: { id: item.contentId },
+              select: {
+                content: true,
+                author: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            });
+            if (comment) {
+              content = {
+                description: comment.content,
+                author:
+                  `${comment.author.firstName || ''} ${comment.author.lastName || ''}`.trim() ||
+                  'Anonymous',
+              };
+            }
+          }
+
+          return {
+            ...item,
+            content,
+          };
+        })
+      );
+
+      const total = await ctx.db.contentModeration.count({
+        where: whereClause,
+      });
+
+      return {
+        items: itemsWithContent,
+        total,
+        hasMore: input.offset + input.limit < total,
+      };
+    }),
+
+  // Update moderation status
+  updateModerationStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        status: z.enum(['approved', 'rejected', 'manual_review']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.contentModeration.update({
+        where: { id: input.id },
+        data: { moderationStatus: input.status },
+      });
+    }),
 });

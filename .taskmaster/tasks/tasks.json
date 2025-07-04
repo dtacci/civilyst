@@ -182,7 +182,7 @@
             "description": "Build the AI-powered suggestion engine and content moderation pipeline to help users create better campaigns and ensure content quality.",
             "dependencies": [1],
             "details": "1. Implement the suggestion engine that analyzes user data (location, interests) to generate relevant content recommendations.\n2. Create API endpoints for fetching and applying content suggestions.\n3. Develop the content moderation pipeline that automatically checks campaign content for quality and safety issues.\n4. Build a moderation queue system for handling flagged content that requires manual review.\n5. Create UI components for displaying suggestions during campaign creation and for administrators to manage moderation.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Test suggestion algorithms with diverse user profiles. Create test cases for moderation with known problematic content. Implement end-to-end tests for the suggestion and moderation workflows."
           },
           {
@@ -285,7 +285,7 @@
     ],
     "metadata": {
       "created": "2025-07-04T16:44:15.867Z",
-      "updated": "2025-07-04T17:21:24.639Z",
+      "updated": "2025-07-04T17:25:32.844Z",
       "description": "Tasks for master context"
     }
   }
