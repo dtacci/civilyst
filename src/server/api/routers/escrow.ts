@@ -440,7 +440,7 @@ export const escrowRouter = createTRPCRouter({
       });
 
       const totalByStatus = escrowSummary.reduce(
-        (acc, curr) => ({
+        (acc: Record<string, { amount: number; count: number }>, curr) => ({
           ...acc,
           [curr.status]: {
             amount: curr._sum.amount || 0,
