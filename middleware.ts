@@ -1,4 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { checkOnboardingStatus } from '~/lib/auth/onboarding-check';
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
@@ -9,10 +11,32 @@ const isProtectedRoute = createRouteMatcher([
   '/campaigns/.*/delete(.*)',
 ]);
 
+// const isPublicRoute = createRouteMatcher([
+//   '/',
+//   '/sign-in(.*)',
+//   '/sign-up(.*)',
+//   '/onboarding(.*)',
+//   '/api/webhooks(.*)',
+// ]);
+
 export default clerkMiddleware(async (auth, req) => {
+  const authData = await auth();
+
   // 1. Protect specific app routes (see matcher above)
   if (isProtectedRoute(req)) {
     await auth.protect();
+
+    // Check onboarding status for authenticated users
+    if (authData.userId && !req.nextUrl.pathname.startsWith('/onboarding')) {
+      const hasCompletedOnboarding = await checkOnboardingStatus(
+        authData.userId
+      );
+
+      if (!hasCompletedOnboarding) {
+        return NextResponse.redirect(new URL('/onboarding', req.url));
+      }
+    }
+
     return;
   }
 

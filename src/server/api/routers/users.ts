@@ -218,6 +218,9 @@ export const usersRouter = createTRPCRouter({
         showLocation: true,
         defaultLocation: true,
         autoDetectLocation: true,
+        hasCompletedOnboarding: true,
+        onboardingCompletedAt: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -239,6 +242,9 @@ export const usersRouter = createTRPCRouter({
       showLocation: dbUser?.showLocation ?? false,
       defaultLocation: dbUser?.defaultLocation,
       autoDetectLocation: dbUser?.autoDetectLocation ?? false,
+      hasCompletedOnboarding: dbUser?.hasCompletedOnboarding ?? false,
+      onboardingCompletedAt: dbUser?.onboardingCompletedAt,
+      metadata: dbUser?.metadata as Record<string, unknown> | null,
       createdAt: dbUser?.createdAt,
       updatedAt: dbUser?.updatedAt,
     };
@@ -252,6 +258,16 @@ export const usersRouter = createTRPCRouter({
         lastName: z.string().min(1).optional(),
         bio: z.string().max(500).optional(),
         location: z.string().max(100).optional(),
+        metadata: z
+          .object({
+            interests: z.array(z.string()).optional(),
+            goals: z.array(z.string()).optional(),
+            profileType: z
+              .enum(['citizen', 'organizer', 'official'])
+              .optional(),
+            onboardingVersion: z.string().optional(),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -276,6 +292,7 @@ export const usersRouter = createTRPCRouter({
           lastName: input.lastName,
           bio: input.bio,
           location: input.location,
+          metadata: input.metadata,
         },
         select: {
           id: true,
@@ -377,4 +394,28 @@ export const usersRouter = createTRPCRouter({
 
       return updatedUser;
     }),
+
+  // Complete onboarding
+  completeOnboarding: rateLimitedProcedure.mutation(async ({ ctx }) => {
+    if (!ctx.userId) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    const userId = ctx.userId;
+
+    // Mark onboarding as complete
+    const updatedUser = await db.user.update({
+      where: { id: userId },
+      data: {
+        hasCompletedOnboarding: true,
+        onboardingCompletedAt: new Date(),
+      },
+      select: {
+        id: true,
+        hasCompletedOnboarding: true,
+        onboardingCompletedAt: true,
+      },
+    });
+
+    return updatedUser;
+  }),
 });
