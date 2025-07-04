@@ -70,7 +70,7 @@ export const CampaignUpdateEmail = ({
           <Text style={text}>Hi {firstName},</Text>
 
           <Section style={campaignBox}>
-            <Text style={campaignTitle}>{campaignTitle}</Text>
+            <Text style={campaignTitleStyle}>{campaignTitle}</Text>
             {(voteCount !== undefined || supportPercentage !== undefined) && (
               <Section style={statsContainer}>
                 {voteCount !== undefined && (
@@ -96,7 +96,8 @@ export const CampaignUpdateEmail = ({
           </Section>
 
           <Text style={footer}>
-            You&apos;re receiving this because you&apos;re following this campaign.
+            You&apos;re receiving this because you&apos;re following this
+            campaign.
             <Link href={unsubscribeUrl} style={link}>
               {' '}
               Unsubscribe
