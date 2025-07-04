@@ -262,14 +262,14 @@ describe('AnonymousWonderButton', () => {
       
       // Default should be GENERAL
       const generalButton = screen.getByRole('button', { name: /general/i });
-      expect(generalButton).toHaveClass('bg-'); // Should have selected styling
+      expect(generalButton).toHaveClass('bg-[--color-primary]'); // Should have selected styling
       
       // Select BUSINESS category
       const businessButton = screen.getByRole('button', { name: /business/i });
       await user.click(businessButton);
       
       // BUSINESS should now be selected
-      expect(businessButton).toHaveClass('bg-'); // Should have selected styling
+      expect(businessButton).toHaveClass('bg-[--color-primary]'); // Should have selected styling
     });
 
     it('should display all available categories', async () => {
@@ -301,14 +301,14 @@ describe('AnonymousWonderButton', () => {
       
       // Default should be ANYTIME
       const anytimeButton = screen.getByRole('button', { name: /anytime/i });
-      expect(anytimeButton).toHaveClass('bg-'); // Should have selected styling
+      expect(anytimeButton).toHaveClass('bg-[--color-primary]'); // Should have selected styling
       
       // Select MORNING context
       const morningButton = screen.getByRole('button', { name: /morning/i });
       await user.click(morningButton);
       
       // MORNING should now be selected
-      expect(morningButton).toHaveClass('bg-'); // Should have selected styling
+      expect(morningButton).toHaveClass('bg-[--color-primary]'); // Should have selected styling
     });
   });
 
@@ -468,7 +468,7 @@ describe('AnonymousWonderButton', () => {
       await user.click(submitButton);
       
       expect(toast.error).toHaveBeenCalledWith(
-        'Please share your wonder. Use text or voice to describe what you\'re wondering about.'
+        "Please share your wonder. Use text or voice to describe what you're wondering about."
       );
     });
 

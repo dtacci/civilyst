@@ -394,7 +394,7 @@ export const wondersRouter = createTRPCRouter({
         // Build location metadata
         locationMetadata = {
           locationCity: gpsLocation?.city || 'Unknown',
-          locationAddress: gpsLocation?.formattedAddress,
+          locationAddress: gpsLocation?.formattedAddress || null,
           ipLocation: ipLocation ? {
             city: ipLocation.city,
             lat: ipLocation.lat,
@@ -403,7 +403,7 @@ export const wondersRouter = createTRPCRouter({
           locationConsistent: isLocationConsistent,
           trustBonusReason: trustBonusInfo.reason,
           communityBoundary: trustBonusInfo.reason !== 'Location verified',
-        };
+        } as Record<string, any>;
       }
 
       // Create anonymous wonder
@@ -417,7 +417,7 @@ export const wondersRouter = createTRPCRouter({
           timeContext: input.timeContext,
           trustScore: 0, // Initial trust score
           isVerified: false,
-          metadata: Object.keys(locationMetadata).length > 0 ? locationMetadata : undefined,
+          metadata: Object.keys(locationMetadata).length > 0 ? locationMetadata as any : undefined,
         },
       });
 
@@ -445,9 +445,9 @@ export const wondersRouter = createTRPCRouter({
             metadata: {
               wonderId: anonymousWonder.id,
               coordinates: input.location.coordinates,
-              locationCity: locationMetadata.locationCity,
-              locationConsistent: locationMetadata.locationConsistent,
-              trustBonusReason: locationMetadata.trustBonusReason,
+              locationCity: locationMetadata.locationCity as string,
+              locationConsistent: locationMetadata.locationConsistent as boolean,
+              trustBonusReason: locationMetadata.trustBonusReason as string,
             },
           },
         });
