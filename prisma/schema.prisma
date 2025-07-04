@@ -17,6 +17,21 @@ model User {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   
+  // Profile information
+  bio                    String?
+  location               String?
+  
+  // Privacy settings
+  isPublic               Boolean  @default(true)
+  showStats              Boolean  @default(true)
+  showActivity           Boolean  @default(true)
+  allowMentions          Boolean  @default(true)
+  showLocation           Boolean  @default(false)
+  
+  // Location settings
+  defaultLocation        String?
+  autoDetectLocation     Boolean  @default(false)
+  
   // Notification preferences stored as JSON
   notificationPreferences String?  // JSON string of NotificationPreferencesData
   
@@ -32,6 +47,8 @@ model User {
   @@index([createdAt])
   @@index([updatedAt])
   @@index([firstName, lastName])
+  @@index([location])
+  @@index([isPublic])
   @@map("users")
 }
 
