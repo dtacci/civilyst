@@ -11,6 +11,9 @@ import { pledgeRouter } from '~/server/api/routers/pledge';
 import { escrowRouter } from '~/server/api/routers/escrow';
 import { aiRouter } from '~/server/api/routers/ai';
 import { aiJobsRouter } from '~/server/api/routers/ai-jobs';
+import { skillRouter } from '~/server/api/routers/skill';
+import { userSkillRouter } from '~/server/api/routers/userSkill';
+import { skillMatchingRouter } from '~/server/api/routers/skillMatching';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const appRouter = createTRPCRouter({
@@ -26,6 +29,9 @@ export const appRouter = createTRPCRouter({
   escrow: escrowRouter,
   ai: aiRouter,
   aiJobs: aiJobsRouter,
+  skills: skillRouter,
+  userSkills: userSkillRouter,
+  skillMatching: skillMatchingRouter,
 });
 
 export type AppRouter = typeof appRouter;

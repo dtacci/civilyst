@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -217,9 +218,11 @@ export function PledgeHistory({
                 <div className="flex items-start gap-4">
                   {/* Project Image */}
                   {pledge.project.campaign?.imageUrl && (
-                    <img
+                    <Image
                       src={pledge.project.campaign.imageUrl}
                       alt={pledge.project.title}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
                   )}

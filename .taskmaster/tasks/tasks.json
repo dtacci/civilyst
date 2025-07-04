@@ -83,7 +83,7 @@
             "description": "Implement all required tRPC routers and procedures for skill management, user skills, and skill matching functionality.",
             "dependencies": [1],
             "details": "Create the Skill router with list and getByCategory procedures. Implement the UserSkill router with add, remove, update, and verify procedures. Develop the SkillMatching router with findMatches, recommendProjects, and recommendUsers procedures. Each procedure should include proper input validation, error handling, and authorization checks.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Create integration tests for each API endpoint to verify correct behavior with valid and invalid inputs. Test authorization rules to ensure proper access control."
           },
           {
@@ -92,7 +92,7 @@
             "description": "Develop the required UI components for skill selection, display, and matching as specified in the requirements.",
             "dependencies": [2],
             "details": "Build a SkillSelector component with multi-select and autocomplete functionality. Create a SkillBadge component to visually represent skills with proficiency levels. Implement an AvailabilityCalendar component for tracking user availability. Design a MatchCard component to display potential skill matches with contact options. Develop a TeamBuilder interface for forming project teams based on skills.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Write component tests using React Testing Library to verify rendering and interaction behavior. Create Storybook stories for each component to document usage patterns."
           },
           {
@@ -331,7 +331,7 @@
     ],
     "metadata": {
       "created": "2025-07-04T16:44:15.867Z",
-      "updated": "2025-07-04T18:06:31.237Z",
+      "updated": "2025-07-04T21:31:40.018Z",
       "description": "Tasks for master context"
     }
   }
