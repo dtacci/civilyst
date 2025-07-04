@@ -6,11 +6,11 @@ import { api } from '~/lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsSection } from '~/components/comments';
 import { useCampaignOperations } from '~/hooks/use-campaign-operations';
-import { VotingInterface } from '~/components/ui/voting-interface';
-import { MobileNav } from '~/components/ui/mobile-nav';
+import { VotingInterface } from '~/components/features/voting/voting-interface';
+import { MobileNav } from '~/components/features/navigation/mobile-nav';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { SocialShare } from '~/components/ui/social-share';
+import { SocialShare } from '~/components/features/sharing/social-share';
 import {
   ArrowLeft,
   MapPin,

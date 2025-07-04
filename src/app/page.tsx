@@ -5,7 +5,7 @@ import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import { MobileNav } from '~/components/ui/mobile-nav';
+import { MobileNav } from '~/components/features/navigation/mobile-nav';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
 import { useRouter } from 'next/navigation';
 import {

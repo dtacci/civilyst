@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { MapPin, User, ThumbsUp, MessageCircle } from 'lucide-react';
 import { CampaignStatus } from '~/generated/prisma';
 import { Card, CardContent } from '~/components/ui/card';
-import { SocialShare } from '~/components/ui/social-share';
+import { SocialShare } from '~/components/features/sharing/social-share';
 import { cn } from '~/lib/utils';
 
 export interface CampaignCardData {

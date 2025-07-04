@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Mic, MicOff, VolumeX } from 'lucide-react';
-import { Button } from './button';
+import { Button } from '../../ui/button';
 import { cn } from '~/lib/utils';
 
 interface VoiceInputProps {

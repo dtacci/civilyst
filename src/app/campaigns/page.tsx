@@ -2,9 +2,9 @@
 
 import { CampaignDiscoveryMap } from '~/components/map/CampaignDiscoveryMap';
 import { AsyncBoundary } from '~/components/error';
-import { MobileNav } from '~/components/ui/mobile-nav';
+import { MobileNav } from '~/components/features/navigation/mobile-nav';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
-import { FloatingShareFab } from '~/components/ui/floating-share-fab';
+import { FloatingShareFab } from '~/components/features/sharing/floating-share-fab';
 import { useRouter } from 'next/navigation';
 
 export default function CampaignsPage() {
