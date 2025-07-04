@@ -12,7 +12,15 @@ import {
   Calendar,
   FileCheck,
 } from 'lucide-react';
-import type { MilestoneStatus } from '@prisma/client';
+// import type { MilestoneStatus } from '@prisma/client';
+type MilestoneStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'DELAYED'
+  | 'VERIFIED'
+  | 'SUBMITTED'
+  | 'DISPUTED';
 
 interface Milestone {
   id: string;

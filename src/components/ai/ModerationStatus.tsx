@@ -110,7 +110,7 @@ export function ModerationStatus({
         <Badge variant={getStatusBadgeVariant()}>
           {moderation.moderationStatus
             .replace('_', ' ')
-            .replace(/\b\w/g, (l) => l.toUpperCase())}
+            .replace(/\b\w/g, (l: string) => l.toUpperCase())}
         </Badge>
       </div>
 
@@ -122,13 +122,15 @@ export function ModerationStatus({
             <AlertDescription>
               <p className="mb-2">The following issues were detected:</p>
               <ul className="list-disc list-inside space-y-1">
-                {moderation.flaggedIssues.map((issue, index) => (
-                  <li key={index} className="text-sm">
-                    {issue
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </li>
-                ))}
+                {moderation.flaggedIssues.map(
+                  (issue: string, index: number) => (
+                    <li key={index} className="text-sm">
+                      {issue
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    </li>
+                  )
+                )}
               </ul>
             </AlertDescription>
           </Alert>

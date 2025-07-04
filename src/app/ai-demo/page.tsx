@@ -21,7 +21,17 @@ import {
   SentimentAnalysis,
   SentimentTrends,
 } from '~/components/ai';
-import { Brain, Shield, Users, FileText, BarChart3 } from 'lucide-react';
+import { Translation } from '~/components/ai/Translation';
+import { AccessibilityDashboard } from '~/components/ai/AccessibilityDashboard';
+import {
+  Brain,
+  Shield,
+  Users,
+  FileText,
+  BarChart3,
+  Languages,
+  Eye,
+} from 'lucide-react';
 
 export default function AIDemo() {
   const [campaignId] = useState('demo-campaign-1');
@@ -56,7 +66,7 @@ export default function AIDemo() {
         </div>
 
         <Tabs defaultValue="suggestions" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
+          <TabsList className="grid w-full grid-cols-7 max-w-6xl">
             <TabsTrigger
               value="suggestions"
               className="flex items-center gap-2"
@@ -66,15 +76,29 @@ export default function AIDemo() {
             </TabsTrigger>
             <TabsTrigger value="moderation" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Content Moderation
+              Moderation
             </TabsTrigger>
             <TabsTrigger value="summary" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Summarization
+              Summary
             </TabsTrigger>
             <TabsTrigger value="sentiment" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Sentiment Analysis
+              Sentiment
+            </TabsTrigger>
+            <TabsTrigger
+              value="translation"
+              className="flex items-center gap-2"
+            >
+              <Languages className="h-4 w-4" />
+              Translation
+            </TabsTrigger>
+            <TabsTrigger
+              value="accessibility"
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Accessibility
             </TabsTrigger>
             <TabsTrigger value="admin" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -304,6 +328,95 @@ export default function AIDemo() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="translation" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content to Translate</CardTitle>
+                  <CardDescription>
+                    Demonstrate AI-powered translation for accessibility
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-2">{title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {description}
+                    </p>
+                  </div>
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-2">Sample Comment</h4>
+                    <p className="text-sm text-muted-foreground">
+                      &quot;This is exactly what our community needs! I would
+                      love to volunteer my time to help maintain the
+                      garden.&quot;
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Translation
+                contentId={campaignId}
+                contentType="campaign"
+                content={`${title}\n\n${description}`}
+                sourceLanguage="en"
+              />
+            </div>
+
+            <div className="mt-8">
+              <h2 className="text-2xl font-semibold mb-4">
+                Comment Translation Example
+              </h2>
+              <Translation
+                contentId="demo-comment-1"
+                contentType="comment"
+                content="This is exactly what our community needs! I would love to volunteer my time to help maintain the garden."
+                sourceLanguage="en"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="accessibility" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaign Accessibility</CardTitle>
+                  <CardDescription>
+                    AI-powered accessibility analysis and improvements
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-2">Current Campaign</h3>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <h4 className="font-medium">{title}</h4>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">
+                      Accessibility Considerations
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Reading level and language clarity</li>
+                      <li>• Visual contrast and color usage</li>
+                      <li>• Alternative text for images</li>
+                      <li>• Screen reader compatibility</li>
+                      <li>• Inclusive language usage</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <AccessibilityDashboard
+                campaignId={campaignId}
+                campaignTitle={title}
+              />
             </div>
           </TabsContent>
 

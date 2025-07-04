@@ -68,6 +68,7 @@
     "react-hook-form": "^7.59.0",
     "react-leaflet": "^5.0.0",
     "react-map-gl": "^8.0.4",
+    "recharts": "^3.0.2",
     "resend": "^4.6.0",
     "superjson": "^2.2.2",
     "svix": "^1.68.0",

@@ -246,7 +246,7 @@ export function SentimentAnalysis({
               Key Themes
             </h4>
             <div className="flex flex-wrap gap-2">
-              {sentimentData.keywords.map((keyword, index) => (
+              {sentimentData.keywords.map((keyword: string, index: number) => (
                 <Badge key={index} variant="secondary" className="text-xs">
                   {keyword}
                 </Badge>

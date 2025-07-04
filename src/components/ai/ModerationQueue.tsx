@@ -129,7 +129,13 @@ export function ModerationQueue({ limit = 20 }: ModerationQueueProps) {
   }
 
   // Mock data for UI demonstration
-  const mockItems: ModerationItem[] = (moderationItems as any)?.items || [
+  const mockItems: ModerationItem[] = (
+    moderationItems as {
+      items?: ModerationItem[];
+      total?: number;
+      hasMore?: boolean;
+    }
+  )?.items || [
     {
       id: '1',
       contentId: 'campaign-1',

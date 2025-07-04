@@ -546,4 +546,106 @@ export const aiRouter = createTRPCRouter({
         data: { moderationStatus: input.status },
       });
     }),
+
+  // Detect language of content
+  detectLanguage: protectedProcedure
+    .input(
+      z.object({
+        content: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const detection = await aiClient.detectLanguage(input.content);
+      return detection;
+    }),
+
+  // Get accessibility enhancements for content
+  getAccessibilityEnhancements: protectedProcedure
+    .input(
+      z.object({
+        contentId: z.string(),
+        contentType: z.enum(['campaign', 'comment', 'update', 'image']),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.accessibilityEnhancement.findMany({
+        where: {
+          contentId: input.contentId,
+          contentType: input.contentType,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    }),
+
+  // Calculate accessibility score for campaign
+  calculateAccessibilityScore: protectedProcedure
+    .input(
+      z.object({
+        campaignId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Get campaign data
+      const campaign = await ctx.db.campaign.findUnique({
+        where: { id: input.campaignId },
+        select: {
+          title: true,
+          description: true,
+          images: true,
+        },
+      });
+
+      if (!campaign) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Campaign not found',
+        });
+      }
+
+      // Calculate accessibility score using AI
+      const score = await aiClient.calculateAccessibilityScore({
+        text: `${campaign.title}\n\n${campaign.description}`,
+        hasImages: campaign.images && campaign.images.length > 0,
+        imageCount: campaign.images ? campaign.images.length : 0,
+      });
+
+      // Save accessibility enhancement record
+      const enhancement = await ctx.db.accessibilityEnhancement.create({
+        data: {
+          contentId: input.campaignId,
+          contentType: 'campaign',
+          accessibilityScore: score.score,
+          suggestions: score.suggestions,
+        },
+      });
+
+      return enhancement;
+    }),
+
+  // Generate audio description for media
+  generateAudioDescription: protectedProcedure
+    .input(
+      z.object({
+        contentId: z.string(),
+        mediaUrl: z.string(),
+        mediaType: z.enum(['image', 'video']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const description = await aiClient.generateAudioDescription(
+        input.mediaUrl,
+        input.mediaType
+      );
+
+      // Save accessibility enhancement
+      const enhancement = await ctx.db.accessibilityEnhancement.create({
+        data: {
+          contentId: input.contentId,
+          contentType: input.mediaType,
+          audioDescription: description,
+        },
+      });
+
+      return enhancement;
+    }),
 });

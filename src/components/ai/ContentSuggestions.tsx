@@ -191,40 +191,52 @@ export function ContentSuggestions({
 
         {suggestions && suggestions.length > 0 ? (
           <div className="space-y-3">
-            {suggestions.map((suggestion: any) => (
-              <div
-                key={suggestion.id}
-                className="p-4 border rounded-lg space-y-3 bg-muted/50"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    {getSuggestionIcon(suggestion.suggestionType)}
-                    <Badge variant="secondary">
-                      {getSuggestionTypeLabel(suggestion.suggestionType)}
-                    </Badge>
-                    <Badge variant="outline">
-                      {Math.round(suggestion.confidence * 100)}% confidence
-                    </Badge>
+            {suggestions.map(
+              (suggestion: {
+                id: string;
+                suggestionType: string;
+                content: string;
+                confidence: number;
+                createdAt: Date;
+                isApplied: boolean;
+              }) => (
+                <div
+                  key={suggestion.id}
+                  className="p-4 border rounded-lg space-y-3 bg-muted/50"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      {getSuggestionIcon(suggestion.suggestionType)}
+                      <Badge variant="secondary">
+                        {getSuggestionTypeLabel(suggestion.suggestionType)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {Math.round(suggestion.confidence * 100)}% confidence
+                      </Badge>
+                    </div>
+                    {suggestion.isApplied ||
+                    appliedSuggestions.has(suggestion.id) ? (
+                      <Badge variant="default">Applied</Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          handleApplySuggestion(
+                            suggestion.id,
+                            suggestion.content
+                          )
+                        }
+                        disabled={applySuggestionMutation.isPending}
+                      >
+                        Apply
+                      </Button>
+                    )}
                   </div>
-                  {suggestion.isApplied ||
-                  appliedSuggestions.has(suggestion.id) ? (
-                    <Badge variant="default">Applied</Badge>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        handleApplySuggestion(suggestion.id, suggestion.content)
-                      }
-                      disabled={applySuggestionMutation.isPending}
-                    >
-                      Apply
-                    </Button>
-                  )}
+                  <p className="text-sm">{suggestion.content}</p>
                 </div>
-                <p className="text-sm">{suggestion.content}</p>
-              </div>
-            ))}
+              )
+            )}
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
