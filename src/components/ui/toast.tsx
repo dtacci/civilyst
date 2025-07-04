@@ -137,14 +137,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const toastApi = {
       toast: (props: ToastProps) => addToast(props),
-      error: (props: Omit<ToastProps, 'variant'>) =>
-        addToast({ ...props, variant: 'destructive' }),
-      success: (props: Omit<ToastProps, 'variant'>) =>
-        addToast({ ...props, variant: 'success' }),
-      info: (props: Omit<ToastProps, 'variant'>) =>
-        addToast({ ...props, variant: 'info' }),
-      warning: (props: Omit<ToastProps, 'variant'>) =>
-        addToast({ ...props, variant: 'warning' }),
+      error: (message: string | ToastProps) => {
+        const props =
+          typeof message === 'string' ? { title: message } : message;
+        return addToast({ ...props, variant: 'destructive' });
+      },
+      success: (message: string | ToastProps) => {
+        const props =
+          typeof message === 'string' ? { title: message } : message;
+        return addToast({ ...props, variant: 'success' });
+      },
+      info: (message: string | ToastProps) => {
+        const props =
+          typeof message === 'string' ? { title: message } : message;
+        return addToast({ ...props, variant: 'info' });
+      },
+      warning: (message: string | ToastProps) => {
+        const props =
+          typeof message === 'string' ? { title: message } : message;
+        return addToast({ ...props, variant: 'warning' });
+      },
       dismiss: dismissToast,
       dismissAll,
     };

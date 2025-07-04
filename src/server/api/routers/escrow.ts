@@ -6,7 +6,7 @@ import {
   protectedProcedure,
 } from '~/server/api/trpc';
 import { db } from '~/server/db';
-import { EscrowStatus } from '@prisma/client';
+import { EscrowStatus } from '~/generated/prisma';
 
 // TODO: Replace with actual escrow service integration
 // This is a mock implementation for development

@@ -14,6 +14,7 @@ import { aiJobsRouter } from '~/server/api/routers/ai-jobs';
 import { skillRouter } from '~/server/api/routers/skill';
 import { userSkillRouter } from '~/server/api/routers/userSkill';
 import { skillMatchingRouter } from '~/server/api/routers/skillMatching';
+import { verificationRouter } from '~/server/api/routers/verification';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const appRouter = createTRPCRouter({
@@ -32,6 +33,7 @@ export const appRouter = createTRPCRouter({
   skills: skillRouter,
   userSkills: userSkillRouter,
   skillMatching: skillMatchingRouter,
+  verification: verificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

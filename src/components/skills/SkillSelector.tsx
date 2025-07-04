@@ -58,12 +58,23 @@ export function SkillSelector({
 
     const alreadySelectedIds = new Set(selectedSkills.map((s) => s.id));
     let results = searchResults.filter(
-      (skill) => !alreadySelectedIds.has(skill.id)
+      (skill: {
+        id: string;
+        name: string;
+        category: string;
+        description?: string;
+      }) => !alreadySelectedIds.has(skill.id)
     );
 
     if (selectedCategory) {
-      results = results.filter((skill) =>
-        skill.category.toLowerCase().includes(selectedCategory.toLowerCase())
+      results = results.filter(
+        (skill: {
+          id: string;
+          name: string;
+          category: string;
+          description?: string;
+        }) =>
+          skill.category.toLowerCase().includes(selectedCategory.toLowerCase())
       );
     }
 
@@ -148,7 +159,7 @@ export function SkillSelector({
                   >
                     All
                   </Button>
-                  {categories.map((category) => (
+                  {categories.map((category: string) => (
                     <Button
                       key={category}
                       variant="outline"
@@ -179,25 +190,39 @@ export function SkillSelector({
                     No skills found
                   </div>
                 ) : (
-                  filteredResults.map((skill) => (
-                    <div
-                      key={skill.id}
-                      onClick={() => handleSkillSelect(skill)}
-                      className="flex items-center justify-between p-2 hover:bg-[--color-surface-hover] cursor-pointer rounded-[--border-radius-sm]"
-                    >
-                      <div>
-                        <div className="font-medium text-[--color-text-primary]">
-                          {skill.name}
+                  filteredResults.map(
+                    (skill: {
+                      id: string;
+                      name: string;
+                      category: string;
+                      description?: string;
+                    }) => (
+                      <div
+                        key={skill.id}
+                        onClick={() =>
+                          handleSkillSelect({
+                            id: skill.id,
+                            name: skill.name,
+                            category: skill.category,
+                            description: skill.description,
+                          })
+                        }
+                        className="flex items-center justify-between p-2 hover:bg-[--color-surface-hover] cursor-pointer rounded-[--border-radius-sm]"
+                      >
+                        <div>
+                          <div className="font-medium text-[--color-text-primary]">
+                            {skill.name}
+                          </div>
+                          <div className="text-xs text-[--color-text-secondary]">
+                            {skill.category}
+                          </div>
                         </div>
-                        <div className="text-xs text-[--color-text-secondary]">
-                          {skill.category}
-                        </div>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Add
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        Add
-                      </Button>
-                    </div>
-                  ))
+                    )
+                  )
                 )}
               </div>
             )}

@@ -7,7 +7,7 @@ import {
   rateLimitedProcedure,
 } from '~/server/api/trpc';
 import { db } from '~/server/db';
-import { ProjectStatus } from '@prisma/client';
+import { ProjectStatus } from '~/generated/prisma';
 
 // Input validation schemas
 const createProjectSchema = z.object({
