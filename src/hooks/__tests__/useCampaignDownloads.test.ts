@@ -9,25 +9,25 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 describe('useCampaignDownloads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock URL.createObjectURL and related functions
     global.URL.createObjectURL = jest.fn(() => 'mock-object-url');
     global.URL.revokeObjectURL = jest.fn();
-    
+
     // Mock DOM manipulation for downloads
     const mockLink = {
       href: '',
       download: '',
       click: jest.fn(),
     };
-    
+
     jest.spyOn(document, 'createElement').mockImplementation((tagName) => {
       if (tagName === 'a') {
         return mockLink as any;
       }
       return document.createElement(tagName);
     });
-    
+
     jest.spyOn(document.body, 'appendChild').mockImplementation(jest.fn());
     jest.spyOn(document.body, 'removeChild').mockImplementation(jest.fn());
 
@@ -62,7 +62,9 @@ describe('useCampaignDownloads', () => {
 
   describe('initialization', () => {
     it('should initialize with correct default state', () => {
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       expect(result.current.isGenerating.qr).toBe(false);
       expect(result.current.isGenerating.pdf).toBe(null);
@@ -78,12 +80,16 @@ describe('useCampaignDownloads', () => {
         configurable: true,
       });
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
       expect(result.current.canShare).toBe(true);
 
       // Remove navigator.share
       delete (navigator as any).share;
-      const { result: result2 } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result: result2 } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
       expect(result2.current.canShare).toBe(false);
     });
   });
@@ -93,13 +99,16 @@ describe('useCampaignDownloads', () => {
       const mockDataUrl = 'data:image/png;base64,mockQRData';
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: { qrCode: mockDataUrl },
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { qrCode: mockDataUrl },
+          }),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let generatedDataUrl: string | null;
       await act(async () => {
@@ -123,7 +132,9 @@ describe('useCampaignDownloads', () => {
     it('should handle QR generation errors', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let generatedDataUrl: string | null;
       await act(async () => {
@@ -143,7 +154,9 @@ describe('useCampaignDownloads', () => {
 
       mockFetch.mockReturnValueOnce(requestPromise as any);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       act(() => {
         result.current.generateQRCode();
@@ -154,10 +167,11 @@ describe('useCampaignDownloads', () => {
       await act(async () => {
         resolveRequest({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: { qrCode: 'data:image/png;base64,test' },
-          }),
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: { qrCode: 'data:image/png;base64,test' },
+            }),
         });
       });
 
@@ -168,13 +182,16 @@ describe('useCampaignDownloads', () => {
       const mockDataUrl = 'data:image/png;base64,mockQRData';
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: { qrCode: mockDataUrl },
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { qrCode: mockDataUrl },
+          }),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       const customOptions = { width: 500, errorCorrectionLevel: 'H' as const };
 
@@ -199,7 +216,9 @@ describe('useCampaignDownloads', () => {
         blob: () => Promise.resolve(mockBlob),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let downloadResult: boolean;
       await act(async () => {
@@ -219,7 +238,9 @@ describe('useCampaignDownloads', () => {
         blob: () => Promise.resolve(mockBlob),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       await act(async () => {
         await result.current.downloadQRCode('custom-qr.png');
@@ -233,7 +254,9 @@ describe('useCampaignDownloads', () => {
     it('should handle download errors', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Download failed'));
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let downloadResult: boolean;
       await act(async () => {
@@ -253,7 +276,9 @@ describe('useCampaignDownloads', () => {
         blob: () => Promise.resolve(mockBlob),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let downloadResult: boolean;
       await act(async () => {
@@ -273,13 +298,17 @@ describe('useCampaignDownloads', () => {
     });
 
     it('should download voting summary with voting data', async () => {
-      const mockBlob = new Blob(['mock-voting-pdf'], { type: 'application/pdf' });
+      const mockBlob = new Blob(['mock-voting-pdf'], {
+        type: 'application/pdf',
+      });
       mockFetch.mockResolvedValueOnce({
         ok: true,
         blob: () => Promise.resolve(mockBlob),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       await act(async () => {
         await result.current.downloadPDFReport('voting_summary');
@@ -301,7 +330,9 @@ describe('useCampaignDownloads', () => {
 
       mockFetch.mockReturnValueOnce(requestPromise as any);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       act(() => {
         result.current.downloadPDFReport('full_report');
@@ -322,7 +353,9 @@ describe('useCampaignDownloads', () => {
     it('should handle PDF generation errors', async () => {
       mockFetch.mockRejectedValueOnce(new Error('PDF failed'));
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let downloadResult: boolean;
       await act(async () => {
@@ -341,13 +374,22 @@ describe('useCampaignDownloads', () => {
         blob: () => Promise.resolve(mockBlob),
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
-      const customOptions = { format: 'letter' as const, orientation: 'landscape' as const };
+      const customOptions = {
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      };
       const customFilename = 'custom-report.pdf';
 
       await act(async () => {
-        await result.current.downloadPDFReport('full_report', customOptions, customFilename);
+        await result.current.downloadPDFReport(
+          'full_report',
+          customOptions,
+          customFilename
+        );
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -361,17 +403,23 @@ describe('useCampaignDownloads', () => {
 
   describe('getCampaignUrl', () => {
     it('should return correct campaign URL', () => {
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       const url = result.current.getCampaignUrl();
-      expect(url).toBe(`http://localhost:3000/campaigns/${mockCampaignData.id}`);
+      expect(url).toBe(
+        `http://localhost:3000/campaigns/${mockCampaignData.id}`
+      );
     });
 
     it('should handle missing window object', () => {
       const originalWindow = global.window;
       delete (global as any).window;
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       const url = result.current.getCampaignUrl();
       expect(url).toBe(`/campaigns/${mockCampaignData.id}`);
@@ -382,7 +430,9 @@ describe('useCampaignDownloads', () => {
 
   describe('copyCampaignUrl', () => {
     it('should copy URL to clipboard successfully', async () => {
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let copyResult: boolean;
       await act(async () => {
@@ -396,9 +446,13 @@ describe('useCampaignDownloads', () => {
     });
 
     it('should handle clipboard errors', async () => {
-      (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(new Error('Clipboard error'));
+      (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
+        new Error('Clipboard error')
+      );
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let copyResult: boolean;
       await act(async () => {
@@ -411,7 +465,9 @@ describe('useCampaignDownloads', () => {
 
   describe('shareCampaign', () => {
     it('should use native share when available', async () => {
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let shareResult: boolean;
       await act(async () => {
@@ -429,7 +485,9 @@ describe('useCampaignDownloads', () => {
     it('should fallback to copy URL when native share unavailable', async () => {
       delete (navigator as any).share;
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let shareResult: boolean;
       await act(async () => {
@@ -443,9 +501,13 @@ describe('useCampaignDownloads', () => {
     });
 
     it('should handle native share errors', async () => {
-      (navigator.share as jest.Mock).mockRejectedValueOnce(new Error('Share cancelled'));
+      (navigator.share as jest.Mock).mockRejectedValueOnce(
+        new Error('Share cancelled')
+      );
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       let shareResult: boolean;
       await act(async () => {
@@ -460,7 +522,9 @@ describe('useCampaignDownloads', () => {
     it('should clear error state', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Test error'));
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       // Trigger an error
       await act(async () => {
@@ -482,7 +546,9 @@ describe('useCampaignDownloads', () => {
     it('should handle unknown error types', async () => {
       mockFetch.mockRejectedValueOnce('Unknown error');
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       await act(async () => {
         await result.current.generateQRCode();
@@ -497,7 +563,9 @@ describe('useCampaignDownloads', () => {
         status: 500,
       } as Response);
 
-      const { result } = renderHook(() => useCampaignDownloads(mockCampaignData));
+      const { result } = renderHook(() =>
+        useCampaignDownloads(mockCampaignData)
+      );
 
       await act(async () => {
         await result.current.downloadQRCode();

@@ -366,7 +366,7 @@ export const wondersRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       // Enhanced location verification process
-      let locationMetadata: any = {};
+      let locationMetadata: Record<string, unknown> = {};
       let locationTrustBonus = 0;
       
       if (input.location) {
@@ -380,7 +380,7 @@ export const wondersRouter = createTRPCRouter({
         
         // Check location consistency
         let isLocationConsistent = false;
-        if (ipLocation && gpsLocation) {
+        if (ipLocation) {
           isLocationConsistent = areLocationsConsistent(
             lat, lng, 
             ipLocation.lat, ipLocation.lng
@@ -394,7 +394,7 @@ export const wondersRouter = createTRPCRouter({
         // Build location metadata
         locationMetadata = {
           locationCity: gpsLocation?.city || 'Unknown',
-          locationAddress: gpsLocation?.address,
+          locationAddress: gpsLocation?.formattedAddress,
           ipLocation: ipLocation ? {
             city: ipLocation.city,
             lat: ipLocation.lat,
@@ -436,7 +436,6 @@ export const wondersRouter = createTRPCRouter({
 
       // Enhanced location verification trust signal
       if (input.location) {
-        const [lng, lat] = input.location.coordinates;
         
         await db.trustSignal.create({
           data: {

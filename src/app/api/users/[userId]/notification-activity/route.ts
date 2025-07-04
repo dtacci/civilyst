@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { userId: authUserId } = await auth();
     const resolvedParams = await params;
-    
+
     // Only allow users to access their own activity
     if (!authUserId || authUserId !== resolvedParams.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -68,7 +68,14 @@ export async function GET(
     user.votes.forEach((vote, index) => {
       activities.push({
         id: `vote-${vote.id}`,
-        type: index % 4 === 0 ? 'opened' : index % 4 === 1 ? 'delivered' : index % 4 === 2 ? 'sent' : 'dismissed',
+        type:
+          index % 4 === 0
+            ? 'opened'
+            : index % 4 === 1
+              ? 'delivered'
+              : index % 4 === 2
+                ? 'sent'
+                : 'dismissed',
         notificationType: 'vote_milestone',
         title: `Vote milestone reached: "${vote.campaign.title}"`,
         timestamp: new Date(vote.createdAt.getTime() + Math.random() * 3600000), // Add some randomness
@@ -80,10 +87,13 @@ export async function GET(
     user.comments.forEach((comment, index) => {
       activities.push({
         id: `comment-${comment.id}`,
-        type: index % 3 === 0 ? 'opened' : index % 3 === 1 ? 'delivered' : 'sent',
+        type:
+          index % 3 === 0 ? 'opened' : index % 3 === 1 ? 'delivered' : 'sent',
         notificationType: 'comment_reply',
         title: `New activity on: "${comment.campaign.title}"`,
-        timestamp: new Date(comment.createdAt.getTime() + Math.random() * 3600000),
+        timestamp: new Date(
+          comment.createdAt.getTime() + Math.random() * 3600000
+        ),
         campaignId: comment.campaign.id,
       });
     });
@@ -95,7 +105,9 @@ export async function GET(
         type: index % 2 === 0 ? 'delivered' : 'sent',
         notificationType: 'campaign_created',
         title: `Your campaign was published: "${campaign.title}"`,
-        timestamp: new Date(campaign.createdAt.getTime() + Math.random() * 1800000),
+        timestamp: new Date(
+          campaign.createdAt.getTime() + Math.random() * 1800000
+        ),
         campaignId: campaign.id,
       });
     });

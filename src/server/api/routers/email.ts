@@ -1,16 +1,16 @@
 import { z } from 'zod';
 import {
   createTRPCRouter,
-  protectedProcedure,
+  rateLimitedProcedure,
   publicProcedure,
 } from '~/server/api/trpc';
-import { EmailService } from '@/lib/email/service';
+import { EmailService } from '~/lib/email/service';
 import { TRPCError } from '@trpc/server';
-import { db } from '~/server/db';
+import { db } from '~/lib/db';
 
 export const emailRouter = createTRPCRouter({
   // Send test email (development only)
-  sendTestEmail: protectedProcedure
+  sendTestEmail: rateLimitedProcedure
     .input(
       z.object({
         template: z.enum([
@@ -23,6 +23,10 @@ export const emailRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+
       if (process.env.NODE_ENV === 'production') {
         throw new TRPCError({
           code: 'FORBIDDEN',
@@ -30,8 +34,7 @@ export const emailRouter = createTRPCRouter({
         });
       }
 
-      const userEmail =
-        input.to || ctx.auth.user?.emailAddresses[0]?.emailAddress;
+      const userEmail = input.to;
       if (!userEmail) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -39,7 +42,7 @@ export const emailRouter = createTRPCRouter({
         });
       }
 
-      const firstName = ctx.auth.user?.firstName || 'Test User';
+      const firstName = 'Test User';
 
       try {
         let result;
@@ -98,8 +101,11 @@ export const emailRouter = createTRPCRouter({
     }),
 
   // Get email preferences
-  getEmailPreferences: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.auth.userId;
+  getEmailPreferences: rateLimitedProcedure.query(async ({ ctx }) => {
+    if (!ctx.userId) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    const userId = ctx.userId;
 
     // Check if user has email preferences in database
     const preferences = await db.userPreferences.findUnique({
@@ -124,7 +130,7 @@ export const emailRouter = createTRPCRouter({
   }),
 
   // Update email preferences
-  updateEmailPreferences: protectedProcedure
+  updateEmailPreferences: rateLimitedProcedure
     .input(
       z.object({
         emailNotifications: z.boolean().optional(),
@@ -134,7 +140,10 @@ export const emailRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.auth.userId;
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+      const userId = ctx.userId;
 
       const preferences = await db.userPreferences.upsert({
         where: { userId },
@@ -171,7 +180,7 @@ export const emailRouter = createTRPCRouter({
           });
         }
 
-        const updateData: any = {};
+        const updateData: Record<string, boolean> = {};
         switch (input.type) {
           case 'campaign':
             updateData.campaignUpdates = false;
@@ -207,7 +216,7 @@ export const emailRouter = createTRPCRouter({
               ? 'You have been unsubscribed from all emails'
               : `You have been unsubscribed from ${input.type} emails`,
         };
-      } catch (error) {
+      } catch (_error) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invalid or expired unsubscribe token',
@@ -216,7 +225,7 @@ export const emailRouter = createTRPCRouter({
     }),
 
   // Send campaign notification emails (internal use)
-  sendCampaignNotification: protectedProcedure
+  sendCampaignNotification: rateLimitedProcedure
     .input(
       z.object({
         campaignId: z.string(),
@@ -230,6 +239,10 @@ export const emailRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+
       // This would be called by other parts of the app when campaign events occur
       // For now, we'll just validate the user has permission
       const campaign = await db.campaign.findUnique({
@@ -252,7 +265,7 @@ export const emailRouter = createTRPCRouter({
       }
 
       // Check if user is creator or admin
-      if (campaign.creatorId !== ctx.auth.userId) {
+      if (campaign.creatorId !== ctx.userId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Only campaign creators can send notifications',

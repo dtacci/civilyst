@@ -42,7 +42,7 @@ export async function checkRateLimit(
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
   const redis = getRedisClient();
-  
+
   // If Redis is not available, allow the request (graceful degradation)
   if (!redis) {
     return {
@@ -61,16 +61,19 @@ export async function checkRateLimit(
     // Use sliding window log approach
     // Remove old entries
     await redis.zremrangebyscore(key, 0, windowStart);
-    
+
     // Count current requests in window
     const currentRequests = await redis.zcard(key);
-    
+
     if (currentRequests >= config.maxRequests) {
       // Get the oldest request time to calculate reset time
-      const oldestRequests = await redis.zrange(key, 0, 0, { withScores: true }) as Array<{ value: string; score: number }>;
-      const resetTime = oldestRequests.length > 0 
-        ? oldestRequests[0].score + config.windowMs
-        : now + config.windowMs;
+      const oldestRequests = (await redis.zrange(key, 0, 0, {
+        withScores: true,
+      })) as Array<{ value: string; score: number }>;
+      const resetTime =
+        oldestRequests.length > 0
+          ? oldestRequests[0].score + config.windowMs
+          : now + config.windowMs;
 
       return {
         success: false,
@@ -82,7 +85,7 @@ export async function checkRateLimit(
 
     // Add current request
     await redis.zadd(key, { score: now, member: `${now}-${Math.random()}` });
-    
+
     // Set expiration for cleanup
     await redis.expire(key, Math.ceil(config.windowMs / 1000));
 

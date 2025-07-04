@@ -1,4 +1,13 @@
-import { type GeocodeResult } from '~/lib/geocoding';
+// IP-based location interface (compatible with ipinfo.io)
+interface IPLocationResult {
+  lat: number;
+  lng: number;
+  city: string;
+  state: string;
+  country: string;
+  zip: string;
+  address: string;
+}
 
 interface IPGeolocationResponse {
   ip: string;
@@ -16,7 +25,7 @@ interface IPGeolocationResponse {
  */
 export async function getLocationFromIP(
   ip?: string
-): Promise<GeocodeResult | null> {
+): Promise<IPLocationResult | null> {
   try {
     // In development, use a placeholder IP or skip
     if (process.env.NODE_ENV === 'development' && !ip) {

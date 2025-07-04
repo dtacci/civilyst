@@ -36,9 +36,9 @@ export async function GET(
 ) {
   try {
     const { userId: authUserId } = await auth();
-    
+
     const resolvedParams = await params;
-    
+
     // Only allow users to access their own preferences
     if (!authUserId || authUserId !== resolvedParams.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -59,7 +59,7 @@ export async function GET(
 
     // Parse stored preferences or return defaults
     let preferences: NotificationPreferencesData;
-    
+
     if (user.notificationPreferences) {
       try {
         preferences = JSON.parse(user.notificationPreferences as string);
@@ -87,7 +87,7 @@ export async function PUT(
   try {
     const { userId: authUserId } = await auth();
     const resolvedParams = await params;
-    
+
     // Only allow users to update their own preferences
     if (!authUserId || authUserId !== resolvedParams.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -97,7 +97,11 @@ export async function PUT(
     const preferencesData: NotificationPreferencesData = body;
 
     // Validate the data structure
-    if (!preferencesData.preferences || !preferencesData.locationSettings || !preferencesData.timingSettings) {
+    if (
+      !preferencesData.preferences ||
+      !preferencesData.locationSettings ||
+      !preferencesData.timingSettings
+    ) {
       return NextResponse.json(
         { error: 'Invalid preferences data structure' },
         { status: 400 }
@@ -138,7 +142,8 @@ function getDefaultPreferences(): NotificationPreferencesData {
       {
         id: 'campaign_nearby',
         name: 'Nearby Activity',
-        description: 'Alerts for campaign activity within your specified radius',
+        description:
+          'Alerts for campaign activity within your specified radius',
         enabled: true,
         category: 'location',
       },

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { api } from '~/utils/api';
+import { api } from '~/lib/trpc';
 
 export default function UnsubscribePage() {
   const searchParams = useSearchParams();

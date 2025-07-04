@@ -40,17 +40,19 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
     }
 
     const deviceId = await getOrCreateDeviceId();
-    
+
     // Get location if permission granted
     let location = null;
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 5000,
-          enableHighAccuracy: true,
-        });
-      });
-      
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+            enableHighAccuracy: true,
+          });
+        }
+      );
+
       location = {
         type: 'Point',
         coordinates: [position.coords.longitude, position.coords.latitude],
@@ -108,7 +110,7 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
         <h3 className="text-[--font-size-xl] font-semibold mb-4 text-[--color-text-primary]">
           What do you wonder about your community?
         </h3>
-        
+
         <div className="space-y-4">
           {/* Voice Recording Option */}
           <div className="flex items-center gap-4">
@@ -137,8 +139,8 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
               🔒 Your privacy is protected
             </p>
             <p className="text-[--color-text-secondary]">
-              Share anonymously now, claim your wonder later if you choose to sign up.
-              Build trust through your contributions.
+              Share anonymously now, claim your wonder later if you choose to
+              sign up. Build trust through your contributions.
             </p>
           </div>
 
@@ -146,7 +148,10 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
           <div className="flex gap-3">
             <Button
               onClick={handleSubmit}
-              disabled={createAnonymousWonder.isPending || (!wonderText.trim() && !voiceUrl)}
+              disabled={
+                createAnonymousWonder.isPending ||
+                (!wonderText.trim() && !voiceUrl)
+              }
               className="flex-1"
             >
               {createAnonymousWonder.isPending ? (

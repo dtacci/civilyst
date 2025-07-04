@@ -20,7 +20,9 @@ let toastInstance: ToastAPI | null = null;
 export const toast: ToastAPI = {
   success: (message) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return '';
     }
     const props = typeof message === 'string' ? { title: message } : message;
@@ -28,7 +30,9 @@ export const toast: ToastAPI = {
   },
   error: (message) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return '';
     }
     const props = typeof message === 'string' ? { title: message } : message;
@@ -36,7 +40,9 @@ export const toast: ToastAPI = {
   },
   info: (message) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return '';
     }
     const props = typeof message === 'string' ? { title: message } : message;
@@ -44,7 +50,9 @@ export const toast: ToastAPI = {
   },
   warning: (message) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return '';
     }
     const props = typeof message === 'string' ? { title: message } : message;
@@ -52,21 +60,27 @@ export const toast: ToastAPI = {
   },
   toast: (props) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return '';
     }
     return toastInstance.toast(props);
   },
   dismiss: (id) => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return;
     }
     toastInstance.dismiss(id);
   },
   dismissAll: () => {
     if (!toastInstance) {
-      console.warn('Toast called before initialization. Make sure ToastProvider is rendered.');
+      console.warn(
+        'Toast called before initialization. Make sure ToastProvider is rendered.'
+      );
       return;
     }
     toastInstance.dismissAll();

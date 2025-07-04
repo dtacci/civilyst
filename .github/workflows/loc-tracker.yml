@@ -2,9 +2,9 @@ name: Lines of Code Tracker
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    types: [ opened, synchronize ]
+    types: [opened, synchronize]
 
 jobs:
   track-loc:
@@ -13,13 +13,13 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed for comparisons
-      
+          fetch-depth: 0 # Full history needed for comparisons
+
       - name: Calculate LOC changes
         id: loc
         run: |
@@ -68,7 +68,7 @@ jobs:
             echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
             echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -79,44 +79,44 @@ jobs:
             const netChange = '${{ steps.loc.outputs.net_change }}';
             const filesChanged = '${{ steps.loc.outputs.files_changed }}';
             const fileBreakdown = `${{ steps.loc.outputs.file_breakdown }}`;
-            
+
             const netChangeEmoji = netChange > 0 ? '📈' : netChange < 0 ? '📉' : '⏸️';
             const netChangeColor = netChange > 0 ? '00ff00' : netChange < 0 ? 'ff0000' : 'gray';
-            
+
             const comment = `## 📊 Lines of Code Analysis
-            
+
             | Metric | Value |
             |--------|-------|
             | **Files Changed** | ${filesChanged} |
             | **Lines Added** | +${insertions} |
             | **Lines Removed** | -${deletions} |
             | **Net Change** | ${netChangeEmoji} ${netChange > 0 ? '+' : ''}${netChange} |
-            
+
             <details>
             <summary>📁 Top Changed Files</summary>
-            
+
             | File | Added | Removed |
             |------|-------|---------|
             ${fileBreakdown}
-            
+
             </details>
-            
+
             ![LOC Badge](https://img.shields.io/badge/Net_Change-${netChange > 0 ? '%2B' : ''}${netChange}-${netChangeColor})
-            
+
             > 💡 *Excludes: package-lock.json, yarn.lock, minified files*`;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('Lines of Code Analysis')
             );
-            
+
             if (botComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -134,7 +134,7 @@ jobs:
                 body: comment
               });
             }
-      
+
       - name: Update Commit Status
         if: github.event_name == 'push'
         uses: actions/github-script@v7
@@ -143,7 +143,7 @@ jobs:
             const insertions = '${{ steps.loc.outputs.insertions }}';
             const deletions = '${{ steps.loc.outputs.deletions }}';
             const netChange = '${{ steps.loc.outputs.net_change }}';
-            
+
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,

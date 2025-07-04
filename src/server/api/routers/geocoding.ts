@@ -11,7 +11,7 @@ export const geocodingRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const result = await geocodeAddress(input.query);
-      
+
       if (!result) {
         throw new Error('Location not found');
       }
@@ -28,7 +28,7 @@ export const geocodingRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const result = await reverseGeocode(input.latitude, input.longitude);
-      
+
       if (!result) {
         throw new Error('Unable to reverse geocode coordinates');
       }

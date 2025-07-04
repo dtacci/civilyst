@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 export async function getPrismaWithRLS() {
   const authResult = await auth();
   const userId = authResult?.userId;
-  
+
   if (!userId) {
     // Return regular prisma for anonymous access (RLS will handle permissions)
     return prisma;

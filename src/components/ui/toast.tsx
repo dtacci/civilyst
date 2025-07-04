@@ -148,7 +148,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       dismiss: dismissToast,
       dismissAll,
     };
-    
+
     initializeToast(toastApi);
   }, [addToast, dismissToast, dismissAll]);
 

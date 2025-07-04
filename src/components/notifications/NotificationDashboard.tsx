@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  BellIcon, 
-  CheckCircleIcon, 
-  ClockIcon, 
+import {
+  BellIcon,
+  CheckCircleIcon,
+  ClockIcon,
   MapPinIcon,
   ChartBarIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
 import { NotificationPreferences } from './NotificationPreferences';
@@ -39,11 +39,13 @@ interface NotificationDashboardProps {
   className?: string;
 }
 
-export function NotificationDashboard({ 
-  userId, 
-  className = '' 
+export function NotificationDashboard({
+  userId,
+  className = '',
 }: NotificationDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'activity' | 'settings' | 'push'>('activity');
+  const [activeTab, setActiveTab] = useState<'activity' | 'settings' | 'push'>(
+    'activity'
+  );
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<NotificationStats>({
     totalSent: 0,
@@ -56,27 +58,35 @@ export function NotificationDashboard({
       averageDistance: 0,
     },
   });
-  const [recentActivity, setRecentActivity] = useState<NotificationActivity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<NotificationActivity[]>(
+    []
+  );
 
   const loadNotificationData = useCallback(async () => {
     try {
       setLoading(true);
 
       // Load notification statistics
-      const statsResponse = await fetch(`/api/users/${userId}/notification-stats`);
+      const statsResponse = await fetch(
+        `/api/users/${userId}/notification-stats`
+      );
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData);
       }
 
       // Load recent notification activity
-      const activityResponse = await fetch(`/api/users/${userId}/notification-activity`);
+      const activityResponse = await fetch(
+        `/api/users/${userId}/notification-activity`
+      );
       if (activityResponse.ok) {
         const activityData = await activityResponse.json();
-        setRecentActivity(activityData.map((item: Record<string, unknown>) => ({
-          ...item,
-          timestamp: new Date(item.timestamp as string),
-        })));
+        setRecentActivity(
+          activityData.map((item: Record<string, unknown>) => ({
+            ...item,
+            timestamp: new Date(item.timestamp as string),
+          }))
+        );
       }
     } catch (error) {
       console.error('Failed to load notification data:', error);
@@ -134,7 +144,9 @@ export function NotificationDashboard({
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Notification Center</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Notification Center
+        </h1>
         <p className="text-gray-600 mt-1">
           Manage your civic engagement notifications and preferences
         </p>
@@ -148,7 +160,9 @@ export function NotificationDashboard({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'activity' | 'settings' | 'push')}
+                onClick={() =>
+                  setActiveTab(tab.id as 'activity' | 'settings' | 'push')
+                }
                 className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -175,8 +189,12 @@ export function NotificationDashboard({
                     <BellIcon className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Sent</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalSent}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Sent
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats.totalSent}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -187,8 +205,12 @@ export function NotificationDashboard({
                     <CheckCircleIcon className="w-6 h-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Delivery Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.deliveryRate}%</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Delivery Rate
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats.deliveryRate}%
+                    </p>
                   </div>
                 </div>
               </div>
@@ -199,8 +221,12 @@ export function NotificationDashboard({
                     <ChartBarIcon className="w-6 h-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Open Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.openRate}%</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Open Rate
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats.openRate}%
+                    </p>
                   </div>
                 </div>
               </div>
@@ -211,8 +237,12 @@ export function NotificationDashboard({
                     <ClockIcon className="w-6 h-6 text-orange-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Engagement</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.engagementScore}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Engagement
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats.engagementScore}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -235,7 +265,8 @@ export function NotificationDashboard({
                   ))}
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
-                  Based on your engagement patterns, these are the best times to receive notifications
+                  Based on your engagement patterns, these are the best times to
+                  receive notifications
                 </p>
               </div>
             )}
@@ -245,10 +276,10 @@ export function NotificationDashboard({
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Recent Notification Activity
               </h3>
-              
+
               {loading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
+                  {[1, 2, 3].map((i) => (
                     <div key={i} className="animate-pulse">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
@@ -263,7 +294,10 @@ export function NotificationDashboard({
               ) : recentActivity.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.slice(0, 10).map((activity) => (
-                    <div key={activity.id} className="flex items-center space-x-3">
+                    <div
+                      key={activity.id}
+                      className="flex items-center space-x-3"
+                    >
                       <div className="flex-shrink-0">
                         {getNotificationIcon(activity.notificationType)}
                       </div>
@@ -289,7 +323,9 @@ export function NotificationDashboard({
               ) : (
                 <div className="text-center py-8">
                   <BellIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-sm text-gray-500">No notification activity yet</p>
+                  <p className="text-sm text-gray-500">
+                    No notification activity yet
+                  </p>
                 </div>
               )}
             </div>
@@ -300,9 +336,7 @@ export function NotificationDashboard({
           <NotificationPreferences userId={userId} />
         )}
 
-        {activeTab === 'push' && (
-          <PushNotificationSettings />
-        )}
+        {activeTab === 'push' && <PushNotificationSettings />}
       </div>
     </div>
   );

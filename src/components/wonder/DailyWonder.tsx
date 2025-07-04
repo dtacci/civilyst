@@ -40,7 +40,10 @@ export function DailyWonder({ wonder, userStats }: DailyWonderProps) {
     },
   });
 
-  const handleVoiceResponse = async (audioUrl?: string, textResponse?: string) => {
+  const handleVoiceResponse = async (
+    audioUrl?: string,
+    textResponse?: string
+  ) => {
     try {
       await answerMutation.mutateAsync({
         wonderId: wonder.id,
@@ -83,11 +86,11 @@ export function DailyWonder({ wonder, userStats }: DailyWonderProps) {
           <span className="mr-1">🤔</span>
           Today&apos;s Wonder
         </div>
-        
+
         <h2 className="text-xl font-semibold text-[--color-text-primary] mb-2">
           {wonder.question}
         </h2>
-        
+
         {wonder.author && (
           <p className="text-[--color-text-tertiary] text-sm">
             Asked by {wonder.author.firstName} {wonder.author.lastName}
@@ -117,4 +120,4 @@ export function DailyWonder({ wonder, userStats }: DailyWonderProps) {
       </div>
     </div>
   );
-} 
+}

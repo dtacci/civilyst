@@ -3,6 +3,16 @@
  * This is a placeholder for now - will be implemented with actual geocoding service
  */
 
+export interface GeocodeResult {
+  lat: number;
+  lng: number;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+}
+
 export interface GeocodingResult {
   city: string | null;
   state: string | null;

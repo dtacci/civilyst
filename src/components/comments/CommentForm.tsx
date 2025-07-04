@@ -25,7 +25,7 @@ export function CommentForm({ campaignId, onCommentAdded }: CommentFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (content.trim().length === 0) {
       return;
     }
@@ -70,7 +70,7 @@ export function CommentForm({ campaignId, onCommentAdded }: CommentFormProps) {
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
           Join the conversation and share your perspective on this campaign.
@@ -82,7 +82,11 @@ export function CommentForm({ campaignId, onCommentAdded }: CommentFormProps) {
         >
           {createMutation.isPending ? (
             <div className="flex items-center space-x-2">
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <svg
+                className="animate-spin h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
                 <circle
                   className="opacity-25"
                   cx="12"

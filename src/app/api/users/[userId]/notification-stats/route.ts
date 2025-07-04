@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { userId: authUserId } = await auth();
     const resolvedParams = await params;
-    
+
     // Only allow users to access their own stats
     if (!authUserId || authUserId !== resolvedParams.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -57,7 +57,7 @@ export async function GET(
 function calculateNotificationStats(user: Record<string, unknown>) {
   // Calculate hourly activity pattern
   const hourlyActivity = new Array(24).fill(0);
-  
+
   // Analyze votes
   (user.votes as Array<{ createdAt: string }>).forEach((vote) => {
     const hour = new Date(vote.createdAt).getHours();
@@ -75,11 +75,14 @@ function calculateNotificationStats(user: Record<string, unknown>) {
     .map((count, hour) => ({ hour, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3)
-    .map(item => item.hour)
+    .map((item) => item.hour)
     .sort();
 
   // Calculate engagement score based on activity
-  const totalActivity = (user.votes as Array<unknown>).length + (user.comments as Array<unknown>).length + (user.campaigns as Array<unknown>).length;
+  const totalActivity =
+    (user.votes as Array<unknown>).length +
+    (user.comments as Array<unknown>).length +
+    (user.campaigns as Array<unknown>).length;
   const engagementScore = Math.min(100, Math.round(totalActivity * 2.5));
 
   // Mock notification delivery stats (in a real app, these would come from notification logs)

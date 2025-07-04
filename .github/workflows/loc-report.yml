@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs every Monday at 9 AM UTC
     - cron: '0 9 * * 1'
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   generate-report:
@@ -12,24 +12,24 @@ jobs:
     permissions:
       contents: read
       issues: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed
-      
+          fetch-depth: 0 # Full history needed
+
       - name: Generate LOC Report
         id: report
         run: |
           # Set date range
           START_DATE=$(date -d "7 days ago" +%Y-%m-%d)
           END_DATE=$(date +%Y-%m-%d)
-          
+
           echo "## 📊 Weekly Code Contribution Report" > report.md
           echo "**Period**: $START_DATE to $END_DATE" >> report.md
           echo "" >> report.md
-          
+
           # Overall stats for the week
           echo "### 📈 Overall Statistics" >> report.md
           WEEKLY_STATS=$(git log --since="$START_DATE" --until="$END_DATE" --pretty=tformat: --numstat | \
@@ -37,12 +37,12 @@ jobs:
           COMMIT_COUNT=$(git log --since="$START_DATE" --until="$END_DATE" --oneline | wc -l)
           echo "${WEEKLY_STATS}${COMMIT_COUNT} |" >> report.md
           echo "" >> report.md
-          
+
           # Top contributors
           echo "### 👥 Top Contributors (by lines added)" >> report.md
           echo "| Author | Lines Added | Lines Removed | Net Change | Commits |" >> report.md
           echo "|--------|-------------|---------------|------------|---------|" >> report.md
-          
+
           git log --since="$START_DATE" --until="$END_DATE" --pretty=format:"%an" | sort | uniq | while read author; do
             AUTHOR_STATS=$(git log --author="$author" --since="$START_DATE" --until="$END_DATE" --pretty=tformat: --numstat | \
               awk -v author="$author" '{ add += $1; subs += $2 } END { printf "| %s | +%d | -%d | %s%d |", author, add, subs, (add-subs > 0 ? "+" : ""), add-subs }')
@@ -50,12 +50,12 @@ jobs:
             echo "${AUTHOR_STATS} ${AUTHOR_COMMITS} |" >> report.md
           done | sort -t'|' -k3 -nr | head -10
           echo "" >> report.md
-          
+
           # Daily breakdown
           echo "### 📅 Daily Breakdown" >> report.md
           echo "| Date | Lines Added | Lines Removed | Commits |" >> report.md
           echo "|------|-------------|---------------|---------|" >> report.md
-          
+
           for i in {6..0}; do
             DATE=$(date -d "$i days ago" +%Y-%m-%d)
             DAY_NAME=$(date -d "$i days ago" +%A)
@@ -65,12 +65,12 @@ jobs:
             echo "${DAILY_STATS} ${DAILY_COMMITS} |" >> report.md
           done
           echo "" >> report.md
-          
+
           # File type breakdown
           echo "### 📁 Changes by File Type" >> report.md
           echo "| Extension | Lines Added | Lines Removed |" >> report.md
           echo "|-----------|-------------|---------------|" >> report.md
-          
+
           git log --since="$START_DATE" --until="$END_DATE" --pretty=tformat: --numstat | \
             awk '{ 
               if ($3 ~ /\./) {
@@ -84,12 +84,12 @@ jobs:
               for (e in add) printf "| .%s | +%d | -%d |\n", e, add[e], subs[e] 
             }' | sort -t'|' -k2 -nr | head -15 >> report.md
           echo "" >> report.md
-          
+
           # Most changed files
           echo "### 🔥 Most Changed Files" >> report.md
           echo "| File | Lines Added | Lines Removed | Total Changes |" >> report.md
           echo "|------|-------------|---------------|---------------|" >> report.md
-          
+
           git log --since="$START_DATE" --until="$END_DATE" --pretty=tformat: --numstat | \
             awk '{ 
               add[$3] += $1; 
@@ -102,20 +102,20 @@ jobs:
                   (length(f) > 40 ? "..." substr(f, length(f)-37) : f), 
                   add[f], del[f], total[f] 
             }' | sort -t'|' -k5 -nr | head -10 >> report.md
-          
+
           # Read the report content
           REPORT_CONTENT=$(cat report.md)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$REPORT_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: Create Issue with Report
         uses: actions/github-script@v7
         with:
           script: |
             const report = `${{ steps.report.outputs.report }}`;
             const date = new Date().toISOString().split('T')[0];
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
