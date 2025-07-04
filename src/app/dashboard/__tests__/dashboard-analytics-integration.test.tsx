@@ -34,26 +34,7 @@ jest.mock('~/components/pwa', () => ({
   ),
 }));
 
-// Mock window.location for navigation tests
-const mockLocation = {
-  href: '',
-};
-if (!window.location) {
-  Object.defineProperty(window, 'location', {
-    value: mockLocation,
-    writable: true,
-    configurable: true,
-  });
-} else {
-  Object.defineProperty(window, 'location', {
-    value: {
-      ...window.location,
-      ...mockLocation,
-    },
-    writable: true,
-    configurable: true,
-  });
-}
+// Mock window.location is not needed for these analytics tests
 
 const mockCampaignsData = {
   campaigns: [
