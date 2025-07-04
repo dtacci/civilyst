@@ -55,6 +55,9 @@ model User {
   wonderResponses   WonderResponse[]   // Wonder responses by user
   trustSignals      TrustSignal[]      // Trust signals for user
   preferences       UserPreferences?   // Email and notification preferences
+  projects          Project[]          // Projects created by user
+  pledges           Pledge[]           // Pledges made by user
+  userSkills        UserSkill[]        // Skills possessed by user
 
   // Performance indexes for user queries
   @@index([createdAt])
@@ -97,6 +100,7 @@ model Campaign {
   districts   CampaignDistrict[]
   fromWonder  Wonder[]        // If originated from a wonder
   fromPattern WonderPattern[] // If originated from a pattern
+  project     Project?        // Associated funding project
 
   // Performance-optimized indexes for common queries
   @@index([status, createdAt])
@@ -484,4 +488,236 @@ model UserPreferences {
   
   @@index([userId])
   @@map("user_preferences")
+}
+
+// ==========================================
+// Investment Infrastructure Models
+// ==========================================
+
+model Project {
+  id                String       @id @default(cuid())
+  title             String
+  description       String
+  fundingGoal       Float
+  fundingDeadline   DateTime
+  status            ProjectStatus @default(DRAFT)
+  
+  // Creator information
+  creatorId         String
+  creator           User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  // Campaign link
+  campaignId        String?      @unique
+  campaign          Campaign?    @relation(fields: [campaignId], references: [id])
+  
+  // Location data (inherited from campaign if linked)
+  latitude          Float?
+  longitude         Float?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  
+  // Metadata
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  // Relationships
+  pledges           Pledge[]
+  milestones        ProjectMilestone[]
+  skillNeeds        ProjectSkillNeed[]
+  
+  @@index([creatorId])
+  @@index([status])
+  @@index([fundingDeadline])
+  @@map("projects")
+}
+
+model Pledge {
+  id                String       @id @default(cuid())
+  userId            String
+  projectId         String
+  amount            Float
+  status            PledgeStatus @default(PENDING)
+  escrowRef         String?      // Reference to external escrow service
+  
+  // Payment information
+  paymentMethod     String?      // Type of payment used
+  paymentIntentId   String?      // Stripe or payment provider reference
+  
+  // Metadata
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  completedAt       DateTime?    // When pledge was successfully completed
+  refundedAt        DateTime?    // If/when pledge was refunded
+  
+  // Relationships
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  transactions      EscrowTransaction[]
+  
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("pledges")
+}
+
+model EscrowTransaction {
+  id                String             @id @default(cuid())
+  pledgeId          String
+  milestoneId       String?
+  amount            Float
+  status            EscrowStatus       @default(PROCESSING)
+  
+  // External references
+  escrowTransactionId String?          // External escrow service transaction ID
+  releaseCode       String?            // Code required to release funds
+  
+  // Metadata
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  processedAt       DateTime?          // When transaction was processed
+  
+  // Relationships
+  pledge            Pledge             @relation(fields: [pledgeId], references: [id], onDelete: Cascade)
+  milestone         ProjectMilestone?  @relation(fields: [milestoneId], references: [id])
+  
+  @@index([pledgeId])
+  @@index([milestoneId])
+  @@index([status])
+  @@map("escrow_transactions")
+}
+
+model ProjectMilestone {
+  id                String             @id @default(cuid())
+  projectId         String
+  title             String
+  description       String
+  targetDate        DateTime
+  fundingAmount     Float              // Amount to be released upon completion
+  orderIndex        Int                // Order of milestones
+  status            MilestoneStatus    @default(PENDING)
+  
+  // Verification data
+  completionEvidence String?           // URL or description of completion evidence
+  verifiedBy        String?            // Admin who verified completion
+  verifiedAt        DateTime?
+  
+  // Metadata
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  completedAt       DateTime?          // When milestone was completed
+  
+  // Relationships
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  transactions      EscrowTransaction[]
+  
+  @@index([projectId])
+  @@index([status])
+  @@index([orderIndex])
+  @@map("project_milestones")
+}
+
+model ProjectSkillNeed {
+  id                String             @id @default(cuid())
+  projectId         String
+  skillId           String
+  hoursNeeded       Int?
+  description       String?
+  isFilled          Boolean            @default(false)
+  
+  // Metadata
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  // Relationships
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill             Skill              @relation(fields: [skillId], references: [id])
+  
+  @@index([projectId])
+  @@index([skillId])
+  @@index([isFilled])
+  @@map("project_skill_needs")
+}
+
+// Skill System Models (for Task 2)
+model Skill {
+  id                String             @id @default(cuid())
+  name              String             @unique
+  category          String
+  description       String?
+  
+  // Metadata
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  // Relationships
+  userSkills        UserSkill[]
+  projectNeeds      ProjectSkillNeed[]
+  
+  @@index([category])
+  @@index([name])
+  @@map("skills")
+}
+
+model UserSkill {
+  id                String             @id @default(cuid())
+  userId            String
+  skillId           String
+  proficiencyLevel  Int                // 1-5 scale
+  isVerified        Boolean            @default(false)
+  
+  // Verification data
+  portfolioUrl      String?
+  endorsements      Int                @default(0)
+  
+  // Metadata
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  // Relationships
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill             Skill              @relation(fields: [skillId], references: [id])
+  
+  @@unique([userId, skillId])
+  @@index([userId])
+  @@index([skillId])
+  @@index([proficiencyLevel])
+  @@map("user_skills")
+}
+
+// Enums for Investment Infrastructure
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  FUNDED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PledgeStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum EscrowStatus {
+  PROCESSING
+  HELD
+  RELEASED
+  REFUNDED
+  FAILED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  VERIFIED
+  COMPLETED
+  DISPUTED
 }

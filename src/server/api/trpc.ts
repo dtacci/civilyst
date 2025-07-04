@@ -32,11 +32,17 @@ export const createTRPCContext = (opts: CreateNextContextOptions) => {
     userId = undefined;
   }
 
+  // Check if user is admin (you can customize this based on your admin logic)
+  // For now, we'll use a simple check based on email or a specific user ID
+  // In production, you might want to check against a database or Clerk metadata
+  const isAdmin = userId === process.env.ADMIN_USER_ID || false;
+
   return {
     req,
     res,
     ip,
     userId,
+    isAdmin,
   };
 };
 
@@ -67,6 +73,7 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
 
   // Log in development only
   if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
     console.info(`[tRPC] ${type} ${path} - ${durationMs}ms`);
   }
 
