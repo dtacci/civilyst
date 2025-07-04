@@ -17,8 +17,8 @@ import {
   CheckCircle,
   Image as ImageIcon,
 } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent } from './card';
+import { Button } from '../../ui/button';
+import { Card, CardContent } from '../../ui/card';
 import { cn } from '~/lib/utils';
 
 export interface SocialShareData {

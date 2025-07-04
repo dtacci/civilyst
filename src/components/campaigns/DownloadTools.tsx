@@ -27,9 +27,11 @@ export function DownloadTools({
   const handleDownloadQR = async () => {
     try {
       setIsDownloading('qr');
-      
-      const response = await fetch(`/api/campaigns/${campaignId}/qr?download=true&filename=campaign-${campaignId}-qr.png`);
-      
+
+      const response = await fetch(
+        `/api/campaigns/${campaignId}/qr?download=true&filename=campaign-${campaignId}-qr.png`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to download QR code');
       }
@@ -51,12 +53,16 @@ export function DownloadTools({
   };
 
   // Download PDF report
-  const handleDownloadPDF = async (type: 'full_report' | 'qr_share' = 'full_report') => {
+  const handleDownloadPDF = async (
+    type: 'full_report' | 'qr_share' = 'full_report'
+  ) => {
     try {
       setIsDownloading(type);
 
       // For GET requests, we'll use the simplified endpoint
-      const response = await fetch(`/api/campaigns/${campaignId}/pdf?download=true&type=${type}&filename=campaign-${campaignId}-${type}.pdf`);
+      const response = await fetch(
+        `/api/campaigns/${campaignId}/pdf?download=true&type=${type}&filename=campaign-${campaignId}-${type}.pdf`
+      );
 
       if (!response.ok) {
         throw new Error('Failed to download PDF');
@@ -91,7 +97,7 @@ export function DownloadTools({
           <QrCodeIcon className="h-4 w-4 mr-3" />
           {isDownloading === 'qr' ? 'Downloading...' : 'Download QR Code'}
         </Button>
-        
+
         <Button
           onClick={() => handleDownloadPDF('full_report')}
           disabled={isDownloading === 'full_report'}
@@ -100,9 +106,11 @@ export function DownloadTools({
           className="w-full justify-start"
         >
           <DocumentArrowDownIcon className="h-4 w-4 mr-3" />
-          {isDownloading === 'full_report' ? 'Downloading...' : 'Download Report'}
+          {isDownloading === 'full_report'
+            ? 'Downloading...'
+            : 'Download Report'}
         </Button>
-        
+
         <Button
           onClick={() => handleDownloadPDF('qr_share')}
           disabled={isDownloading === 'qr_share'}
@@ -111,7 +119,9 @@ export function DownloadTools({
           className="w-full justify-start"
         >
           <ArrowDownTrayIcon className="h-4 w-4 mr-3" />
-          {isDownloading === 'qr_share' ? 'Downloading...' : 'Download QR Share PDF'}
+          {isDownloading === 'qr_share'
+            ? 'Downloading...'
+            : 'Download QR Share PDF'}
         </Button>
       </div>
     );
@@ -128,7 +138,7 @@ export function DownloadTools({
         <QrCodeIcon className="h-4 w-4 mr-2" />
         {isDownloading === 'qr' ? 'Downloading...' : 'QR Code'}
       </Button>
-      
+
       <Button
         onClick={() => handleDownloadPDF('full_report')}
         disabled={isDownloading === 'full_report'}

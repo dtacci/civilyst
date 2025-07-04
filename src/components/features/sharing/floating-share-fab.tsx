@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Share2, Zap, Users, TrendingUp } from 'lucide-react';
-import { Button } from './button';
+import { Button } from '../../ui/button';
 import { SocialShare, type SocialShareData } from './social-share';
 import { cn } from '~/lib/utils';
 

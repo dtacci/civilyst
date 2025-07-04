@@ -2,8 +2,8 @@
 
 import React, { useState, useRef } from 'react';
 import { cn } from '~/lib/utils';
-import { Button } from './button';
-import { Card, CardContent } from './card';
+import { Button } from '../../ui/button';
+import { Card, CardContent } from '../../ui/card';
 import {
   ThumbsUp,
   ThumbsDown,
@@ -568,7 +568,10 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
         {isVoting && (
           <div className="mb-6 p-4 bg-[--color-primary]/10 border border-[--color-primary]/20 rounded-[--border-radius-lg]">
             <div className="flex items-center justify-center text-[--color-primary]">
-              <Loader2 className="animate-spin h-5 w-5 mr-3" data-testid="loading-spinner" />
+              <Loader2
+                className="animate-spin h-5 w-5 mr-3"
+                data-testid="loading-spinner"
+              />
               <span className="font-medium">Submitting your vote...</span>
             </div>
           </div>
