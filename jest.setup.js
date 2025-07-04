@@ -6,12 +6,12 @@ process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
 // Mock DOM APIs that might not be available in Jest
 Object.defineProperty(global, 'URL', {
   value: URL,
-  writable: true
+  writable: true,
 });
 
 Object.defineProperty(global, 'Blob', {
   value: Blob,
-  writable: true
+  writable: true,
 });
 
 // Mock window.URL.createObjectURL

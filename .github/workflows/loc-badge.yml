@@ -1,0 +1,61 @@
+name: Update LOC Badge
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Update daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Count total lines of code
+        id: count
+        run: |
+          # Count lines in source files (excluding common non-code files)
+          TOTAL_LOC=$(find . -type f \( \
+            -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+            -o -name "*.css" -o -name "*.scss" -o -name "*.html" \
+            -o -name "*.py" -o -name "*.go" -o -name "*.java" \
+            -o -name "*.c" -o -name "*.cpp" -o -name "*.h" \
+            \) -not -path "*/node_modules/*" \
+            -not -path "*/.next/*" \
+            -not -path "*/dist/*" \
+            -not -path "*/build/*" \
+            -not -path "*/.git/*" \
+            -exec wc -l {} + | awk '{sum += $1} END {print sum}')
+
+          # Format number with commas
+          FORMATTED_LOC=$(echo $TOTAL_LOC | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta')
+
+          echo "total_loc=$TOTAL_LOC" >> $GITHUB_OUTPUT
+          echo "formatted_loc=$FORMATTED_LOC" >> $GITHUB_OUTPUT
+
+      - name: Create badge JSON
+        run: |
+          mkdir -p .github/badges
+          echo '{
+            "schemaVersion": 1,
+            "label": "Lines of Code",
+            "message": "${{ steps.count.outputs.formatted_loc }}",
+            "color": "blue"
+          }' > .github/badges/loc.json
+
+      - name: Commit badge update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .github/badges/loc.json
+          git diff --staged --quiet || git commit -m "Update LOC badge: ${{ steps.count.outputs.formatted_loc }} lines"
+          git push || echo "No changes to push"

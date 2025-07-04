@@ -4,7 +4,7 @@ import { NotificationDashboard } from '~/components/notifications/NotificationDa
 
 export default async function NotificationsPage() {
   const user = await currentUser();
-  
+
   if (!user) {
     redirect('/sign-in');
   }

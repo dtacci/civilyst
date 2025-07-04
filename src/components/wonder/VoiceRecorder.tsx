@@ -31,7 +31,7 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
         // TODO: Upload to Uploadthing and get URL
         // For now, we'll just submit as text
         await onResponse(undefined, 'Voice recording placeholder');
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -40,9 +40,8 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
 
       // Start timer
       intervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime((prev) => prev + 1);
       }, 1000);
-
     } catch (error) {
       console.error('Error accessing microphone:', error);
       setShowTextInput(true);
@@ -53,7 +52,7 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -118,7 +117,9 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
   return (
     <div className="text-center space-y-4">
       <p className="text-[--color-text-secondary] text-sm">
-        {isRecording ? 'Listening...' : 'Hold the button and share your thoughts'}
+        {isRecording
+          ? 'Listening...'
+          : 'Hold the button and share your thoughts'}
       </p>
 
       {/* Recording Timer */}
@@ -139,16 +140,17 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
           disabled={isLoading}
           className={`
             w-20 h-20 rounded-full font-semibold transition-all duration-200 transform active:scale-95
-            ${isRecording 
-              ? 'bg-red-500 text-white animate-pulse' 
-              : 'bg-[--color-primary] hover:bg-[--color-primary-hover] text-white'
+            ${
+              isRecording
+                ? 'bg-red-500 text-white animate-pulse'
+                : 'bg-[--color-primary] hover:bg-[--color-primary-hover] text-white'
             }
             ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
         >
           {isRecording ? '🛑' : '🎤'}
         </button>
-        
+
         {/* Ripple effect */}
         {isRecording && (
           <div className="absolute inset-0 rounded-full bg-[--color-primary] animate-ping opacity-20"></div>
@@ -159,7 +161,7 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
         <p className="text-xs text-[--color-text-tertiary]">
           {isRecording ? 'Release to stop' : 'Hold to record'}
         </p>
-        
+
         <button
           onClick={() => setShowTextInput(true)}
           className="text-[--color-text-tertiary] hover:text-[--color-text-secondary] text-sm underline"
@@ -169,4 +171,4 @@ export function VoiceRecorder({ onResponse, isLoading }: VoiceRecorderProps) {
       </div>
     </div>
   );
-} 
+}

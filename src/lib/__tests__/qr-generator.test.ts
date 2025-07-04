@@ -223,7 +223,7 @@ describe('QR Generator Utilities', () => {
 
     it('should use environment base URL when available', () => {
       process.env.NEXT_PUBLIC_BASE_URL = 'https://production.com';
-      
+
       const result = createCampaignShareUrl('test-123');
 
       expect(result).toMatch(/^https:\/\/production\.com\/campaigns\/test-123/);
@@ -231,7 +231,7 @@ describe('QR Generator Utilities', () => {
 
     it('should fallback to localhost when no environment variable', () => {
       delete process.env.NEXT_PUBLIC_BASE_URL;
-      
+
       const result = createCampaignShareUrl('test-123');
 
       expect(result).toMatch(/^http:\/\/localhost:3000\/campaigns\/test-123/);

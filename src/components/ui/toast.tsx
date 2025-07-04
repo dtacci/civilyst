@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '~/lib/utils';
 import { X } from 'lucide-react';
+import { initializeToast } from '~/lib/toast';
 
 // Toast context for managing toasts
 const ToastContext = React.createContext<{
@@ -131,6 +132,25 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const dismissAll = React.useCallback(() => {
     setToasts([]);
   }, []);
+
+  // Initialize the singleton toast instance
+  React.useEffect(() => {
+    const toastApi = {
+      toast: (props: ToastProps) => addToast(props),
+      error: (props: Omit<ToastProps, 'variant'>) =>
+        addToast({ ...props, variant: 'destructive' }),
+      success: (props: Omit<ToastProps, 'variant'>) =>
+        addToast({ ...props, variant: 'success' }),
+      info: (props: Omit<ToastProps, 'variant'>) =>
+        addToast({ ...props, variant: 'info' }),
+      warning: (props: Omit<ToastProps, 'variant'>) =>
+        addToast({ ...props, variant: 'warning' }),
+      dismiss: dismissToast,
+      dismissAll,
+    };
+
+    initializeToast(toastApi);
+  }, [addToast, dismissToast, dismissAll]);
 
   return (
     <ToastContext.Provider

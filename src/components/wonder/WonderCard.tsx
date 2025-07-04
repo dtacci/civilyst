@@ -51,11 +51,11 @@ export function WonderCard({ wonder, showPattern = false }: WonderCardProps) {
               </span>
             )}
           </div>
-          
+
           <h3 className="font-medium text-[--color-text-primary] mb-2 line-clamp-2 group-hover:text-[--color-primary] transition-colors">
             {wonder.question}
           </h3>
-          
+
           <div className="flex items-center space-x-3 text-sm text-[--color-text-tertiary]">
             <span className="flex items-center space-x-1">
               <span>🔥</span>
@@ -75,12 +75,22 @@ export function WonderCard({ wonder, showPattern = false }: WonderCardProps) {
         {/* Action */}
         <div className="flex-shrink-0">
           <button className="w-8 h-8 rounded-full bg-[--color-surface-hover] hover:bg-[--color-primary] hover:text-white transition-colors flex items-center justify-center">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
       </div>
     </div>
   );
-} 
+}

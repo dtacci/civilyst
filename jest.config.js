@@ -18,6 +18,8 @@ const customJestConfig = {
     '!src/components/**/*.stories.{js,jsx,ts,tsx}',
     '!src/components/**/index.{js,jsx,ts,tsx}',
   ],
+  // Add polyfills for Node.js globals that React Email needs
+  setupFiles: ['<rootDir>/jest.polyfills.js'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

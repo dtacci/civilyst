@@ -5,6 +5,7 @@ import { campaignsRouter } from '~/server/api/routers/campaigns';
 import { commentsRouter } from '~/server/api/routers/comments';
 import { usersRouter } from '~/server/api/routers/users';
 import { wondersRouter } from '~/server/api/routers/wonders';
+import { emailRouter } from '~/server/api/routers/email';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const appRouter = createTRPCRouter({
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   comments: commentsRouter,
   users: usersRouter,
   wonders: wondersRouter,
+  email: emailRouter,
 });
 
 export type AppRouter = typeof appRouter;

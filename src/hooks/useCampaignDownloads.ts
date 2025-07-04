@@ -78,145 +78,161 @@ export function useCampaignDownloads(campaignData: CampaignData) {
   const [error, setError] = useState<string | null>(null);
 
   // Generate QR code and return data URL
-  const generateQRCode = useCallback(async (options?: QRCodeOptions): Promise<string | null> => {
-    try {
-      setIsGenerating(prev => ({ ...prev, qr: true }));
-      setError(null);
+  const generateQRCode = useCallback(
+    async (options?: QRCodeOptions): Promise<string | null> => {
+      try {
+        setIsGenerating((prev) => ({ ...prev, qr: true }));
+        setError(null);
 
-      const response = await fetch(`/api/campaigns/${campaignData.id}/qr`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: campaignData.title,
-          format: 'dataurl',
-          options: {
-            width: 300,
-            margin: 4,
-            errorCorrectionLevel: 'M',
-            ...options,
+        const response = await fetch(`/api/campaigns/${campaignData.id}/qr`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            title: campaignData.title,
+            format: 'dataurl',
+            options: {
+              width: 300,
+              margin: 4,
+              errorCorrectionLevel: 'M',
+              ...options,
+            },
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate QR code');
+        if (!response.ok) {
+          throw new Error('Failed to generate QR code');
+        }
+
+        const result = await response.json();
+        const dataUrl = result.data.qrCode;
+        setQrCodeDataUrl(dataUrl);
+        return dataUrl;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        console.error('QR generation error:', err);
+        return null;
+      } finally {
+        setIsGenerating((prev) => ({ ...prev, qr: false }));
       }
-
-      const result = await response.json();
-      const dataUrl = result.data.qrCode;
-      setQrCodeDataUrl(dataUrl);
-      return dataUrl;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      console.error('QR generation error:', err);
-      return null;
-    } finally {
-      setIsGenerating(prev => ({ ...prev, qr: false }));
-    }
-  }, [campaignData.id, campaignData.title]);
+    },
+    [campaignData.id, campaignData.title]
+  );
 
   // Download QR code as PNG file
-  const downloadQRCode = useCallback(async (filename?: string): Promise<boolean> => {
-    try {
-      setIsGenerating(prev => ({ ...prev, qr: true }));
-      setError(null);
+  const downloadQRCode = useCallback(
+    async (filename?: string): Promise<boolean> => {
+      try {
+        setIsGenerating((prev) => ({ ...prev, qr: true }));
+        setError(null);
 
-      const downloadFilename = filename || `campaign-${campaignData.id}-qr.png`;
-      const response = await fetch(`/api/campaigns/${campaignData.id}/qr?download=true&filename=${downloadFilename}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to download QR code');
+        const downloadFilename =
+          filename || `campaign-${campaignData.id}-qr.png`;
+        const response = await fetch(
+          `/api/campaigns/${campaignData.id}/qr?download=true&filename=${downloadFilename}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to download QR code');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadFilename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        console.error('QR download error:', err);
+        return false;
+      } finally {
+        setIsGenerating((prev) => ({ ...prev, qr: false }));
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = downloadFilename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      console.error('QR download error:', err);
-      return false;
-    } finally {
-      setIsGenerating(prev => ({ ...prev, qr: false }));
-    }
-  }, [campaignData.id]);
+    },
+    [campaignData.id]
+  );
 
   // Generate and download PDF report
-  const downloadPDFReport = useCallback(async (
-    type: 'full_report' | 'voting_summary' | 'qr_share' = 'full_report',
-    options?: PDFOptions,
-    filename?: string
-  ): Promise<boolean> => {
-    try {
-      setIsGenerating(prev => ({ ...prev, pdf: type }));
-      setError(null);
+  const downloadPDFReport = useCallback(
+    async (
+      type: 'full_report' | 'voting_summary' | 'qr_share' = 'full_report',
+      options?: PDFOptions,
+      filename?: string
+    ): Promise<boolean> => {
+      try {
+        setIsGenerating((prev) => ({ ...prev, pdf: type }));
+        setError(null);
 
-      const pdfData = {
-        type,
-        data: {
-          id: campaignData.id,
-          title: campaignData.title,
-          description: campaignData.description,
-          status: campaignData.status || 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          location: campaignData.location,
-          votes: campaignData.votes,
-          engagement: campaignData.engagement,
-          timeline: campaignData.timeline,
-          documents: campaignData.documents,
-        },
-        options: {
-          format: 'a4',
-          orientation: 'portrait',
-          ...options,
-        },
-      };
+        const pdfData = {
+          type,
+          data: {
+            id: campaignData.id,
+            title: campaignData.title,
+            description: campaignData.description,
+            status: campaignData.status || 'ACTIVE',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            location: campaignData.location,
+            votes: campaignData.votes,
+            engagement: campaignData.engagement,
+            timeline: campaignData.timeline,
+            documents: campaignData.documents,
+          },
+          options: {
+            format: 'a4',
+            orientation: 'portrait',
+            ...options,
+          },
+        };
 
-      const response = await fetch(`/api/campaigns/${campaignData.id}/pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pdfData),
-      });
+        const response = await fetch(`/api/campaigns/${campaignData.id}/pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(pdfData),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        if (!response.ok) {
+          throw new Error('Failed to generate PDF');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const downloadFilename =
+          filename || `campaign-${campaignData.id}-${type}.pdf`;
+        a.href = url;
+        a.download = downloadFilename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        console.error('PDF generation error:', err);
+        return false;
+      } finally {
+        setIsGenerating((prev) => ({ ...prev, pdf: null }));
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const downloadFilename = filename || `campaign-${campaignData.id}-${type}.pdf`;
-      a.href = url;
-      a.download = downloadFilename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      console.error('PDF generation error:', err);
-      return false;
-    } finally {
-      setIsGenerating(prev => ({ ...prev, pdf: null }));
-    }
-  }, [campaignData]);
+    },
+    [campaignData]
+  );
 
   // Get campaign share URL
   const getCampaignUrl = useCallback(() => {
@@ -254,7 +270,12 @@ export function useCampaignDownloads(campaignData: CampaignData) {
       // Fallback to copy URL
       return copyCampaignUrl();
     }
-  }, [campaignData.title, campaignData.description, getCampaignUrl, copyCampaignUrl]);
+  }, [
+    campaignData.title,
+    campaignData.description,
+    getCampaignUrl,
+    copyCampaignUrl,
+  ]);
 
   // Clear error
   const clearError = useCallback(() => {
@@ -266,7 +287,7 @@ export function useCampaignDownloads(campaignData: CampaignData) {
     isGenerating,
     qrCodeDataUrl,
     error,
-    
+
     // Actions
     generateQRCode,
     downloadQRCode,
@@ -275,7 +296,7 @@ export function useCampaignDownloads(campaignData: CampaignData) {
     copyCampaignUrl,
     shareCampaign,
     clearError,
-    
+
     // Utilities
     canShare: typeof navigator !== 'undefined' && !!navigator.share,
   };

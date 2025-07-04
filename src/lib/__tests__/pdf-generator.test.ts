@@ -72,7 +72,8 @@ describe('PDF Generator Utilities', () => {
     const mockCampaignData: CampaignReportData = {
       id: 'test-campaign-123',
       title: 'Test Campaign for PDF Generation',
-      description: 'This is a test campaign description for PDF report generation.',
+      description:
+        'This is a test campaign description for PDF report generation.',
       status: 'ACTIVE',
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-02'),
@@ -271,7 +272,9 @@ describe('PDF Generator Utilities', () => {
         updatedAt: '2024-01-02T00:00:00Z',
       };
 
-      await expect(generateCampaignReport(dataWithStringDates)).resolves.toBeDefined();
+      await expect(
+        generateCampaignReport(dataWithStringDates)
+      ).resolves.toBeDefined();
     });
   });
 
@@ -322,7 +325,10 @@ describe('PDF Generator Utilities', () => {
     const mockQRDataUrl = 'data:image/png;base64,mockQRData';
 
     it('should generate QR PDF successfully', async () => {
-      const result = await generateCampaignQRPDF(mockCampaignData, mockQRDataUrl);
+      const result = await generateCampaignQRPDF(
+        mockCampaignData,
+        mockQRDataUrl
+      );
 
       expect(result).toBeInstanceOf(Buffer);
       expect(jsPDF).toHaveBeenCalled();
@@ -394,7 +400,9 @@ describe('PDF Generator Utilities', () => {
         format: 'invalid' as any,
       };
 
-      await expect(generateCampaignReport(mockData, invalidOptions)).rejects.toThrow();
+      await expect(
+        generateCampaignReport(mockData, invalidOptions)
+      ).rejects.toThrow();
     });
 
     it('should validate orientation options', async () => {
@@ -402,7 +410,9 @@ describe('PDF Generator Utilities', () => {
         orientation: 'invalid' as any,
       };
 
-      await expect(generateCampaignReport(mockData, invalidOptions)).rejects.toThrow();
+      await expect(
+        generateCampaignReport(mockData, invalidOptions)
+      ).rejects.toThrow();
     });
 
     it('should validate margin values', async () => {
@@ -412,7 +422,9 @@ describe('PDF Generator Utilities', () => {
         },
       };
 
-      await expect(generateCampaignReport(mockData, invalidOptions)).rejects.toThrow();
+      await expect(
+        generateCampaignReport(mockData, invalidOptions)
+      ).rejects.toThrow();
     });
 
     it('should validate font size range', async () => {
@@ -420,7 +432,9 @@ describe('PDF Generator Utilities', () => {
         fontSize: 5, // Below minimum
       };
 
-      await expect(generateCampaignReport(mockData, invalidOptions)).rejects.toThrow();
+      await expect(
+        generateCampaignReport(mockData, invalidOptions)
+      ).rejects.toThrow();
     });
   });
 

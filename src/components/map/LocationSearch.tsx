@@ -94,7 +94,7 @@ export function LocationSearch({
           placeholder={placeholder}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        
+
         {loading && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
@@ -115,7 +115,9 @@ export function LocationSearch({
               </div>
               {(suggestion.city || suggestion.state) && (
                 <div className="text-sm text-gray-500">
-                  {[suggestion.city, suggestion.state].filter(Boolean).join(', ')}
+                  {[suggestion.city, suggestion.state]
+                    .filter(Boolean)
+                    .join(', ')}
                 </div>
               )}
             </button>

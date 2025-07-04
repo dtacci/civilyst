@@ -1,12 +1,15 @@
 'use client';
 
 import { api } from '~/lib/trpc';
-import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
+import { SignUpButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { MobileNav } from '~/components/features/navigation/mobile-nav';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
+import { AnonymousWonderButton } from '~/components/anonymous/AnonymousWonderButton';
+import { TrustSignalDisplay } from '~/components/trust/TrustSignalDisplay';
+import { AnonymousWonderFeed } from '~/components/anonymous/AnonymousWonderFeed';
 import { useRouter } from 'next/navigation';
 import {
   Zap,
@@ -33,7 +36,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Voice capture - requires login');
+        console.warn('[Home] Voice capture - requires login');
       }
     }
   };
@@ -44,7 +47,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Photo capture - requires login');
+        console.warn('[Home] Photo capture - requires login');
       }
     }
   };
@@ -55,7 +58,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Location capture - requires login');
+        console.warn('[Home] Location capture - requires login');
       }
     }
   };
@@ -75,7 +78,7 @@ export default function Home() {
   const handleFeedback = () => {
     // Development logging only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Home] Feedback - Future: User feedback system');
+      console.warn('[Home] Feedback - Future: User feedback system');
     }
   };
 
@@ -153,21 +156,17 @@ export default function Home() {
                   </>
                 ) : (
                   <>
+                    <AnonymousWonderButton variant="hero" />
                     <SignUpButton mode="modal">
-                      <Button size="lg" className="w-full sm:w-auto">
-                        <Mic className="h-5 w-5 mr-2" />
-                        Start Creating
-                      </Button>
-                    </SignUpButton>
-                    <SignInButton mode="modal">
                       <Button
-                        variant="outline"
                         size="lg"
+                        variant="secondary"
                         className="w-full sm:w-auto"
                       >
-                        Sign In
+                        <Mic className="h-5 w-5 mr-2" />
+                        Sign Up for More
                       </Button>
-                    </SignInButton>
+                    </SignUpButton>
                   </>
                 )}
               </div>
@@ -346,6 +345,12 @@ export default function Home() {
                   )}
                 </CardContent>
               </Card>
+            </section>
+
+            {/* Trust Building Section */}
+            <section>
+              <TrustSignalDisplay />
+              <AnonymousWonderFeed />
             </section>
           </div>
         </div>

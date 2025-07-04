@@ -10,10 +10,17 @@ interface CommentsSectionProps {
   currentUserId?: string;
 }
 
-export function CommentsSection({ campaignId, currentUserId }: CommentsSectionProps) {
+export function CommentsSection({
+  campaignId,
+  currentUserId,
+}: CommentsSectionProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
 
-  const { data: commentsData, isLoading, error } = api.comments.getComments.useQuery({
+  const {
+    data: commentsData,
+    isLoading,
+    error,
+  } = api.comments.getComments.useQuery({
     campaignId,
     limit: 20,
   });

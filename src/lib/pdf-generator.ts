@@ -10,12 +10,15 @@ const PDFOptionsSchema = z.object({
   compress: z.boolean().optional().default(true),
   fontSize: z.number().min(8).max(72).optional().default(11),
   lineHeight: z.number().min(1).max(3).optional().default(1.4),
-  margin: z.object({
-    top: z.number().min(0).max(50).optional().default(20),
-    right: z.number().min(0).max(50).optional().default(20),
-    bottom: z.number().min(0).max(50).optional().default(20),
-    left: z.number().min(0).max(50).optional().default(20),
-  }).optional().default({}),
+  margin: z
+    .object({
+      top: z.number().min(0).max(50).optional().default(20),
+      right: z.number().min(0).max(50).optional().default(20),
+      bottom: z.number().min(0).max(50).optional().default(20),
+      left: z.number().min(0).max(50).optional().default(20),
+    })
+    .optional()
+    .default({}),
 });
 
 type PDFOptions = z.infer<typeof PDFOptionsSchema>;
@@ -28,40 +31,56 @@ const CampaignReportDataSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']),
   createdAt: z.string().or(z.date()),
   updatedAt: z.string().or(z.date()),
-  location: z.object({
-    address: z.string(),
-    city: z.string(),
-    state: z.string(),
-    zipCode: z.string(),
-    coordinates: z.object({
-      lat: z.number(),
-      lng: z.number(),
-    }).optional(),
-  }).optional(),
-  votes: z.object({
-    total: z.number(),
-    support: z.number(),
-    oppose: z.number(),
-    supportPercentage: z.number(),
-    opposePercentage: z.number(),
-  }).optional(),
-  engagement: z.object({
-    views: z.number(),
-    shares: z.number(),
-    comments: z.number(),
-    participants: z.number(),
-  }).optional(),
-  timeline: z.array(z.object({
-    date: z.string().or(z.date()),
-    event: z.string(),
-    description: z.string(),
-  })).optional(),
-  documents: z.array(z.object({
-    name: z.string(),
-    url: z.string(),
-    type: z.string(),
-    size: z.number().optional(),
-  })).optional(),
+  location: z
+    .object({
+      address: z.string(),
+      city: z.string(),
+      state: z.string(),
+      zipCode: z.string(),
+      coordinates: z
+        .object({
+          lat: z.number(),
+          lng: z.number(),
+        })
+        .optional(),
+    })
+    .optional(),
+  votes: z
+    .object({
+      total: z.number(),
+      support: z.number(),
+      oppose: z.number(),
+      supportPercentage: z.number(),
+      opposePercentage: z.number(),
+    })
+    .optional(),
+  engagement: z
+    .object({
+      views: z.number(),
+      shares: z.number(),
+      comments: z.number(),
+      participants: z.number(),
+    })
+    .optional(),
+  timeline: z
+    .array(
+      z.object({
+        date: z.string().or(z.date()),
+        event: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  documents: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        size: z.number().optional(),
+      })
+    )
+    .optional(),
 });
 
 type CampaignReportData = z.infer<typeof CampaignReportDataSchema>;
@@ -96,11 +115,17 @@ export async function generateCampaignReport(
     let yPosition = margin.top;
 
     // Helper function to add text with automatic line breaks
-    const addText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = validatedOptions.fontSize) => {
+    const addText = (
+      text: string,
+      x: number,
+      y: number,
+      maxWidth: number,
+      fontSize: number = validatedOptions.fontSize
+    ) => {
       doc.setFontSize(fontSize);
       const lines = doc.splitTextToSize(text, maxWidth);
       doc.text(lines, x, y);
-      return y + (lines.length * fontSize * validatedOptions.lineHeight);
+      return y + lines.length * fontSize * validatedOptions.lineHeight;
     };
 
     // Helper function to check if we need a new page
@@ -120,7 +145,13 @@ export async function generateCampaignReport(
     // Campaign Title
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    yPosition = addText(validatedData.title, margin.left, yPosition, contentWidth, 16);
+    yPosition = addText(
+      validatedData.title,
+      margin.left,
+      yPosition,
+      contentWidth,
+      16
+    );
     yPosition += 10;
 
     // Basic Information Section
@@ -131,26 +162,48 @@ export async function generateCampaignReport(
 
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    
+
     // Campaign ID
-    yPosition = addText(`Campaign ID: ${validatedData.id}`, margin.left, yPosition, contentWidth);
+    yPosition = addText(
+      `Campaign ID: ${validatedData.id}`,
+      margin.left,
+      yPosition,
+      contentWidth
+    );
     yPosition += 5;
 
     // Status
-    yPosition = addText(`Status: ${validatedData.status}`, margin.left, yPosition, contentWidth);
+    yPosition = addText(
+      `Status: ${validatedData.status}`,
+      margin.left,
+      yPosition,
+      contentWidth
+    );
     yPosition += 5;
 
     // Dates
-    const createdDate = typeof validatedData.createdAt === 'string' 
-      ? new Date(validatedData.createdAt) 
-      : validatedData.createdAt;
-    const updatedDate = typeof validatedData.updatedAt === 'string' 
-      ? new Date(validatedData.updatedAt) 
-      : validatedData.updatedAt;
+    const createdDate =
+      typeof validatedData.createdAt === 'string'
+        ? new Date(validatedData.createdAt)
+        : validatedData.createdAt;
+    const updatedDate =
+      typeof validatedData.updatedAt === 'string'
+        ? new Date(validatedData.updatedAt)
+        : validatedData.updatedAt;
 
-    yPosition = addText(`Created: ${format(createdDate, 'PPP')}`, margin.left, yPosition, contentWidth);
+    yPosition = addText(
+      `Created: ${format(createdDate, 'PPP')}`,
+      margin.left,
+      yPosition,
+      contentWidth
+    );
     yPosition += 5;
-    yPosition = addText(`Last Updated: ${format(updatedDate, 'PPP')}`, margin.left, yPosition, contentWidth);
+    yPosition = addText(
+      `Last Updated: ${format(updatedDate, 'PPP')}`,
+      margin.left,
+      yPosition,
+      contentWidth
+    );
     yPosition += 10;
 
     // Location Section
@@ -164,13 +217,28 @@ export async function generateCampaignReport(
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       const location = validatedData.location;
-      yPosition = addText(`Address: ${location.address}`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Address: ${location.address}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`City: ${location.city}, ${location.state} ${location.zipCode}`, margin.left, yPosition, contentWidth);
-      
+      yPosition = addText(
+        `City: ${location.city}, ${location.state} ${location.zipCode}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
+
       if (location.coordinates) {
         yPosition += 5;
-        yPosition = addText(`Coordinates: ${location.coordinates.lat.toFixed(6)}, ${location.coordinates.lng.toFixed(6)}`, margin.left, yPosition, contentWidth);
+        yPosition = addText(
+          `Coordinates: ${location.coordinates.lat.toFixed(6)}, ${location.coordinates.lng.toFixed(6)}`,
+          margin.left,
+          yPosition,
+          contentWidth
+        );
       }
       yPosition += 10;
     }
@@ -184,7 +252,12 @@ export async function generateCampaignReport(
 
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    yPosition = addText(validatedData.description, margin.left, yPosition, contentWidth);
+    yPosition = addText(
+      validatedData.description,
+      margin.left,
+      yPosition,
+      contentWidth
+    );
     yPosition += 10;
 
     // Voting Results Section
@@ -198,12 +271,27 @@ export async function generateCampaignReport(
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       const votes = validatedData.votes;
-      
-      yPosition = addText(`Total Votes: ${votes.total}`, margin.left, yPosition, contentWidth);
+
+      yPosition = addText(
+        `Total Votes: ${votes.total}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`Support: ${votes.support} (${votes.supportPercentage.toFixed(1)}%)`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Support: ${votes.support} (${votes.supportPercentage.toFixed(1)}%)`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`Oppose: ${votes.oppose} (${votes.opposePercentage.toFixed(1)}%)`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Oppose: ${votes.oppose} (${votes.opposePercentage.toFixed(1)}%)`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 10;
 
       // Simple visual representation
@@ -215,15 +303,21 @@ export async function generateCampaignReport(
       // Support bar (green)
       doc.setFillColor(34, 197, 94); // Green
       doc.rect(margin.left, yPosition, supportWidth, barHeight, 'F');
-      
+
       // Oppose bar (red)
       doc.setFillColor(239, 68, 68); // Red
-      doc.rect(margin.left + supportWidth, yPosition, opposeWidth, barHeight, 'F');
-      
+      doc.rect(
+        margin.left + supportWidth,
+        yPosition,
+        opposeWidth,
+        barHeight,
+        'F'
+      );
+
       // Border
       doc.setDrawColor(0, 0, 0);
       doc.rect(margin.left, yPosition, barWidth, barHeight, 'S');
-      
+
       yPosition += barHeight + 10;
     }
 
@@ -238,14 +332,34 @@ export async function generateCampaignReport(
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       const engagement = validatedData.engagement;
-      
-      yPosition = addText(`Views: ${engagement.views}`, margin.left, yPosition, contentWidth);
+
+      yPosition = addText(
+        `Views: ${engagement.views}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`Shares: ${engagement.shares}`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Shares: ${engagement.shares}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`Comments: ${engagement.comments}`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Comments: ${engagement.comments}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 5;
-      yPosition = addText(`Participants: ${engagement.participants}`, margin.left, yPosition, contentWidth);
+      yPosition = addText(
+        `Participants: ${engagement.participants}`,
+        margin.left,
+        yPosition,
+        contentWidth
+      );
       yPosition += 10;
     }
 
@@ -259,13 +373,24 @@ export async function generateCampaignReport(
 
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      
+
       validatedData.timeline.forEach((event) => {
         checkPageBreak(20);
-        const eventDate = typeof event.date === 'string' ? new Date(event.date) : event.date;
-        yPosition = addText(`${format(eventDate, 'PPP')}: ${event.event}`, margin.left, yPosition, contentWidth);
+        const eventDate =
+          typeof event.date === 'string' ? new Date(event.date) : event.date;
+        yPosition = addText(
+          `${format(eventDate, 'PPP')}: ${event.event}`,
+          margin.left,
+          yPosition,
+          contentWidth
+        );
         yPosition += 3;
-        yPosition = addText(`   ${event.description}`, margin.left, yPosition, contentWidth);
+        yPosition = addText(
+          `   ${event.description}`,
+          margin.left,
+          yPosition,
+          contentWidth
+        );
         yPosition += 5;
       });
       yPosition += 5;
@@ -281,12 +406,22 @@ export async function generateCampaignReport(
 
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      
+
       validatedData.documents.forEach((document) => {
         checkPageBreak(15);
-        yPosition = addText(`• ${document.name} (${document.type})`, margin.left, yPosition, contentWidth);
+        yPosition = addText(
+          `• ${document.name} (${document.type})`,
+          margin.left,
+          yPosition,
+          contentWidth
+        );
         yPosition += 3;
-        yPosition = addText(`  ${document.url}`, margin.left, yPosition, contentWidth);
+        yPosition = addText(
+          `  ${document.url}`,
+          margin.left,
+          yPosition,
+          contentWidth
+        );
         yPosition += 5;
       });
     }
@@ -297,9 +432,20 @@ export async function generateCampaignReport(
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-      doc.text(`Generated on ${format(new Date(), 'PPP')}`, pageWidth - margin.right, pageHeight - 10, { align: 'right' });
-      doc.text('Civilyst - Civic Engagement Platform', margin.left, pageHeight - 10);
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, {
+        align: 'center',
+      });
+      doc.text(
+        `Generated on ${format(new Date(), 'PPP')}`,
+        pageWidth - margin.right,
+        pageHeight - 10,
+        { align: 'right' }
+      );
+      doc.text(
+        'Civilyst - Civic Engagement Platform',
+        margin.left,
+        pageHeight - 10
+      );
     }
 
     // Return PDF as buffer
@@ -307,7 +453,9 @@ export async function generateCampaignReport(
     return pdfBuffer;
   } catch (error) {
     console.error('PDF generation failed:', error);
-    throw new Error(`Failed to generate PDF report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to generate PDF report: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -318,7 +466,10 @@ export async function generateCampaignReport(
  * @returns Promise resolving to PDF buffer
  */
 export async function generateVotingSummaryPDF(
-  campaignData: Pick<CampaignReportData, 'id' | 'title' | 'votes' | 'engagement'>,
+  campaignData: Pick<
+    CampaignReportData,
+    'id' | 'title' | 'votes' | 'engagement'
+  >,
   options: Partial<PDFOptions> = {}
 ): Promise<Buffer> {
   const summaryData: CampaignReportData = {
@@ -367,7 +518,10 @@ export async function generateCampaignQRPDF(
     // Campaign Title
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    const lines = doc.splitTextToSize(campaignData.title, pageWidth - margin.left - margin.right);
+    const lines = doc.splitTextToSize(
+      campaignData.title,
+      pageWidth - margin.left - margin.right
+    );
     doc.text(lines, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += lines.length * 8 + 10;
 
@@ -380,32 +534,49 @@ export async function generateCampaignQRPDF(
     // Instructions
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('Scan this QR code to view the campaign', pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(
+      'Scan this QR code to view the campaign',
+      pageWidth / 2,
+      yPosition,
+      { align: 'center' }
+    );
     yPosition += 10;
 
     // Campaign ID
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Campaign ID: ${campaignData.id}`, pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(`Campaign ID: ${campaignData.id}`, pageWidth / 2, yPosition, {
+      align: 'center',
+    });
     yPosition += 15;
 
     // Description
     if (campaignData.description) {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      const descLines = doc.splitTextToSize(campaignData.description, pageWidth - margin.left - margin.right);
+      const descLines = doc.splitTextToSize(
+        campaignData.description,
+        pageWidth - margin.left - margin.right
+      );
       doc.text(descLines, margin.left, yPosition);
     }
 
     // Footer
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated on ${format(new Date(), 'PPP')}`, pageWidth / 2, pageWidth - 10, { align: 'center' });
+    doc.text(
+      `Generated on ${format(new Date(), 'PPP')}`,
+      pageWidth / 2,
+      pageWidth - 10,
+      { align: 'center' }
+    );
 
     return Buffer.from(doc.output('arraybuffer'));
   } catch (error) {
     console.error('QR PDF generation failed:', error);
-    throw new Error(`Failed to generate QR PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to generate QR PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
