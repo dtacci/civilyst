@@ -36,7 +36,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Voice capture - requires login');
+        console.warn('[Home] Voice capture - requires login');
       }
     }
   };
@@ -47,7 +47,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Photo capture - requires login');
+        console.warn('[Home] Photo capture - requires login');
       }
     }
   };
@@ -58,7 +58,7 @@ export default function Home() {
     } else {
       // Development logging only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Home] Location capture - requires login');
+        console.warn('[Home] Location capture - requires login');
       }
     }
   };
@@ -78,7 +78,7 @@ export default function Home() {
   const handleFeedback = () => {
     // Development logging only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Home] Feedback - Future: User feedback system');
+      console.warn('[Home] Feedback - Future: User feedback system');
     }
   };
 
@@ -158,7 +158,11 @@ export default function Home() {
                   <>
                     <AnonymousWonderButton variant="hero" />
                     <SignUpButton mode="modal">
-                      <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                      >
                         <Mic className="h-5 w-5 mr-2" />
                         Sign Up for More
                       </Button>

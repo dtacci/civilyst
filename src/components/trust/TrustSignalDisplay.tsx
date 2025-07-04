@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
-import { 
-  MapPin, 
-  Clock, 
-  ThumbsUp, 
-  User, 
+import {
+  MapPin,
+  Clock,
+  ThumbsUp,
+  User,
   Shield,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { api } from '~/lib/trpc';
-import { getOrCreateDeviceId } from '~/lib/trust/deviceFingerprint';
+import { getDeviceId } from '~/lib/trust/deviceFingerprint';
 
 interface TrustSignal {
   icon: React.ReactNode;
@@ -29,14 +29,15 @@ export function TrustSignalDisplay() {
   const [signals, setSignals] = useState<TrustSignal[]>([]);
 
   // Get anonymous wonders for this device
-  const { data: anonymousData, isLoading } = api.wonders.getAnonymousWonders.useQuery(
-    { deviceId: deviceId ?? '' },
-    { enabled: !!deviceId }
-  );
+  const { data: anonymousData, isLoading } =
+    api.wonders.getAnonymousWonders.useQuery(
+      { deviceId: deviceId ?? '' },
+      { enabled: !!deviceId }
+    );
 
   useEffect(() => {
     const initDevice = async () => {
-      const id = await getOrCreateDeviceId();
+      const id = await getDeviceId();
       setDeviceId(id);
     };
     initDevice();
@@ -45,13 +46,15 @@ export function TrustSignalDisplay() {
   useEffect(() => {
     if (anonymousData) {
       setTrustScore(anonymousData.trustScore);
-      
+
       // Build trust signals based on data
       const newSignals: TrustSignal[] = [
         {
           icon: <MapPin className="h-5 w-5" />,
           label: 'Location Verified',
-          status: anonymousData.wonders.some(w => w.location) ? 'verified' : 'unverified',
+          status: anonymousData.wonders.some((w) => w.location)
+            ? 'verified'
+            : 'unverified',
           value: 0.2,
           description: 'Share your location to build local trust',
         },
@@ -77,7 +80,7 @@ export function TrustSignalDisplay() {
           description: 'Sign up to claim your wonders and boost trust',
         },
       ];
-      
+
       setSignals(newSignals);
     }
   }, [anonymousData]);
@@ -165,7 +168,8 @@ export function TrustSignalDisplay() {
         {trustScore < 0.3 && (
           <div className="mt-6 p-4 bg-[--color-primary-light] rounded-[--border-radius-md]">
             <p className="text-[--font-size-sm] text-[--color-primary] text-center">
-              Continue sharing wonders and engaging with your community to build trust!
+              Continue sharing wonders and engaging with your community to build
+              trust!
             </p>
           </div>
         )}

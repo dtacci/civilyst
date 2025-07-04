@@ -19,7 +19,7 @@ export const wondersRouter = createTRPCRouter({
     // Get today's featured wonder or most recent active wonder
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const activeWonder = await db.wonder.findFirst({
       where: {
         status: WonderStatus.ACTIVE,
@@ -63,10 +63,7 @@ export const wondersRouter = createTRPCRouter({
           status: WonderStatus.ACTIVE,
           category: input.category,
         },
-        orderBy: [
-          { responseCount: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ responseCount: 'desc' }, { createdAt: 'desc' }],
         take: input.limit,
         include: {
           author: {
@@ -94,7 +91,9 @@ export const wondersRouter = createTRPCRouter({
       z.object({
         question: z.string().min(10).max(500),
         category: z.nativeEnum(WonderCategory).default(WonderCategory.GENERAL),
-        timeContext: z.nativeEnum(WonderTimeContext).default(WonderTimeContext.ANYTIME),
+        timeContext: z
+          .nativeEnum(WonderTimeContext)
+          .default(WonderTimeContext.ANYTIME),
         locationContext: z.string().optional(),
       })
     )
@@ -250,7 +249,7 @@ export const wondersRouter = createTRPCRouter({
     }
 
     const userId = ctx.userId;
-    
+
     // Calculate streak (consecutive days with responses)
     const recentResponses = await db.wonderResponse.findMany({
       where: {
@@ -268,7 +267,7 @@ export const wondersRouter = createTRPCRouter({
     // Calculate streak logic
     let streak = 0;
     const today = new Date();
-    const responseDates = recentResponses.map(r => {
+    const responseDates = recentResponses.map((r) => {
       const date = new Date(r.createdAt);
       date.setHours(0, 0, 0, 0);
       return date.getTime();
@@ -276,12 +275,12 @@ export const wondersRouter = createTRPCRouter({
 
     // Check consecutive days from today backwards
     const uniqueDates = [...new Set(responseDates)].sort((a, b) => b - a);
-    
+
     for (let i = 0; i < uniqueDates.length; i++) {
       const expectedDate = new Date(today);
       expectedDate.setDate(today.getDate() - i);
       expectedDate.setHours(0, 0, 0, 0);
-      
+
       if (uniqueDates[i] === expectedDate.getTime()) {
         streak++;
       } else {
@@ -328,10 +327,7 @@ export const wondersRouter = createTRPCRouter({
             gte: input.minConfidence,
           },
         },
-        orderBy: [
-          { confidence: 'desc' },
-          { supportCount: 'desc' },
-        ],
+        orderBy: [{ confidence: 'desc' }, { supportCount: 'desc' }],
         include: {
           campaign: {
             select: {
@@ -360,7 +356,9 @@ export const wondersRouter = createTRPCRouter({
           })
           .optional(),
         category: z.nativeEnum(WonderCategory).default(WonderCategory.GENERAL),
-        timeContext: z.nativeEnum(WonderTimeContext).default(WonderTimeContext.ANYTIME),
+        timeContext: z
+          .nativeEnum(WonderTimeContext)
+          .default(WonderTimeContext.ANYTIME),
       })
     )
     .mutation(async ({ input }) => {
@@ -539,4 +537,4 @@ export const wondersRouter = createTRPCRouter({
         wonders: createdWonders,
       };
     }),
-}); 
+});

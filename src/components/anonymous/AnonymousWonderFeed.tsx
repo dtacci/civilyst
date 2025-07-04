@@ -5,7 +5,7 @@ import { Card, CardContent } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Sparkles, Clock, MapPin, Tag } from 'lucide-react';
 import { api } from '~/lib/trpc';
-import { getOrCreateDeviceId } from '~/lib/trust/deviceFingerprint';
+import { getDeviceId } from '~/lib/trust/deviceFingerprint';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@clerk/nextjs';
 import { toast } from '~/lib/toast';
@@ -15,10 +15,11 @@ export function AnonymousWonderFeed() {
   const { isSignedIn } = useAuth();
 
   // Get anonymous wonders for this device
-  const { data: anonymousData, isLoading } = api.wonders.getAnonymousWonders.useQuery(
-    { deviceId: deviceId ?? '' },
-    { enabled: !!deviceId }
-  );
+  const { data: anonymousData, isLoading } =
+    api.wonders.getAnonymousWonders.useQuery(
+      { deviceId: deviceId ?? '' },
+      { enabled: !!deviceId }
+    );
 
   // Claim wonders mutation
   const claimWonders = api.wonders.claimAnonymousWonders.useMutation({
@@ -32,7 +33,7 @@ export function AnonymousWonderFeed() {
 
   useEffect(() => {
     const initDevice = async () => {
-      const id = await getOrCreateDeviceId();
+      const id = await getDeviceId();
       setDeviceId(id);
     };
     initDevice();
@@ -84,21 +85,25 @@ export function AnonymousWonderFeed() {
               key={wonder.id}
               className="p-4 rounded-[--border-radius-md] bg-[--color-surface] border border-[--color-border]"
             >
-              <p className="text-[--color-text-primary] mb-3">{wonder.content}</p>
-              
+              <p className="text-[--color-text-primary] mb-3">
+                {wonder.content}
+              </p>
+
               <div className="flex flex-wrap gap-4 text-[--font-size-sm] text-[--color-text-secondary]">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {formatDistanceToNow(new Date(wonder.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(wonder.createdAt), {
+                    addSuffix: true,
+                  })}
                 </div>
-                
+
                 {wonder.location && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     Location shared
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-1">
                   <Tag className="h-4 w-4" />
                   {wonder.category.toLowerCase()}

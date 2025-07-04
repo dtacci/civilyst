@@ -27,7 +27,9 @@ interface FingerprintComponents {
 /**
  * Collect device fingerprint components from the browser
  */
-export async function collectFingerprintComponents(): Promise<Partial<FingerprintComponents>> {
+export async function collectFingerprintComponents(): Promise<
+  Partial<FingerprintComponents>
+> {
   const components: Partial<FingerprintComponents> = {};
 
   // Basic browser properties
@@ -107,7 +109,8 @@ async function getCanvasFingerprint(): Promise<string> {
  */
 async function getWebGLFingerprint(): Promise<string> {
   const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  const gl =
+    canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) return 'not-available';
 
   const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
@@ -123,7 +126,10 @@ async function getWebGLFingerprint(): Promise<string> {
  * Generate audio fingerprint
  */
 async function getAudioFingerprint(): Promise<string> {
-  const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const AudioContext =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioContext) return 'not-available';
 
   const context = new AudioContext();
@@ -139,7 +145,7 @@ async function getAudioFingerprint(): Promise<string> {
   gainNode.connect(context.destination);
 
   oscillator.start(0);
-  
+
   return new Promise((resolve) => {
     let fingerprint = '';
     scriptProcessor.onaudioprocess = (event) => {
@@ -155,7 +161,9 @@ async function getAudioFingerprint(): Promise<string> {
 /**
  * Generate a stable device ID from fingerprint components
  */
-export async function generateDeviceId(components: Partial<FingerprintComponents>): Promise<string> {
+export async function generateDeviceId(
+  components: Partial<FingerprintComponents>
+): Promise<string> {
   // Sort components for stability
   const sortedComponents = Object.entries(components)
     .filter(([_, value]) => value !== undefined && value !== null)
@@ -173,8 +181,10 @@ export async function generateDeviceId(components: Partial<FingerprintComponents
   const data = encoder.encode(sortedComponents);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
   return hashHex;
 }
 
@@ -209,9 +219,11 @@ export function clearDeviceId(): void {
  * Check if device fingerprinting is available
  */
 export function isFingerprintingAvailable(): boolean {
-  return typeof window !== 'undefined' && 
-         typeof navigator !== 'undefined' &&
-         typeof localStorage !== 'undefined';
+  return (
+    typeof window !== 'undefined' &&
+    typeof navigator !== 'undefined' &&
+    typeof localStorage !== 'undefined'
+  );
 }
 
 /**
@@ -254,7 +266,8 @@ function getOSFamily(ua: string): string {
   if (ua.includes('Mac')) return 'macOS';
   if (ua.includes('Linux')) return 'Linux';
   if (ua.includes('Android')) return 'Android';
-  if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+  if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad'))
+    return 'iOS';
   return 'Other';
 }
 

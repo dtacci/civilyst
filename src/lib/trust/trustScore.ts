@@ -10,16 +10,16 @@ import { TrustSignalType, TrustLevel } from '~/generated/prisma';
 const TRUST_SIGNAL_WEIGHTS: Record<TrustSignalType, number> = {
   LOCATION_VERIFIED: 0.15,
   RETURN_VISIT: 0.05,
-  CONTENT_QUALITY: 0.10,
-  COMMUNITY_VALIDATION: 0.10,
-  PROFILE_COMPLETION: 0.10,
+  CONTENT_QUALITY: 0.1,
+  COMMUNITY_VALIDATION: 0.1,
+  PROFILE_COMPLETION: 0.1,
   EMAIL_VERIFIED: 0.15,
   PHONE_VERIFIED: 0.15,
   ADDRESS_VERIFIED: 0.05,
   SOCIAL_CONNECTED: 0.05,
   WONDER_CONVERTED: 0.05,
   CAMPAIGN_SUCCESS: 0.03,
-  MODERATION_FLAG: -0.20, // Negative weight for bad behavior
+  MODERATION_FLAG: -0.2, // Negative weight for bad behavior
 };
 
 /**
@@ -28,34 +28,39 @@ const TRUST_SIGNAL_WEIGHTS: Record<TrustSignalType, number> = {
 const TRUST_LEVEL_THRESHOLDS = {
   BASIC: 0,
   VERIFIED: 0.25,
-  TRUSTED: 0.50,
+  TRUSTED: 0.5,
   LEADER: 0.75,
 };
 
 /**
  * Calculate trust score from signals
  */
-export function calculateTrustScore(signals: Array<{
-  signalType: TrustSignalType;
-  signalValue: number;
-  expiresAt?: Date | null;
-}>): number {
+export function calculateTrustScore(
+  signals: Array<{
+    signalType: TrustSignalType;
+    signalValue: number;
+    expiresAt?: Date | null;
+  }>
+): number {
   const now = new Date();
   let totalScore = 0;
 
   // Group signals by type and take the highest value for each type
-  const signalsByType = signals.reduce((acc, signal) => {
-    // Skip expired signals
-    if (signal.expiresAt && signal.expiresAt < now) {
-      return acc;
-    }
+  const signalsByType = signals.reduce(
+    (acc, signal) => {
+      // Skip expired signals
+      if (signal.expiresAt && signal.expiresAt < now) {
+        return acc;
+      }
 
-    const type = signal.signalType;
-    if (!acc[type] || acc[type] < signal.signalValue) {
-      acc[type] = signal.signalValue;
-    }
-    return acc;
-  }, {} as Record<TrustSignalType, number>);
+      const type = signal.signalType;
+      if (!acc[type] || acc[type] < signal.signalValue) {
+        acc[type] = signal.signalValue;
+      }
+      return acc;
+    },
+    {} as Record<TrustSignalType, number>
+  );
 
   // Calculate weighted score
   for (const [type, value] of Object.entries(signalsByType)) {
@@ -129,16 +134,27 @@ export function getTrustLevelBenefits(level: TrustLevel): string[] {
 /**
  * Calculate trust score progress percentage
  */
-export function getTrustProgress(score: number, currentLevel: TrustLevel): number {
+export function getTrustProgress(
+  score: number,
+  currentLevel: TrustLevel
+): number {
   const thresholds = TRUST_LEVEL_THRESHOLDS;
-  
+
   switch (currentLevel) {
     case 'BASIC':
       return (score / thresholds.VERIFIED) * 100;
     case 'VERIFIED':
-      return ((score - thresholds.VERIFIED) / (thresholds.TRUSTED - thresholds.VERIFIED)) * 100;
+      return (
+        ((score - thresholds.VERIFIED) /
+          (thresholds.TRUSTED - thresholds.VERIFIED)) *
+        100
+      );
     case 'TRUSTED':
-      return ((score - thresholds.TRUSTED) / (thresholds.LEADER - thresholds.TRUSTED)) * 100;
+      return (
+        ((score - thresholds.TRUSTED) /
+          (thresholds.LEADER - thresholds.TRUSTED)) *
+        100
+      );
     case 'LEADER':
       return 100; // Already at max level
   }
@@ -219,6 +235,6 @@ export function calculateTrustDecay(
   // Gradual decay after 30 days of inactivity
   const decayRate = 0.001; // 0.1% per day
   const decayAmount = decayRate * (daysSinceActivity - 30);
-  
+
   return Math.max(0, currentScore - decayAmount);
 }
