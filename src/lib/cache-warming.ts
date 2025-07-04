@@ -939,7 +939,7 @@ export async function warmCityStatistics(): Promise<WarmingResult> {
  * Warm all caches (comprehensive warming)
  */
 export async function warmAllCaches(): Promise<WarmingResult[]> {
-  console.log('Starting comprehensive cache warming...');
+  console.warn('Starting comprehensive cache warming...');
 
   const results: WarmingResult[] = [];
 
@@ -959,7 +959,7 @@ export async function warmAllCaches(): Promise<WarmingResult[]> {
     // Warm city statistics
     results.push(await warmCityStatistics());
 
-    console.log('Comprehensive cache warming completed successfully');
+    console.warn('Comprehensive cache warming completed successfully');
   } catch (error) {
     console.error('Error during comprehensive cache warming:', error);
   }
@@ -1030,7 +1030,7 @@ export function startScheduledCacheWarming(): void {
       )
   );
 
-  console.log('Scheduled cache warming started');
+  console.warn('Scheduled cache warming started');
 }
 
 /**
@@ -1046,7 +1046,7 @@ export function stopScheduledCacheWarming(): void {
   });
 
   warmingMetrics.nextScheduledRun = null;
-  console.log('Scheduled cache warming stopped');
+  console.warn('Scheduled cache warming stopped');
 }
 
 /**
@@ -1149,7 +1149,7 @@ export async function initCacheWarming(
 
     // Run initial warming if requested
     if (runInitialWarming) {
-      console.log('Running initial cache warming...');
+      console.warn('Running initial cache warming...');
       await warmAllCaches();
     }
 
@@ -1158,7 +1158,7 @@ export async function initCacheWarming(
       startScheduledCacheWarming();
     }
 
-    console.log('Cache warming system initialized successfully');
+    console.warn('Cache warming system initialized successfully');
   } catch (error) {
     console.error('Error initializing cache warming system:', error);
   }

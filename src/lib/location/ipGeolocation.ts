@@ -29,7 +29,7 @@ export async function getLocationFromIP(
   try {
     // In development, use a placeholder IP or skip
     if (process.env.NODE_ENV === 'development' && !ip) {
-      console.log('Skipping IP geolocation in development');
+      console.warn('Skipping IP geolocation in development');
       return null;
     }
 

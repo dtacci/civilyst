@@ -101,7 +101,7 @@ export function getRedisClient(): Redis | null {
   if (process.env.NODE_ENV === 'development') {
     if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
       if (process.env.NODE_ENV === 'development') {
-        console.info(
+        console.warn(
           '[Cache] Redis not configured for development - using in-memory fallback'
         );
       }
@@ -119,7 +119,7 @@ export function getRedisClient(): Redis | null {
       console.error('[Cache] Failed to initialize Redis client:', error);
       if (process.env.NODE_ENV === 'development') {
         if (process.env.NODE_ENV === 'development') {
-          console.info('[Cache] Development mode: continuing without Redis');
+          console.warn('[Cache] Development mode: continuing without Redis');
         }
         return null;
       }

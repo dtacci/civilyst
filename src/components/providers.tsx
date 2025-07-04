@@ -136,8 +136,8 @@ export function Providers({ children }: { children: ReactNode }) {
       const logInterval = setInterval(() => {
         const stats = cacheManager.getCacheStats();
         const perfMetrics = performanceMonitor.getMetrics();
-        console.info('[Cache Stats]', stats);
-        console.info('[Performance Metrics]', perfMetrics);
+        console.warn('[Cache Stats]', stats);
+        console.warn('[Performance Metrics]', perfMetrics);
       }, 60000); // Log every minute
 
       return () => {

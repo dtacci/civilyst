@@ -12,7 +12,15 @@ import {
   Calendar,
   FileCheck,
 } from 'lucide-react';
-import type { MilestoneStatus } from '@prisma/client';
+// import type { MilestoneStatus } from '@prisma/client';
+type MilestoneStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'DELAYED'
+  | 'VERIFIED'
+  | 'SUBMITTED'
+  | 'DISPUTED';
 
 interface Milestone {
   id: string;
@@ -74,17 +82,21 @@ export function MilestoneTracker({
       'default' | 'secondary' | 'destructive'
     > = {
       PENDING: 'secondary',
+      IN_PROGRESS: 'default',
       SUBMITTED: 'default',
       VERIFIED: 'default',
       COMPLETED: 'default',
+      DELAYED: 'destructive',
       DISPUTED: 'destructive',
     };
 
     const labels: Record<MilestoneStatus, string> = {
       PENDING: 'Pending',
+      IN_PROGRESS: 'In Progress',
       SUBMITTED: 'Under Review',
       VERIFIED: 'Verified',
       COMPLETED: 'Completed',
+      DELAYED: 'Delayed',
       DISPUTED: 'Disputed',
     };
 

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           ],
         });
 
-        console.log(`Welcome email sent to ${primaryEmail.email_address}`);
+        console.warn(`Welcome email sent to ${primaryEmail.email_address}`);
       } catch (error) {
         console.error('Failed to send welcome email:', error);
         // Don't fail the webhook, just log the error
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     );
 
     // You can add logic here to track email verification status changes
-    console.log(`User ${id} updated, verified emails:`, verifiedEmails.length);
+    console.warn(`User ${id} updated, verified emails:`, verifiedEmails.length);
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

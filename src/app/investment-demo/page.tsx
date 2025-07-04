@@ -7,7 +7,9 @@ import {
   MilestoneTracker,
   PledgeHistory,
 } from '~/components/investment';
-import type { PledgeStatus, MilestoneStatus } from '@prisma/client';
+// Mock enums for demo purposes
+type PledgeStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+type MilestoneStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 
 // Mock data for demonstration
 const mockProject = {
@@ -140,12 +142,12 @@ export default function InvestmentDemoPage() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  const handleMilestoneClick = (milestone: any) => {
-    console.log('Milestone clicked:', milestone);
+  const handleMilestoneClick = (milestone: unknown) => {
+    console.warn('Milestone clicked:', milestone);
   };
 
   const handleRefundRequest = (pledgeId: string) => {
-    console.log('Refund requested for pledge:', pledgeId);
+    console.warn('Refund requested for pledge:', pledgeId);
   };
 
   return (

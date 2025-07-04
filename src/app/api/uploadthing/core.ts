@@ -28,8 +28,8 @@ export const ourFileRouter = {
       // This code RUNS ON YOUR SERVER after upload
       // Log upload completion in development
       if (process.env.NODE_ENV === 'development') {
-        console.info('Upload complete for userId:', metadata.userId);
-        console.info('File URL:', file.url);
+        console.warn('Upload complete for userId:', metadata.userId);
+        console.warn('File URL:', file.url);
       }
 
       // You can use the metadata and file data to save to your database

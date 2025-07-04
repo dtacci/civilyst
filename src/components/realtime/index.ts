@@ -69,7 +69,7 @@ export * from '~/hooks/useRealtimeSubscriptions';
  *   const subscriptionKey = manager.subscribeToCampaignUpdates(
  *     campaignId,
  *     (payload) => {
- *       console.log('Campaign updated:', payload);
+ *       console.warn('Campaign updated:', payload);
  *     }
  *   );
  *

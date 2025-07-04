@@ -20,6 +20,16 @@ const customJestConfig = {
   ],
   // Add polyfills for Node.js globals that React Email needs
   setupFiles: ['<rootDir>/jest.polyfills.js'],
+  // Transform ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(superjson|@radix-ui|uncrypto|@upstash)/)',
+  ],
+  // Mock problematic modules
+  moduleNameMapper: {
+    '^~/(.*)$': '<rootDir>/src/$1',
+    '^superjson$': '<rootDir>/__mocks__/superjson.js',
+    '^@upstash/redis$': '<rootDir>/__mocks__/@upstash/redis.js',
+  },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

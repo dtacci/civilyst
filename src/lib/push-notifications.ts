@@ -63,7 +63,7 @@ class PushNotificationService {
 
       // Log push notification initialization in development only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Push] Notification service initialized');
+        console.warn('[Push] Notification service initialized');
       }
       return true;
     } catch (error) {
@@ -232,7 +232,7 @@ class PushNotificationService {
 
       // Log subscription success in development only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Push] Subscription sent to server successfully');
+        console.warn('[Push] Subscription sent to server successfully');
       }
     } catch (error) {
       console.error('Failed to send subscription to server:', error);
@@ -265,7 +265,7 @@ class PushNotificationService {
 
       // Log subscription removal in development only
       if (process.env.NODE_ENV === 'development') {
-        console.info('[Push] Subscription removed from server successfully');
+        console.warn('[Push] Subscription removed from server successfully');
       }
     } catch (error) {
       console.error('Failed to remove subscription from server:', error);

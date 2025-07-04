@@ -1,4 +1,5 @@
 import { TRPCError } from '@trpc/server';
+// import { aiFallbackManager, FallbackResponse } from './fallback';
 
 // AI Service Types
 export enum AIServiceType {
@@ -318,25 +319,25 @@ export class AIServiceClient {
       const content = data.choices[0].message.content;
 
       // Parse the structured response
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = content.split('\n').filter((line: string) => line.trim());
       const shortSummary =
         lines
-          .find((line) => line.startsWith('SHORT:'))
+          .find((line: string) => line.startsWith('SHORT:'))
           ?.replace('SHORT:', '')
           .trim() || '';
       const fullSummary =
         lines
-          .find((line) => line.startsWith('FULL:'))
+          .find((line: string) => line.startsWith('FULL:'))
           ?.replace('FULL:', '')
           .trim() || '';
-      const keyPointsStart = lines.findIndex((line) =>
+      const keyPointsStart = lines.findIndex((line: string) =>
         line.startsWith('KEY POINTS:')
       );
       const keyPoints =
         keyPointsStart >= 0
           ? lines
               .slice(keyPointsStart + 1)
-              .map((point) => point.replace(/^[-*]\s*/, '').trim())
+              .map((point: string) => point.replace(/^[-*]\s*/, '').trim())
           : [];
 
       return { shortSummary, fullSummary, keyPoints };
@@ -494,6 +495,189 @@ export class AIServiceClient {
         .slice(0, 5);
 
       return { sentiment, emotions, keywords };
+    });
+  }
+
+  // Language Detection using Google Translate API
+  async detectLanguage(text: string): Promise<{
+    language: string;
+    confidence: number;
+  }> {
+    return this.makeRequest(AIServiceType.GOOGLE_TRANSLATE, async () => {
+      const response = await fetch(
+        `https://translation.googleapis.com/language/translate/v2/detect?key=${this.configs.get(AIServiceType.GOOGLE_TRANSLATE)!.apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            q: text,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Language detection failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const detection = result.data.detections[0][0];
+
+      return {
+        language: detection.language,
+        confidence: detection.confidence,
+      };
+    });
+  }
+
+  // Calculate Accessibility Score
+  async calculateAccessibilityScore(content: {
+    text: string;
+    hasImages: boolean;
+    imageCount: number;
+  }): Promise<{
+    score: number;
+    suggestions: string[];
+  }> {
+    return this.makeRequest(AIServiceType.OPENAI, async () => {
+      const prompt = `Analyze the accessibility of this content and provide a score from 0-100 and suggestions:
+
+Content: ${content.text}
+Has Images: ${content.hasImages}
+Image Count: ${content.imageCount}
+
+Consider:
+- Reading level and clarity
+- Length and structure
+- Use of inclusive language
+- Image accessibility (alt text needs)
+- Color contrast considerations
+- Screen reader compatibility
+
+Provide response in this format:
+SCORE: [0-100]
+SUGGESTIONS:
+- Suggestion 1
+- Suggestion 2
+- Suggestion 3`;
+
+      const response = await fetch(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.configs.get(AIServiceType.OPENAI)!.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an accessibility expert that evaluates content for inclusivity and accessibility compliance.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            max_tokens: 500,
+            temperature: 0.3,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Accessibility analysis failed: ${response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+      const analysis = result.choices[0].message.content;
+
+      // Parse the response
+      const scoreMatch = analysis.match(/SCORE:\s*(\d+)/);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : 50;
+
+      const suggestionsMatch = analysis.match(/SUGGESTIONS:\s*([\s\S]*)/);
+      const suggestions = suggestionsMatch
+        ? suggestionsMatch[1]
+            .split('\n')
+            .filter((line: string) => line.trim().startsWith('-'))
+            .map((line: string) => line.replace(/^-\s*/, '').trim())
+            .filter((suggestion: string) => suggestion.length > 0)
+        : [];
+
+      return { score, suggestions };
+    });
+  }
+
+  // Generate Audio Description for Media
+  async generateAudioDescription(
+    mediaUrl: string,
+    mediaType: 'image' | 'video'
+  ): Promise<string> {
+    return this.makeRequest(AIServiceType.GOOGLE_VISION, async () => {
+      if (mediaType === 'image') {
+        // Use Google Cloud Vision API for image analysis
+        const response = await fetch(
+          `https://vision.googleapis.com/v1/images:annotate?key=${this.configs.get(AIServiceType.GOOGLE_VISION)!.apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              requests: [
+                {
+                  image: {
+                    source: {
+                      imageUri: mediaUrl,
+                    },
+                  },
+                  features: [
+                    { type: 'OBJECT_LOCALIZATION', maxResults: 10 },
+                    { type: 'TEXT_DETECTION', maxResults: 1 },
+                    { type: 'LABEL_DETECTION', maxResults: 10 },
+                  ],
+                },
+              ],
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Image analysis failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const annotation = result.responses[0];
+
+        // Build description from detected elements
+        const objects =
+          annotation.localizedObjectAnnotations?.map(
+            (obj: { name: string }) => obj.name
+          ) || [];
+        const labels =
+          annotation.labelAnnotations?.map(
+            (label: { description: string }) => label.description
+          ) || [];
+        const text = annotation.textAnnotations?.[0]?.description || '';
+
+        let description = `This image contains: ${[...new Set([...objects, ...labels])].slice(0, 5).join(', ')}.`;
+
+        if (text) {
+          description += ` Text in image: "${text.replace(/\n/g, ' ').slice(0, 100)}".`;
+        }
+
+        return description;
+      } else {
+        // For video, return a placeholder implementation
+        return `This video content requires manual audio description. Please provide a detailed description of visual elements, actions, and text that appear in the video.`;
+      }
     });
   }
 

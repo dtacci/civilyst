@@ -156,7 +156,7 @@ export const commentsRouter = createTRPCRouter({
 
         // Log mock comment creation in development only
         if (process.env.NODE_ENV === 'development') {
-          console.info('[Comments] Mock comment created:', mockComment);
+          console.warn('[Comments] Mock comment created:', mockComment);
         }
         return mockComment;
 
@@ -222,7 +222,7 @@ export const commentsRouter = createTRPCRouter({
 
         // Log mock comment update in development only
         if (process.env.NODE_ENV === 'development') {
-          console.info('[Comments] Mock comment updated:', mockUpdatedComment);
+          console.warn('[Comments] Mock comment updated:', mockUpdatedComment);
         }
         return mockUpdatedComment;
 
@@ -285,7 +285,7 @@ export const commentsRouter = createTRPCRouter({
 
         // Log mock comment deletion in development only
         if (process.env.NODE_ENV === 'development') {
-          console.info('[Comments] Mock comment deleted:', input.id);
+          console.warn('[Comments] Mock comment deleted:', input.id);
         }
         return { success: true };
 

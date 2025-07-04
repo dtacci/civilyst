@@ -17,7 +17,6 @@ interface AnonymousWonderCTAProps {
 export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [wonderText, setWonderText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
 
   const createAnonymousWonder = api.wonders.createAnonymous.useMutation({
@@ -42,7 +41,8 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
     const deviceId = await getOrCreateDeviceId();
 
     // Get location if permission granted
-    let location = null;
+    let location: { type: 'Point'; coordinates: [number, number] } | undefined =
+      undefined;
     try {
       const position = await new Promise<GeolocationPosition>(
         (resolve, reject) => {
@@ -54,23 +54,28 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
       );
 
       location = {
-        type: 'Point',
+        type: 'Point' as const,
         coordinates: [position.coords.longitude, position.coords.latitude],
       };
-    } catch (error) {
-      console.log('Location not available:', error);
+    } catch {
+      // Location not available - this is fine, it's optional
     }
 
     createAnonymousWonder.mutate({
       deviceId,
       content: wonderText,
-      voiceUrl,
+      voiceUrl: voiceUrl ?? undefined,
       location,
     });
   };
 
-  const handleVoiceRecording = (audioUrl: string, transcript?: string) => {
-    setVoiceUrl(audioUrl);
+  const handleVoiceRecording = async (
+    audioUrl?: string,
+    transcript?: string
+  ) => {
+    if (audioUrl) {
+      setVoiceUrl(audioUrl);
+    }
     if (transcript) {
       setWonderText(transcript);
     }
@@ -115,12 +120,11 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
           {/* Voice Recording Option */}
           <div className="flex items-center gap-4">
             <VoiceRecorder
-              onRecordingComplete={handleVoiceRecording}
-              onRecordingStart={() => setIsRecording(true)}
-              onRecordingStop={() => setIsRecording(false)}
+              onResponse={handleVoiceRecording}
+              isLoading={createAnonymousWonder.isPending}
             />
             <span className="text-[--font-size-sm] text-[--color-text-secondary]">
-              {isRecording ? 'Recording...' : 'Tap to record your wonder'}
+              Tap to record your wonder
             </span>
           </div>
 
@@ -130,7 +134,6 @@ export function AnonymousWonderCTA({ onSuccess }: AnonymousWonderCTAProps) {
             value={wonderText}
             onChange={(e) => setWonderText(e.target.value)}
             className="min-h-[100px] text-[--font-size-base]"
-            disabled={isRecording}
           />
 
           {/* Trust Building Message */}

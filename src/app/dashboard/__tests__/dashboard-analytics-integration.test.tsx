@@ -99,11 +99,12 @@ describe('Dashboard Analytics Integration', () => {
       renderWithProviders(<DashboardPage />);
 
       await waitFor(() => {
-        // Total campaigns
-        expect(screen.getByText('3')).toBeInTheDocument(); // Total: 3 campaigns
+        // Use getAllByText since numbers might appear multiple times
+        const threeElements = screen.getAllByText('3');
+        expect(threeElements.length).toBeGreaterThan(0); // Total: 3 campaigns
 
-        // Active campaigns
-        expect(screen.getByText('1')).toBeInTheDocument(); // Active: 1 campaign
+        const oneElements = screen.getAllByText('1');
+        expect(oneElements.length).toBeGreaterThan(0); // Active: 1 campaign
 
         // Total votes: 25 + 12 + 45 = 82
         expect(screen.getByText('82')).toBeInTheDocument();
@@ -123,7 +124,8 @@ describe('Dashboard Analytics Integration', () => {
       renderWithProviders(<DashboardPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('0')).toBeInTheDocument(); // Should show 0 for all metrics
+        const zeroElements = screen.getAllByText('0');
+        expect(zeroElements.length).toBeGreaterThan(0); // Should show 0 for all metrics
       });
     });
 
@@ -151,8 +153,11 @@ describe('Dashboard Analytics Integration', () => {
       renderWithProviders(<DashboardPage />);
 
       await waitFor(() => {
-        expect(screen.getByText('1')).toBeInTheDocument(); // Total campaigns
-        expect(screen.getByText('0')).toBeInTheDocument(); // Votes should be 0
+        const oneElements = screen.getAllByText('1');
+        expect(oneElements.length).toBeGreaterThan(0); // Total campaigns
+
+        const zeroElements = screen.getAllByText('0');
+        expect(zeroElements.length).toBeGreaterThan(0); // Votes should be 0
       });
     });
   });

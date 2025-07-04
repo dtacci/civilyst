@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -23,7 +24,16 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { PledgeStatus } from '@prisma/client';
+// import type { PledgeStatus } from '@prisma/client';
+type PledgeStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'CONFIRMED'
+  | 'RELEASED'
+  | 'REFUNDED'
+  | 'FAILED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 interface Pledge {
   id: string;
@@ -92,6 +102,9 @@ export function PledgeHistory({
       'default' | 'secondary' | 'destructive'
     > = {
       PENDING: 'secondary',
+      PROCESSING: 'default',
+      CONFIRMED: 'default',
+      RELEASED: 'default',
       COMPLETED: 'default',
       FAILED: 'destructive',
       REFUNDED: 'secondary',
@@ -205,9 +218,11 @@ export function PledgeHistory({
                 <div className="flex items-start gap-4">
                   {/* Project Image */}
                   {pledge.project.campaign?.imageUrl && (
-                    <img
+                    <Image
                       src={pledge.project.campaign.imageUrl}
                       alt={pledge.project.title}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
                   )}

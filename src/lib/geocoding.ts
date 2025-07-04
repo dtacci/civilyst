@@ -144,7 +144,7 @@ export async function geocodeAddress(
   if (cached) {
     // Log cache hit in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Geocoding] Cache hit for:', query);
+      console.warn('[Geocoding] Cache hit for:', query);
     }
     return cached;
   }
@@ -156,7 +156,7 @@ export async function geocodeAddress(
   if (!result) {
     // Log fallback in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Geocoding] Mapbox failed, trying Nominatim fallback');
+      console.warn('[Geocoding] Mapbox failed, trying Nominatim fallback');
     }
     result = await geocodeWithNominatim(query);
   }
@@ -166,7 +166,7 @@ export async function geocodeAddress(
     await cacheSet(cacheKey, result, CacheTTL.GEOCODE);
     // Log caching in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Geocoding] Result cached for:', query);
+      console.warn('[Geocoding] Result cached for:', query);
     }
   }
 
@@ -185,7 +185,7 @@ export async function reverseGeocode(
   if (cached) {
     // Log cache hit in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Geocoding] Reverse geocoding cache hit');
+      console.warn('[Geocoding] Reverse geocoding cache hit');
     }
     return cached;
   }
@@ -236,7 +236,7 @@ export async function reverseGeocode(
     await cacheSet(cacheKey, result, CacheTTL.REVERSE_GEOCODE);
     // Log caching in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Geocoding] Reverse geocoding result cached');
+      console.warn('[Geocoding] Reverse geocoding result cached');
     }
 
     return result;

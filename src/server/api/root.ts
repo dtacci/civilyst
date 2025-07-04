@@ -10,6 +10,11 @@ import { projectRouter } from '~/server/api/routers/project';
 import { pledgeRouter } from '~/server/api/routers/pledge';
 import { escrowRouter } from '~/server/api/routers/escrow';
 import { aiRouter } from '~/server/api/routers/ai';
+import { aiJobsRouter } from '~/server/api/routers/ai-jobs';
+import { skillRouter } from '~/server/api/routers/skill';
+import { userSkillRouter } from '~/server/api/routers/userSkill';
+import { skillMatchingRouter } from '~/server/api/routers/skillMatching';
+import { verificationRouter } from '~/server/api/routers/verification';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const appRouter = createTRPCRouter({
@@ -24,6 +29,11 @@ export const appRouter = createTRPCRouter({
   pledges: pledgeRouter,
   escrow: escrowRouter,
   ai: aiRouter,
+  aiJobs: aiJobsRouter,
+  skills: skillRouter,
+  userSkills: userSkillRouter,
+  skillMatching: skillMatchingRouter,
+  verification: verificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

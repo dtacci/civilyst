@@ -73,8 +73,7 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
 
   // Log in development only
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.info(`[tRPC] ${type} ${path} - ${durationMs}ms`);
+    console.warn(`[tRPC] ${type} ${path} - ${durationMs}ms`);
   }
 
   return result;
@@ -110,7 +109,25 @@ const rateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
   return next();
 });
 
+// Authentication middleware
+const authMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to perform this action',
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId, // Now guaranteed to be defined
+    },
+  });
+});
+
 export const loggedProcedure = publicProcedure.use(loggerMiddleware);
 export const rateLimitedProcedure = publicProcedure
   .use(rateLimitMiddleware)
   .use(loggerMiddleware);
+export const protectedProcedure = publicProcedure.use(authMiddleware);

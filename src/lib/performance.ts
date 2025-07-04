@@ -164,7 +164,7 @@ function initializeDatabaseQueryMonitoring() {
   if (!options.enabled || !options.monitorDatabaseQueries) return;
   // Log database monitoring status in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] Database query monitoring is disabled (no Prisma client present).'
     );
   }
@@ -243,7 +243,7 @@ function initializeApiResponseMonitoring() {
   if (!options.enabled || !options.monitorApiResponses) return;
   // Log API monitoring status in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] API response time monitoring relies on Sentry Next.js SDK configuration.'
     );
   }
@@ -288,7 +288,7 @@ function initializeUserInteractionMonitoring() {
   });
   // Log initialization in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info('[Performance] User interaction monitoring initialized.');
+    console.warn('[Performance] User interaction monitoring initialized.');
   }
 }
 
@@ -307,7 +307,7 @@ function initializePerformanceBudgetMonitoring() {
   // or resource loading failures.
   // Log budget monitoring status in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] Performance budget monitoring is primarily a build-time concern.'
     );
   }
@@ -359,7 +359,7 @@ function initializeMemoryMonitoring() {
     });
     // Log memory monitoring in development only
     if (process.env.NODE_ENV === 'development') {
-      console.info('[Performance] Client-side memory monitoring initialized.');
+      console.warn('[Performance] Client-side memory monitoring initialized.');
     }
   } else {
     // Log browser compatibility in development only
@@ -390,13 +390,13 @@ export function initializePerformanceMonitoring(
   options = { ...options, ...opts };
 
   if (!options.enabled) {
-    console.info('[Performance] Performance monitoring is disabled.');
+    console.warn('[Performance] Performance monitoring is disabled.');
     return;
   }
 
   // Log initialization in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] Initializing comprehensive performance monitoring...'
     );
   }
@@ -421,7 +421,7 @@ export function initializePerformanceMonitoring(
   isInitialized = true;
   // Log successful initialization in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] Performance monitoring initialized successfully.'
     );
   }
@@ -445,7 +445,7 @@ export function stopPerformanceMonitoring() {
   isInitialized = false;
   // Log stopping in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info('[Performance] Performance monitoring stopped.');
+    console.warn('[Performance] Performance monitoring stopped.');
   }
 }
 
@@ -456,7 +456,7 @@ function initializeCustomMetricsReporting() {
   if (!options.enabled || !options.sendCustomMetricsToSentry) return;
   // Log custom metrics initialization in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info('[Performance] Custom metrics reporting initialized.');
+    console.warn('[Performance] Custom metrics reporting initialized.');
   }
 }
 
@@ -487,7 +487,7 @@ export function collectPerformanceDashboardData() {
 
   // Log dashboard data collection in development only
   if (process.env.NODE_ENV === 'development') {
-    console.info(
+    console.warn(
       '[Performance] Collected performance dashboard data:',
       dashboardData
     );

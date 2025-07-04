@@ -58,6 +58,12 @@ model User {
   projects          Project[]          // Projects created by user
   pledges           Pledge[]           // Pledges made by user
   userSkills        UserSkill[]        // Skills possessed by user
+  
+  // Verification system relationships
+  skillEndorsements SkillEndorsement[]
+  verificationRequests SkillVerificationRequest[]
+  adminVerifications SkillVerificationRequest[] @relation("AdminVerifications")
+  verificationNotifications VerificationNotification[]
 
   // Performance indexes for user queries
   @@index([createdAt])
@@ -675,6 +681,9 @@ model UserSkill {
   // Verification data
   portfolioUrl      String?
   endorsements      Int                @default(0)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt        DateTime?
+  verifiedBy        String?            // Admin who verified
   
   // Metadata
   createdAt         DateTime           @default(now())
@@ -683,12 +692,196 @@ model UserSkill {
   // Relationships
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   skill             Skill              @relation(fields: [skillId], references: [id])
+  skillEndorsements SkillEndorsement[] @relation("EndorsedSkill")
+  skillPortfolios   SkillPortfolio[]
+  verificationRequests SkillVerificationRequest[]
   
   @@unique([userId, skillId])
   @@index([userId])
   @@index([skillId])
   @@index([proficiencyLevel])
+  @@index([verificationStatus])
   @@map("user_skills")
+}
+
+// ==========================================
+// Expertise Verification System Models
+// ==========================================
+
+model SkillEndorsement {
+  id              String             @id @default(cuid())
+  endorserId      String             // User giving the endorsement
+  userSkillId     String             // Skill being endorsed
+  message         String?            // Optional endorsement message
+  strength        EndorsementStrength @default(GOOD)
+  
+  // Verification
+  isVerified      Boolean            @default(false)
+  verifiedAt      DateTime?
+  
+  // Metadata
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  // Relationships
+  endorser        User               @relation(fields: [endorserId], references: [id], onDelete: Cascade)
+  userSkill       UserSkill          @relation("EndorsedSkill", fields: [userSkillId], references: [id], onDelete: Cascade)
+  
+  @@unique([endorserId, userSkillId]) // One endorsement per user per skill
+  @@index([userSkillId])
+  @@index([endorserId])
+  @@index([strength])
+  @@index([isVerified])
+  @@map("skill_endorsements")
+}
+
+model SkillPortfolio {
+  id              String             @id @default(cuid())
+  userSkillId     String
+  title           String
+  description     String?
+  url             String?            // External URL (GitHub, Dribbble, etc.)
+  fileUrl         String?            // Uploaded file (PDF, images, etc.)
+  type            PortfolioType      @default(LINK)
+  
+  // Verification
+  isVerified      Boolean            @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?            // Admin who verified
+  verificationNotes String?
+  
+  // Metadata
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  // Relationships
+  userSkill       UserSkill          @relation(fields: [userSkillId], references: [id], onDelete: Cascade)
+  
+  @@index([userSkillId])
+  @@index([type])
+  @@index([isVerified])
+  @@map("skill_portfolios")
+}
+
+model SkillVerificationRequest {
+  id              String             @id @default(cuid())
+  userSkillId     String
+  requestedBy     String             // User requesting verification
+  adminAssignedTo String?            // Admin assigned to review
+  
+  // Request details
+  requestType     VerificationRequestType @default(SELF_VERIFICATION)
+  message         String?            // Additional context from requester
+  evidence        Json?              // Links, files, or other evidence
+  
+  // Processing
+  status          VerificationRequestStatus @default(PENDING)
+  reviewNotes     String?            // Admin review notes
+  decision        VerificationDecision?
+  decisionReason  String?
+  
+  // Metadata
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  reviewedAt      DateTime?
+  
+  // Relationships
+  userSkill       UserSkill          @relation(fields: [userSkillId], references: [id], onDelete: Cascade)
+  requester       User               @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+  adminAssigned   User?              @relation("AdminVerifications", fields: [adminAssignedTo], references: [id])
+  notifications   VerificationNotification[]
+  
+  @@index([userSkillId])
+  @@index([requestedBy])
+  @@index([adminAssignedTo])
+  @@index([status])
+  @@index([createdAt])
+  @@map("skill_verification_requests")
+}
+
+model VerificationNotification {
+  id              String             @id @default(cuid())
+  verificationRequestId String
+  recipientId     String             // User to notify
+  notificationType NotificationType  @default(REQUEST_RECEIVED)
+  
+  // Content
+  title           String
+  message         String
+  actionUrl       String?            // URL for user to take action
+  
+  // Status
+  isRead          Boolean            @default(false)
+  readAt          DateTime?
+  isSent          Boolean            @default(false)
+  sentAt          DateTime?
+  
+  // Metadata
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  // Relationships
+  verificationRequest SkillVerificationRequest @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
+  recipient       User               @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  @@index([verificationRequestId])
+  @@index([recipientId])
+  @@index([isRead])
+  @@index([isSent])
+  @@index([createdAt])
+  @@map("verification_notifications")
+}
+
+
+// Enums for Expertise Verification System
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum EndorsementStrength {
+  GOOD
+  EXCELLENT
+  OUTSTANDING
+}
+
+enum PortfolioType {
+  LINK          // External URL
+  FILE          // Uploaded file
+  CERTIFICATE   // Professional certificate
+  PROJECT       // Personal project
+  TESTIMONIAL   // Client testimonial
+}
+
+enum VerificationRequestType {
+  SELF_VERIFICATION    // User requests their own skill verification
+  PEER_ENDORSEMENT     // Another user endorses their skill
+  ADMIN_REVIEW         // Admin initiates verification review
+}
+
+enum VerificationRequestStatus {
+  PENDING
+  IN_REVIEW
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum VerificationDecision {
+  APPROVED
+  REJECTED
+  NEEDS_MORE_EVIDENCE
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED     // New verification request received
+  ENDORSEMENT_GIVEN    // Someone endorsed your skill
+  VERIFICATION_APPROVED // Your skill was verified
+  VERIFICATION_REJECTED // Your skill verification was rejected
+  ADMIN_ASSIGNED       // Admin assigned to review request
+  EVIDENCE_REQUESTED   // More evidence needed
 }
 
 // Enums for Investment Infrastructure
