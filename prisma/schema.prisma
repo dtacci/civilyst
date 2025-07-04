@@ -41,6 +41,11 @@ model User {
   // Notification preferences stored as JSON
   notificationPreferences String?  // JSON string of NotificationPreferencesData
   
+  // Onboarding and metadata
+  hasCompletedOnboarding Boolean  @default(false)
+  onboardingCompletedAt  DateTime?
+  metadata               Json?     // Stores interests, goals, profileType, etc.
+  
   // Relationships
   campaigns         Campaign[]
   votes             Vote[]

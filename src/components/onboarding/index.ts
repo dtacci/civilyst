@@ -1,0 +1,1 @@
+export { SmartOnboarding } from './SmartOnboarding';

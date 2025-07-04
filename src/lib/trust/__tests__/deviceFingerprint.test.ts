@@ -28,7 +28,8 @@ const localStorageMock = {
 
 // Mock browser APIs
 const mockNavigator = {
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  userAgent:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
   language: 'en-US',
   languages: ['en-US', 'en'],
   platform: 'MacIntel',
@@ -47,12 +48,13 @@ const mockScreen = {
 const mockCrypto = {
   subtle: {
     digest: jest.fn((algorithm: string, data: ArrayBuffer) => {
-      // Return a consistent mock hash
-      const mockHash = new Uint8Array(32);
+      // Return a hash based on input data to ensure different inputs produce different hashes
+      const dataString = new TextDecoder().decode(data);
+      const hash = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
-        mockHash[i] = i;
+        hash[i] = (dataString.charCodeAt(i % dataString.length) + i) % 256;
       }
-      return Promise.resolve(mockHash.buffer);
+      return Promise.resolve(hash.buffer);
     }),
   },
 };
@@ -94,12 +96,25 @@ const mockAudioContext = jest.fn(() => ({
     gain: { value: 0 },
     connect: jest.fn(),
   })),
-  createScriptProcessor: jest.fn(() => ({
-    connect: jest.fn(),
-    onaudioprocess: null as any,
-  })),
+  createScriptProcessor: jest.fn(() => {
+    const processor = {
+      connect: jest.fn(),
+      onaudioprocess: null as any,
+    };
+    // Simulate immediate audio processing to prevent timeout
+    setTimeout(() => {
+      if (processor.onaudioprocess) {
+        processor.onaudioprocess({
+          inputBuffer: {
+            getChannelData: jest.fn(() => new Float32Array(100).fill(0.5)),
+          },
+        });
+      }
+    }, 10);
+    return processor;
+  }),
   destination: {},
-  close: jest.fn(),
+  close: jest.fn(() => Promise.resolve()),
 }));
 
 describe('Device Fingerprinting', () => {
@@ -141,19 +156,22 @@ describe('Device Fingerprinting', () => {
     });
 
     // Mock document.createElement for canvas
-    jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-      if (tagName === 'canvas') {
-        return {
-          ...mockCanvas,
-          getContext: jest.fn((type: string) => {
-            if (type === '2d') return mockCanvas.getContext();
-            if (type === 'webgl' || type === 'experimental-webgl') return mockWebGLContext;
-            return null;
-          }),
-        } as any;
-      }
-      return document.createElement(tagName);
-    });
+    jest
+      .spyOn(document, 'createElement')
+      .mockImplementation((tagName: string) => {
+        if (tagName === 'canvas') {
+          return {
+            ...mockCanvas,
+            getContext: jest.fn((type: string) => {
+              if (type === '2d') return mockCanvas.getContext();
+              if (type === 'webgl' || type === 'experimental-webgl')
+                return mockWebGLContext;
+              return null;
+            }),
+          } as any;
+        }
+        return document.createElement(tagName);
+      });
 
     // Mock AudioContext
     Object.defineProperty(window, 'AudioContext', {
@@ -195,7 +213,9 @@ describe('Device Fingerprinting', () => {
       expect(components.languages).toEqual(mockNavigator.languages);
       expect(components.platform).toBe(mockNavigator.platform);
       expect(components.cookiesEnabled).toBe(mockNavigator.cookieEnabled);
-      expect(components.hardwareConcurrency).toBe(mockNavigator.hardwareConcurrency);
+      expect(components.hardwareConcurrency).toBe(
+        mockNavigator.hardwareConcurrency
+      );
     });
 
     it('should collect screen properties', async () => {
@@ -314,7 +334,9 @@ describe('Device Fingerprinting', () => {
       const deviceId = await getDeviceId();
 
       expect(deviceId).toBe(storedId);
-      expect(localStorageMock.getItem).toHaveBeenCalledWith('civilyst_device_id');
+      expect(localStorageMock.getItem).toHaveBeenCalledWith(
+        'civilyst_device_id'
+      );
     });
 
     it('should generate and store new device ID if not available', async () => {
@@ -322,7 +344,10 @@ describe('Device Fingerprinting', () => {
 
       expect(deviceId).toHaveLength(64);
       expect(deviceId).toMatch(/^[0-9a-f]+$/);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('civilyst_device_id', deviceId);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'civilyst_device_id',
+        deviceId
+      );
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'civilyst_device_generated',
         expect.any(String)
@@ -337,8 +362,12 @@ describe('Device Fingerprinting', () => {
 
       clearDeviceId();
 
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('civilyst_device_id');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('civilyst_device_generated');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'civilyst_device_id'
+      );
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'civilyst_device_generated'
+      );
     });
   });
 
@@ -351,7 +380,7 @@ describe('Device Fingerprinting', () => {
     it('should return false when window is not available', () => {
       const originalWindow = global.window;
       // @ts-ignore
-      delete global.window;
+      global.window = undefined;
 
       const available = isFingerprintingAvailable();
       expect(available).toBe(false);
@@ -417,14 +446,16 @@ describe('Device Fingerprinting', () => {
     });
 
     it('should handle WebGL errors gracefully', async () => {
-      jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-        if (tagName === 'canvas') {
-          return {
-            getContext: jest.fn(() => null), // No WebGL context
-          } as any;
-        }
-        return document.createElement(tagName);
-      });
+      jest
+        .spyOn(document, 'createElement')
+        .mockImplementation((tagName: string) => {
+          if (tagName === 'canvas') {
+            return {
+              getContext: jest.fn(() => null), // No WebGL context
+            } as any;
+          }
+          return document.createElement(tagName);
+        });
 
       const components = await collectFingerprintComponents();
       expect(components.webgl).toBe('not-available');
