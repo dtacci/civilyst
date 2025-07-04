@@ -47,11 +47,14 @@ export const COMMUNITY_BOUNDARIES: CommunityBoundary[] = [
 
 /**
  * Check if a location is within any community boundary
+ * Prioritizes smaller boundaries over larger ones
  */
 export function isWithinCommunityBoundary(
   lat: number,
   lng: number
 ): { isWithin: boolean; community?: CommunityBoundary; distance?: number } {
+  let bestMatch: { community: CommunityBoundary; distance: number } | null = null;
+
   for (const boundary of COMMUNITY_BOUNDARIES) {
     const distance = calculateDistance(
       lat,
@@ -61,12 +64,22 @@ export function isWithinCommunityBoundary(
     );
 
     if (distance <= boundary.radiusMiles) {
-      return {
-        isWithin: true,
-        community: boundary,
-        distance,
-      };
+      // If this is the first match or a smaller boundary, use it
+      if (!bestMatch || boundary.radiusMiles < bestMatch.community.radiusMiles) {
+        bestMatch = {
+          community: boundary,
+          distance,
+        };
+      }
     }
+  }
+
+  if (bestMatch) {
+    return {
+      isWithin: true,
+      community: bestMatch.community,
+      distance: bestMatch.distance,
+    };
   }
 
   return { isWithin: false };
