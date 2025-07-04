@@ -22,7 +22,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '~/components/ui/alert';
-import { toast } from '~/hooks/use-toast';
+import { useToast } from '~/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ModerationQueueProps {
@@ -46,6 +46,7 @@ interface ModerationItem {
 }
 
 export function ModerationQueue({ limit = 20 }: ModerationQueueProps) {
+  const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<
     'manual_review' | 'rejected' | 'all'
   >('manual_review');
@@ -128,7 +129,7 @@ export function ModerationQueue({ limit = 20 }: ModerationQueueProps) {
   }
 
   // Mock data for UI demonstration
-  const mockItems: ModerationItem[] = moderationItems || [
+  const mockItems: ModerationItem[] = (moderationItems as any)?.items || [
     {
       id: '1',
       contentId: 'campaign-1',

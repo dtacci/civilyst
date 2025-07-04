@@ -21,7 +21,7 @@ import {
   FileText,
   Calendar,
 } from 'lucide-react';
-import { toast } from '~/hooks/use-toast';
+import { useToast } from '~/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CampaignSummaryProps {
@@ -41,6 +41,7 @@ export function CampaignSummary({
   onSummaryGenerated,
   className,
 }: CampaignSummaryProps) {
+  const { toast } = useToast();
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
 
   // Query existing summary
@@ -226,7 +227,7 @@ export function CampaignSummary({
                   </Button>
                 </div>
                 <ul className="space-y-1">
-                  {summary.keyPoints.map((point, index) => (
+                  {summary.keyPoints.map((point: string, index: number) => (
                     <li
                       key={index}
                       className="text-sm text-muted-foreground flex items-start"

@@ -191,7 +191,7 @@ export function ContentSuggestions({
 
         {suggestions && suggestions.length > 0 ? (
           <div className="space-y-3">
-            {suggestions.map((suggestion) => (
+            {suggestions.map((suggestion: any) => (
               <div
                 key={suggestion.id}
                 className="p-4 border rounded-lg space-y-3 bg-muted/50"

@@ -26,7 +26,7 @@ import {
   AlertTriangle,
   Settings,
 } from 'lucide-react';
-import { toast } from '~/hooks/use-toast';
+import { useToast } from '~/hooks/use-toast';
 
 interface SentimentNotificationSettingsProps {
   campaignId: string;
@@ -52,6 +52,7 @@ export function SentimentNotificationSettings({
   campaignId: _campaignId,
   className,
 }: SentimentNotificationSettingsProps) {
+  const { toast } = useToast();
   const [settings, setSettings] = React.useState<NotificationSettings>({
     enabled: true,
     thresholds: {

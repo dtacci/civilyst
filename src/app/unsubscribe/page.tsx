@@ -6,7 +6,7 @@ import { api } from '~/lib/trpc';
 
 export default function UnsubscribePage() {
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams?.get('token');
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
   >('idle');

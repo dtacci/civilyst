@@ -7,7 +7,9 @@ import {
   MilestoneTracker,
   PledgeHistory,
 } from '~/components/investment';
-import type { PledgeStatus, MilestoneStatus } from '@prisma/client';
+// Mock enums for demo purposes
+type PledgeStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+type MilestoneStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 
 // Mock data for demonstration
 const mockProject = {

@@ -40,11 +40,10 @@ const logError = (error: Error, errorInfo?: ErrorInfo) => {
 
   // Additional logging for development
   if (process.env.NODE_ENV === 'development') {
-    console.group('🚨 Error Boundary Details');
+    console.warn('🚨 Error Boundary Details');
     console.error('Error:', error);
     console.error('Error Info:', errorInfo);
     console.error('Stack Trace:', error.stack);
-    console.groupEnd();
   }
 };
 
