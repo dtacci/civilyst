@@ -12,6 +12,9 @@ import {
   WonderStatus,
   TrustSignalType,
 } from '~/generated/prisma';
+import { getLocationFromIP, areLocationsConsistent } from '~/lib/location/ipGeolocation';
+import { calculateLocationTrustBonus } from '~/lib/location/communityBoundaries';
+import { reverseGeocode } from '~/lib/geocoding';
 
 export const wondersRouter = createTRPCRouter({
   // Get active wonder for homepage
@@ -361,7 +364,48 @@ export const wondersRouter = createTRPCRouter({
           .default(WonderTimeContext.ANYTIME),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Enhanced location verification process
+      let locationMetadata: any = {};
+      let locationTrustBonus = 0;
+      
+      if (input.location) {
+        const [lng, lat] = input.location.coordinates;
+        
+        // Get IP-based location for verification
+        const ipLocation = await getLocationFromIP(ctx.req?.headers['x-forwarded-for'] as string);
+        
+        // Reverse geocode GPS location for city name
+        const gpsLocation = await reverseGeocode(lat, lng);
+        
+        // Check location consistency
+        let isLocationConsistent = false;
+        if (ipLocation && gpsLocation) {
+          isLocationConsistent = areLocationsConsistent(
+            lat, lng, 
+            ipLocation.lat, ipLocation.lng
+          );
+        }
+        
+        // Calculate trust bonus based on community boundaries
+        const trustBonusInfo = calculateLocationTrustBonus(lat, lng);
+        locationTrustBonus = trustBonusInfo.bonus;
+        
+        // Build location metadata
+        locationMetadata = {
+          locationCity: gpsLocation?.city || 'Unknown',
+          locationAddress: gpsLocation?.address,
+          ipLocation: ipLocation ? {
+            city: ipLocation.city,
+            lat: ipLocation.lat,
+            lng: ipLocation.lng,
+          } : null,
+          locationConsistent: isLocationConsistent,
+          trustBonusReason: trustBonusInfo.reason,
+          communityBoundary: trustBonusInfo.reason !== 'Location verified',
+        };
+      }
+
       // Create anonymous wonder
       const anonymousWonder = await db.anonymousWonder.create({
         data: {
@@ -373,6 +417,7 @@ export const wondersRouter = createTRPCRouter({
           timeContext: input.timeContext,
           trustScore: 0, // Initial trust score
           isVerified: false,
+          metadata: Object.keys(locationMetadata).length > 0 ? locationMetadata : undefined,
         },
       });
 
@@ -389,16 +434,21 @@ export const wondersRouter = createTRPCRouter({
         },
       });
 
-      // Track location verification if provided
+      // Enhanced location verification trust signal
       if (input.location) {
+        const [lng, lat] = input.location.coordinates;
+        
         await db.trustSignal.create({
           data: {
             deviceId: input.deviceId,
             signalType: TrustSignalType.LOCATION_VERIFIED,
-            signalValue: 0.2, // Value for providing location
+            signalValue: 0.2 + locationTrustBonus, // Base + community bonus
             metadata: {
               wonderId: anonymousWonder.id,
               coordinates: input.location.coordinates,
+              locationCity: locationMetadata.locationCity,
+              locationConsistent: locationMetadata.locationConsistent,
+              trustBonusReason: locationMetadata.trustBonusReason,
             },
           },
         });
