@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc';
 import { aiClient } from '~/lib/ai/client';
+import { db } from '~/lib/db';
 
 export const aiJobsRouter = createTRPCRouter({
   // Generate summaries for all active campaigns
@@ -12,9 +13,9 @@ export const aiJobsRouter = createTRPCRouter({
         includeVotes: z.boolean().default(true),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx: _ctx, input }) => {
       // Get active campaigns that either don't have summaries or have old summaries
-      const activeCampaigns = await ctx.db.campaign.findMany({
+      const activeCampaigns = await db.campaign.findMany({
         where: {
           status: 'ACTIVE',
           OR: [
@@ -45,7 +46,7 @@ export const aiJobsRouter = createTRPCRouter({
       for (const campaign of activeCampaigns) {
         try {
           // Fetch additional data if needed
-          const campaignWithData = await ctx.db.campaign.findUnique({
+          const campaignWithData = await db.campaign.findUnique({
             where: { id: campaign.id },
             include: {
               comments: input.includeComments
@@ -86,7 +87,7 @@ export const aiJobsRouter = createTRPCRouter({
           });
 
           // Save or update summary
-          await ctx.db.campaignSummary.upsert({
+          await db.campaignSummary.upsert({
             where: { campaignId: campaign.id },
             create: {
               campaignId: campaign.id,
@@ -122,13 +123,13 @@ export const aiJobsRouter = createTRPCRouter({
         limit: z.number().min(1).max(100).default(50),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx: _ctx, input }) => {
       const cutoffDate = new Date(
         Date.now() - input.hoursBack * 60 * 60 * 1000
       );
 
       // Get recent comments without sentiment analysis
-      const recentComments = await ctx.db.comment.findMany({
+      const recentComments = await db.comment.findMany({
         where: {
           createdAt: { gte: cutoffDate },
           sentimentAnalysis: null,
@@ -150,7 +151,7 @@ export const aiJobsRouter = createTRPCRouter({
         try {
           const analysis = await aiClient.analyzeSentiment(comment.content);
 
-          await ctx.db.sentimentAnalysis.create({
+          await db.sentimentAnalysis.create({
             data: {
               contentId: comment.id,
               contentType: 'comment',
@@ -170,7 +171,7 @@ export const aiJobsRouter = createTRPCRouter({
     }),
 
   // Get job statistics
-  getJobStatistics: protectedProcedure.query(async ({ ctx }) => {
+  getJobStatistics: protectedProcedure.query(async ({ ctx: _ctx }) => {
     const [
       totalCampaigns,
       campaignsWithSummaries,
@@ -179,20 +180,20 @@ export const aiJobsRouter = createTRPCRouter({
       analyzedComments,
       recentAnalyses,
     ] = await Promise.all([
-      ctx.db.campaign.count({ where: { status: 'ACTIVE' } }),
-      ctx.db.campaignSummary.count(),
-      ctx.db.campaignSummary.count({
+      db.campaign.count({ where: { status: 'ACTIVE' } }),
+      db.campaignSummary.count(),
+      db.campaignSummary.count({
         where: {
           lastGenerated: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
           },
         },
       }),
-      ctx.db.comment.count(),
-      ctx.db.sentimentAnalysis.count({
+      db.comment.count(),
+      db.sentimentAnalysis.count({
         where: { contentType: 'comment' },
       }),
-      ctx.db.sentimentAnalysis.count({
+      db.sentimentAnalysis.count({
         where: {
           contentType: 'comment',
           createdAt: {
@@ -226,7 +227,7 @@ export const aiJobsRouter = createTRPCRouter({
         contentType: z.enum(['campaign', 'comment', 'all']).default('all'),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx: _ctx, input }) => {
       // Get content that hasn't been moderated
       const contentToModerate: Array<{
         id: string;
@@ -235,7 +236,7 @@ export const aiJobsRouter = createTRPCRouter({
       }> = [];
 
       if (input.contentType === 'campaign' || input.contentType === 'all') {
-        const campaigns = await ctx.db.campaign.findMany({
+        const campaigns = await db.campaign.findMany({
           where: {
             moderation: null,
           },
@@ -259,7 +260,7 @@ export const aiJobsRouter = createTRPCRouter({
       if (input.contentType === 'comment' || input.contentType === 'all') {
         const remainingLimit = input.limit - contentToModerate.length;
         if (remainingLimit > 0) {
-          const comments = await ctx.db.comment.findMany({
+          const comments = await db.comment.findMany({
             where: {
               moderation: null,
             },
@@ -308,7 +309,7 @@ export const aiJobsRouter = createTRPCRouter({
             moderationStatus = 'approved';
           }
 
-          await ctx.db.contentModeration.create({
+          await db.contentModeration.create({
             data: {
               contentId: item.id,
               contentType: item.type,
