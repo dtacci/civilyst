@@ -23,7 +23,16 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { PledgeStatus } from '@prisma/client';
+// import type { PledgeStatus } from '@prisma/client';
+type PledgeStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'CONFIRMED'
+  | 'RELEASED'
+  | 'REFUNDED'
+  | 'FAILED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 interface Pledge {
   id: string;
@@ -92,6 +101,9 @@ export function PledgeHistory({
       'default' | 'secondary' | 'destructive'
     > = {
       PENDING: 'secondary',
+      PROCESSING: 'default',
+      CONFIRMED: 'default',
+      RELEASED: 'default',
       COMPLETED: 'default',
       FAILED: 'destructive',
       REFUNDED: 'secondary',

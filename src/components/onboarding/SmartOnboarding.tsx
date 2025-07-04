@@ -152,7 +152,7 @@ export function SmartOnboarding() {
         metadata: {
           interests: onboardingData.interests,
           goals: onboardingData.goals,
-          profileType: onboardingData.profileType,
+          profileType: onboardingData.profileType || undefined,
           onboardingVersion: '1.0',
         },
       });

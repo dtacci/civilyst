@@ -66,8 +66,54 @@
         "testStrategy": "1. Unit tests for skill models and validation\n2. API endpoint tests for skill CRUD operations\n3. Integration tests for the matching algorithm\n4. UI component tests for skill selection and display\n5. Performance testing with large skill datasets\n6. User acceptance testing with sample projects and skills\n7. A/B testing of different matching algorithms",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Database Schema and Core Models",
+            "description": "Set up the database schema with UserSkill, Skill, and ProjectSkillNeed models as specified in the requirements.",
+            "dependencies": [],
+            "details": "Create migration files for the new models. Implement the UserSkill model with fields for id, userId, skillId, proficiencyLevel (1-5 scale), isVerified flag, and createdAt timestamp. Implement the Skill model with id, name, category, and description fields. Implement the ProjectSkillNeed model with id, projectId, skillId, hoursNeeded, description, and isFilled flag. Add appropriate indexes and relationships between models.",
+            "status": "done",
+            "testStrategy": "Write unit tests to verify model creation, relationships, and constraints. Test CRUD operations on each model to ensure data integrity."
+          },
+          {
+            "id": 2,
+            "title": "Develop API Endpoints with tRPC",
+            "description": "Implement all required tRPC routers and procedures for skill management, user skills, and skill matching functionality.",
+            "dependencies": [1],
+            "details": "Create the Skill router with list and getByCategory procedures. Implement the UserSkill router with add, remove, update, and verify procedures. Develop the SkillMatching router with findMatches, recommendProjects, and recommendUsers procedures. Each procedure should include proper input validation, error handling, and authorization checks.",
+            "status": "in-progress",
+            "testStrategy": "Create integration tests for each API endpoint to verify correct behavior with valid and invalid inputs. Test authorization rules to ensure proper access control."
+          },
+          {
+            "id": 3,
+            "title": "Create UI Components for Skill Management",
+            "description": "Develop the required UI components for skill selection, display, and matching as specified in the requirements.",
+            "dependencies": [2],
+            "details": "Build a SkillSelector component with multi-select and autocomplete functionality. Create a SkillBadge component to visually represent skills with proficiency levels. Implement an AvailabilityCalendar component for tracking user availability. Design a MatchCard component to display potential skill matches with contact options. Develop a TeamBuilder interface for forming project teams based on skills.",
+            "status": "pending",
+            "testStrategy": "Write component tests using React Testing Library to verify rendering and interaction behavior. Create Storybook stories for each component to document usage patterns."
+          },
+          {
+            "id": 4,
+            "title": "Implement Expertise Verification System",
+            "description": "Create a system for verifying user skills through endorsements and portfolio links.",
+            "dependencies": [2],
+            "details": "Design and implement an endorsement system where users can vouch for others' skills. Add functionality for users to link portfolio items or credentials as evidence of their skills. Create an admin interface for reviewing and approving skill verifications. Implement notification systems for endorsement requests and approvals.",
+            "status": "pending",
+            "testStrategy": "Test the endorsement workflow end-to-end. Verify that notifications are sent correctly. Test the admin approval process and ensure proper state changes after verification."
+          },
+          {
+            "id": 5,
+            "title": "Develop Skill Matching Algorithm",
+            "description": "Create an algorithm for optimal skill matching based on project needs and user capabilities.",
+            "dependencies": [1, 2],
+            "details": "Design and implement a matching algorithm that considers skill proficiency levels, availability, project requirements, and user preferences. Include weighting factors for different match criteria. Implement filtering options to refine matches based on various parameters. Create a scoring system to rank potential matches. Optimize the algorithm for performance with large datasets.",
+            "status": "pending",
+            "testStrategy": "Create benchmark tests with sample data to evaluate matching accuracy and performance. Test edge cases such as partial matches or conflicting requirements. Verify that the algorithm produces consistent results for the same inputs."
+          }
+        ]
       },
       {
         "id": 3,
@@ -285,7 +331,7 @@
     ],
     "metadata": {
       "created": "2025-07-04T16:44:15.867Z",
-      "updated": "2025-07-04T18:01:35.311Z",
+      "updated": "2025-07-04T18:06:31.237Z",
       "description": "Tasks for master context"
     }
   }
