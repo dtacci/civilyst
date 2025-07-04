@@ -49,6 +49,7 @@ model User {
   wonders           Wonder[]           // Wonders created by user
   wonderResponses   WonderResponse[]   // Wonder responses by user
   trustSignals      TrustSignal[]      // Trust signals for user
+  preferences       UserPreferences?   // Email and notification preferences
 
   // Performance indexes for user queries
   @@index([createdAt])
@@ -403,6 +404,7 @@ model AnonymousWonder {
   // Trust signals for anonymous users
   trustScore      Float    @default(0)
   isVerified      Boolean  @default(false)
+  metadata        Json?    // Additional metadata (city, IP location, etc.)
   
   // Conversion tracking
   convertedToWonderId String?
@@ -456,4 +458,25 @@ enum TrustLevel {
   VERIFIED   // 26-50%: Create campaigns, analytics
   TRUSTED    // 51-75%: Moderation, priority support
   LEADER     // 76-100%: Investment, B2B access
+}
+
+model UserPreferences {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  
+  // Email preferences
+  emailNotifications  Boolean  @default(true)  // Master email toggle
+  campaignUpdates     Boolean  @default(true)  // Campaign activity emails
+  weeklyDigest        Boolean  @default(false) // Weekly summary emails
+  marketingEmails     Boolean  @default(false) // Product updates and offers
+  
+  // Metadata
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relationships
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("user_preferences")
 }
