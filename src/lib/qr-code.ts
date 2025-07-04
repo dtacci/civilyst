@@ -1,4 +1,4 @@
-import * as QRCode from 'qrcode';
+import QRCode from 'qrcode';
 
 export interface QRCodeOptions {
   errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
