@@ -126,11 +126,14 @@ export function AccessibilityDashboard({
 
   // Mock accessibility data for demonstration
   const accessibilityScore = enhancements && enhancements.length > 0 ? 85 : 0;
-  const suggestions = enhancements && enhancements.length > 0 ? [
-    'Add alt text for all images',
-    'Provide audio descriptions for videos',
-    'Include transcriptions for audio content'
-  ] : [];
+  const suggestions =
+    enhancements && enhancements.length > 0
+      ? [
+          'Add alt text for all images',
+          'Provide audio descriptions for videos',
+          'Include transcriptions for audio content',
+        ]
+      : [];
 
   // Mock accessibility features for demonstration
   const accessibilityFeatures: AccessibilityFeature[] = [
@@ -162,14 +165,8 @@ export function AccessibilityDashboard({
       icon: <Ear className="h-5 w-5" />,
       title: 'Audio Descriptions',
       description: 'Media accessibility for hearing impaired',
-      score: enhancements?.filter(
-        (e) => e.audioDescription
-      ).length
-        ? 85
-        : 30,
-      status: enhancements?.filter(
-        (e) => e.audioDescription
-      ).length
+      score: enhancements?.filter((e) => e.audioDescription).length ? 85 : 30,
+      status: enhancements?.filter((e) => e.audioDescription).length
         ? 'good'
         : 'needs-attention',
     },
@@ -177,11 +174,8 @@ export function AccessibilityDashboard({
       icon: <Image className="h-5 w-5" />,
       title: 'Alt Text Coverage',
       description: 'Image alternative text availability',
-      score: enhancements?.filter((e) => e.altText).length
-        ? 90
-        : 25,
-      status: enhancements?.filter((e) => e.altText)
-        .length
+      score: enhancements?.filter((e) => e.altText).length ? 90 : 25,
+      status: enhancements?.filter((e) => e.altText).length
         ? 'good'
         : 'needs-attention',
     },
@@ -242,7 +236,9 @@ export function AccessibilityDashboard({
             ) : (
               <>
                 <TrendingUp className="h-4 w-4 mr-2" />
-                {latestEnhancement ? 'Re-analyze' : 'Analyze'}
+                {enhancements && enhancements.length > 0
+                  ? 'Re-analyze'
+                  : 'Analyze'}
               </>
             )}
           </Button>
@@ -251,7 +247,7 @@ export function AccessibilityDashboard({
 
       <CardContent className="space-y-6">
         {/* Overall Accessibility Score */}
-        {latestEnhancement ? (
+        {enhancements && enhancements.length > 0 ? (
           <div className="space-y-4">
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2">

@@ -458,10 +458,8 @@ export const aiRouter = createTRPCRouter({
         take: input.limit,
         skip: input.offset,
         orderBy: { createdAt: 'desc' },
-        include: {
-          // We'll need to add a way to get the actual content
-          // This would require conditional joins based on contentType
-        },
+        // We'll need to add a way to get the actual content
+        // This would require conditional joins based on contentType
       });
 
       // For each item, fetch the actual content based on contentType
@@ -592,7 +590,7 @@ export const aiRouter = createTRPCRouter({
         select: {
           title: true,
           description: true,
-          images: true,
+          imageUrl: true,
         },
       });
 
@@ -606,8 +604,8 @@ export const aiRouter = createTRPCRouter({
       // Calculate accessibility score using AI
       const score = await aiClient.calculateAccessibilityScore({
         text: `${campaign.title}\n\n${campaign.description}`,
-        hasImages: campaign.images && campaign.images.length > 0,
-        imageCount: campaign.images ? campaign.images.length : 0,
+        hasImages: !!campaign.imageUrl,
+        imageCount: campaign.imageUrl ? 1 : 0,
       });
 
       // Save accessibility enhancement record
@@ -615,12 +613,14 @@ export const aiRouter = createTRPCRouter({
         data: {
           contentId: input.campaignId,
           contentType: 'campaign',
-          accessibilityScore: score.score,
-          suggestions: score.suggestions,
         },
       });
 
-      return enhancement;
+      return {
+        ...enhancement,
+        accessibilityScore: score.score,
+        suggestions: score.suggestions,
+      };
     }),
 
   // Generate audio description for media
