@@ -12,6 +12,7 @@ import {
 import { WonderCategory, WonderTimeContext } from '~/generated/prisma';
 import { toast } from '~/lib/toast';
 import { VoiceRecorder } from '~/components/wonder/VoiceRecorder';
+import { CaptchaGuard } from '~/components/security/withCaptchaProtection';
 
 interface AnonymousWonderButtonProps {
   className?: string;
@@ -36,6 +37,7 @@ export function AnonymousWonderButton({
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const createWonderMutation = api.wonders.createAnonymous.useMutation({
     onSuccess: () => {
@@ -57,6 +59,7 @@ export function AnonymousWonderButton({
     setTimeContext('ANYTIME');
     setShareLocation(false);
     setLocation(null);
+    setCaptchaToken(null);
   };
 
   const handleLocationToggle = async () => {
@@ -110,6 +113,7 @@ export function AnonymousWonderButton({
             coordinates: [location.lng, location.lat],
           }
         : undefined,
+      captchaToken: captchaToken || undefined,
     });
   };
 
@@ -186,122 +190,130 @@ export function AnonymousWonderButton({
               </div>
             </div>
 
-            {/* Input Mode Toggle */}
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant={inputMode === 'text' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInputMode('text')}
-              >
-                <Type className="w-4 h-4 mr-1" />
-                Text
-              </Button>
-              <Button
-                variant={inputMode === 'voice' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInputMode('voice')}
-              >
-                <Mic className="w-4 h-4 mr-1" />
-                Voice
-              </Button>
-            </div>
-
-            {/* Input Area */}
-            {inputMode === 'text' ? (
-              <Textarea
-                placeholder="What would make your community better? What are you wondering about?"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="min-h-[120px] mb-4"
-              />
-            ) : (
-              <div className="mb-4">
-                <VoiceRecorder
-                  onResponse={async (audioUrl, textResponse) => {
-                    if (audioUrl) setVoiceUrl(audioUrl);
-                    if (textResponse) setContent(textResponse);
-                  }}
-                  isLoading={false}
-                />
-              </div>
-            )}
-
-            {/* Category Selection */}
-            <div className="mb-4">
-              <label className="text-sm font-medium mb-2 block">Category</label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.values(WonderCategory).map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={category === cat ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCategory(cat)}
-                    className="text-xs"
-                  >
-                    {cat.toLowerCase()}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Time Context */}
-            <div className="mb-4">
-              <label className="text-sm font-medium mb-2 block">
-                When is this relevant?
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.values(WonderTimeContext).map((time) => (
-                  <Button
-                    key={time}
-                    variant={timeContext === time ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setTimeContext(time)}
-                    className="text-xs"
-                  >
-                    {time.toLowerCase()}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Location Toggle */}
-            <div className="mb-6">
-              <Button
-                variant={shareLocation ? 'default' : 'outline'}
-                size="sm"
-                onClick={handleLocationToggle}
-                className="w-full"
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                {shareLocation
-                  ? 'Location shared'
-                  : 'Share location (optional)'}
-              </Button>
-              {shareLocation && (
-                <p className="text-xs text-gray-500 mt-1 text-center">
-                  Helps connect you with local community members
-                </p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                createWonderMutation.isPending || (!content && !voiceUrl)
-              }
-              className="w-full"
-              size="lg"
+            {/* CAPTCHA Protection */}
+            <CaptchaGuard
+              onVerified={(token) => setCaptchaToken(token)}
+              className="mb-6"
             >
-              {createWonderMutation.isPending ? (
-                'Sharing...'
+              {/* Input Mode Toggle */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant={inputMode === 'text' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setInputMode('text')}
+                >
+                  <Type className="w-4 h-4 mr-1" />
+                  Text
+                </Button>
+                <Button
+                  variant={inputMode === 'voice' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setInputMode('voice')}
+                >
+                  <Mic className="w-4 h-4 mr-1" />
+                  Voice
+                </Button>
+              </div>
+
+              {/* Input Area */}
+              {inputMode === 'text' ? (
+                <Textarea
+                  placeholder="What would make your community better? What are you wondering about?"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="min-h-[120px] mb-4"
+                />
               ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Share Wonder Anonymously
-                </>
+                <div className="mb-4">
+                  <VoiceRecorder
+                    onResponse={async (audioUrl, textResponse) => {
+                      if (audioUrl) setVoiceUrl(audioUrl);
+                      if (textResponse) setContent(textResponse);
+                    }}
+                    isLoading={false}
+                  />
+                </div>
               )}
-            </Button>
+
+              {/* Category Selection */}
+              <div className="mb-4">
+                <label className="text-sm font-medium mb-2 block">
+                  Category
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.values(WonderCategory).map((cat) => (
+                    <Button
+                      key={cat}
+                      variant={category === cat ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCategory(cat)}
+                      className="text-xs"
+                    >
+                      {cat.toLowerCase()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Context */}
+              <div className="mb-4">
+                <label className="text-sm font-medium mb-2 block">
+                  When is this relevant?
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.values(WonderTimeContext).map((time) => (
+                    <Button
+                      key={time}
+                      variant={timeContext === time ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeContext(time)}
+                      className="text-xs"
+                    >
+                      {time.toLowerCase()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Location Toggle */}
+              <div className="mb-6">
+                <Button
+                  variant={shareLocation ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handleLocationToggle}
+                  className="w-full"
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  {shareLocation
+                    ? 'Location shared'
+                    : 'Share location (optional)'}
+                </Button>
+                {shareLocation && (
+                  <p className="text-xs text-gray-500 mt-1 text-center">
+                    Helps connect you with local community members
+                  </p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  createWonderMutation.isPending || (!content && !voiceUrl)
+                }
+                className="w-full"
+                size="lg"
+              >
+                {createWonderMutation.isPending ? (
+                  'Sharing...'
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Share Wonder Anonymously
+                  </>
+                )}
+              </Button>
+            </CaptchaGuard>
 
             {/* Privacy Note */}
             <p className="text-xs text-gray-500 text-center mt-4">
